@@ -15,9 +15,8 @@ profile = "black"
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
+exclude = [".venv"]
 
-[tool.flake8]
-max-line-length = 120
 
 [tool.black]
 line-length = 120
