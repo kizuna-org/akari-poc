@@ -64,58 +64,47 @@ jobs:
           dotenv_linter_flags: --skip UnorderedKey
           fail_on_error: true
 
-  mise-python:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      python-version: ${{ steps.get-python-version.outputs.python-version }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: get-python-version
-        run: |
-          python_version=$(grep 'python = ' mise.toml | sed -e 's/python = //' -e 's/"//g')
-          echo "python-version=${python_version}" >> $GITHUB_OUTPUT
-
   python-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: mise-python
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-python
       - name: Run tests
         run: |
+          source .venv/bin/activate
           python -m pytest
 
   python-lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: mise-python
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-python
-      - run: |
+      - name: Run lint check
+        run: |
+          source .venv/bin/activate
           flake8 .
 
   python-type-check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: mise-python
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-python
       - name: Run type check
         run: |
+          source .venv/bin/activate
           mypy .
 
   python-format:
-    runs-on: ubuntu-latest1
+    runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: mise-python
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-python
       - name: Run format check
         run: |
+          source .venv/bin/activate
           black --check .
           isort --check-only .
