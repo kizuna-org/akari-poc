@@ -51,7 +51,7 @@ mypy .
 #### test
 
 ```sh
-pytest
+python -m pytest
 ```
 
 #### all
