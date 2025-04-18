@@ -19,7 +19,6 @@ pip install -r requirements-dev.txt
 >
 > See <https://xcfile.dev/getting-started/#installation> for installation instructions
 
-
 #### format
 
 ```sh
