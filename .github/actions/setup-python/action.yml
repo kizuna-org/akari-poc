@@ -1,0 +1,20 @@
+name: Setup python
+description: Setup python
+
+runs:
+  using: composite
+  steps:
+    - id: get-python-version
+      shell: bash
+      run: |
+        python_version="$(grep 'python = ' mise.toml | sed -e 's/python = //' -e 's/"//g')"
+        echo "python-version=${python_version}" >> "$GITHUB_OUTPUT"
+    - uses: actions/setup-python@v5.5.0
+      with:
+        python-version: ${{ steps.get-python-version.outputs.python-version }}
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements-dev.txt
