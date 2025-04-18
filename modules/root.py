@@ -10,4 +10,5 @@ class RootModule(AkariModule):
         print("Data:", data)
         print("Params:", params)
         self._router.callModule(params, data, None)
+
         return data

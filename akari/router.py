@@ -21,10 +21,8 @@ class MainRouter:
         inputData = copy.deepcopy(data)
 
         selected_module = self._modules[moduleType]
-        if not selected_module:
+        if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
-        if not isinstance(selected_module, module.AkariModule):
-            raise TypeError(f"Module {moduleType} is not an instance of AkariModule.")
 
         result = selected_module.call(inputData, params)
 
