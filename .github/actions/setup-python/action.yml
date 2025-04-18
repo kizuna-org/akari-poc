@@ -1,0 +1,15 @@
+name: Setup python
+description: Setup python
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5.5.0
+      with:
+        python-version: ${{ needs.mise-python.outputs.python-version }}
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements-dev.txt

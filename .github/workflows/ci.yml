@@ -1,0 +1,121 @@
+name: Main CI
+
+on:
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  all-status-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - ci-req-check
+      - yaml-lint
+      - action-lint
+      - dotenv-lint
+      - python-test
+      - python-lint
+      - python-type-check
+      - python-format
+    steps:
+      - name: All status check
+        run: echo "All status check passed"
+
+  ci-req-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check all-status-check
+        run: |
+          diff \
+            <(yq ".jobs | del(.all-status-check) | keys.[]" .github/workflows/ci.yml) \
+            <(yq ".jobs.all-status-check.needs.[]" .github/workflows/ci.yml)
+
+  yaml-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: reviewdog/action-yamllint@v1.19.0
+        with:
+          level: warning
+          yamllint_flags: "-c .yamllint ."
+          fail_on_error: true
+
+  action-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: reviewdog/action-actionlint@v1.57.0
+        with:
+          level: warning
+          fail_on_error: true
+
+  dotenv-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dotenv-linter/action-dotenv-linter@9c9a09ba60235ae0b92b2e2ed8f4268ac76d075f # v2.23.0
+        with:
+          dotenv_linter_flags: --skip UnorderedKey
+          fail_on_error: true
+
+  mise-python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      python-version: ${{ steps.get-python-version.outputs.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: get-python-version
+        run: |
+          python_version=$(grep 'python = ' mise.toml | sed -e 's/python = //' -e 's/"//g')
+          echo "python-version=${python_version}" >> $GITHUB_OUTPUT
+
+  python-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: mise-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python
+      - name: Run tests
+        run: |
+          python -m pytest
+
+  python-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: mise-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python
+      - run: |
+          flake8 .
+
+  python-type-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: mise-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python
+      - name: Run type check
+        run: |
+          mypy .
+
+  python-format:
+    runs-on: ubuntu-latest1
+    timeout-minutes: 10
+    needs: mise-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python
+      - name: Run format check
+        run: |
+          black --check .
+          isort --check-only .
