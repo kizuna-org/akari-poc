@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: reviewdog/action-yamllint@v1.19.0
+      - uses: reviewdog/action-yamllint@e09f07780388032a624e9eb44a23fd1bbb4052cc # v1.19.0
         with:
           level: warning
           yamllint_flags: "-c .yamllint ."
@@ -49,7 +49,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: reviewdog/action-actionlint@v1.57.0
+      - uses: reviewdog/action-actionlint@7eeec1dd160c2301eb28e1568721837d084558ad # v1.57.0
         with:
           level: warning
           fail_on_error: true
