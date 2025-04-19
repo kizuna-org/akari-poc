@@ -1,0 +1,73 @@
+name: PR Comment
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+  issue_comment:
+    types:
+      - edited
+
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR comment
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ github.event.pull_request.number }}
+          header: re-review-comment
+          only_create: true
+          message: |
+            ### Re-review
+
+            - [ ] Re-review <!-- comment-id: re-review-comment -->
+
+            Check this box to have
+            - Gemini Code Assist
+            - CodeRabbit
+
+            re-review
+
+  check_checkbox:
+    runs-on: ubuntu-latest
+    outputs:
+      checkbox_checked: ${{ steps.check.outputs.checkbox_checked }}
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commentBody = context.payload.comment?.body || '';
+            const commentBodyBefore = context.payload.changes?.body?.from || '';
+
+            const checkboxLine = "- \\[ \\] Re-review <!-- comment-id: re-review-comment -->";
+            const checkedCheckboxLine = "- \\[x\\] Re-review <!-- comment-id: re-review-comment -->";
+
+            if (commentBody.includes(checkedCheckboxLine) && commentBodyBefore.includes(checkboxLine)) {
+              core.setOutput('checkbox_checked', 'true');
+            } else {
+              core.setOutput('checkbox_checked', 'false');
+            }
+
+  run_conditional_job:
+    needs: check_checkbox
+    runs-on: ubuntu-latest
+    if: needs.check_checkbox.outputs.checkbox_checked == 'true'
+    steps:
+      - run: |
+          cat  << EOF > gemini.md
+          /gemini review
+          EOF
+          cat << EOF > coderabbit.md
+          @coderabbitai full review
+          EOF
+      - run: |
+          gh pr comment ${{ github.event.issue.number }} --body-file gemini.md
+          gh pr comment ${{ github.event.issue.number }} --body-file coderabbit.md
+
