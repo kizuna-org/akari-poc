@@ -17,5 +17,5 @@ class AkariModule(ABC):
         self._router = router
 
     @abstractmethod
-    def call(self, data: data.AkariData, params: AkariModuleParams) -> data.AkariData:
+    def call(self, data: data.AkariData, params: AkariModuleParams) -> data.AkariDataSet:
         pass
