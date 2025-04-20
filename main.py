@@ -8,12 +8,7 @@ akariDataSet = akari.AkariDataSet()
 akariDataSet.text = akari.AkariDataSetType(
     main="Hello, Akari!", others={"greeting": "Hello, World!", "farewell": "Goodbye, World!"}
 )
-akariDataSet.text = akari.AkariDataSetType(
-    main="Hello, Akari!", 
-    others={"greeting": "Hello, World!", "farewell": "Goodbye, World!"}
-)
-akariData = akari.AkariData()
-akariData.add(akariDataSet)
+akariData = akari.AkariData(last=akariDataSet)
 
 akariRouter = akari.MainRouter()
 akariRouter.setModules(
@@ -25,6 +20,6 @@ akariRouter.setModules(
 
 akariRouter.callModule(
     moduleType=modules.RootModule,
-    data=akari.AkariData(),
+    data=akari.AkariData(akari.AkariDataSet()),
     params=sample.SampleModule,
 )

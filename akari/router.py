@@ -24,12 +24,6 @@ class MainRouter:
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
-        print()
-        print("[Router] Module calling:", selected_module.__class__.__name__)
-        print()
+        result = selected_module.call(inputData, params)
 
-        dataset = selected_module.call(inputData, params)
-
-        data.add(dataset)
-
-        return data
+        return result
