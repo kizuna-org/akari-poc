@@ -4,9 +4,9 @@ T = TypeVar("T")
 
 
 class AkariDataSetType(Generic[T]):
-    def __init__(self, main: T, others: Dict[str, T] = {}) -> None:
+    def __init__(self, main: T, others: Dict[str, T] = None) -> None:
         self.main = main
-        self.others = others
+        self.others = others if others is not None else {}
 
 
 class AkariDataSet:
