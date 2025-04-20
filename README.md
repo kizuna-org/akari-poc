@@ -7,9 +7,7 @@ What is Akari? The answer, as it must, will eventually be revealed.
 Setup the environment:
 
 ```sh
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
+poetry install
 ```
 
 ### Tasks
@@ -22,8 +20,8 @@ pip install -r requirements-dev.txt
 #### format
 
 ```sh
-black .
-isort .
+poetry run black .
+poetry run isort .
 ```
 
 #### format:check
@@ -31,28 +29,36 @@ isort .
 Check only
 
 ```sh
-black --check .
-isort --check-only .
+poetry run black --check .
+poetry run isort --check-only .
 ```
 
 #### lint
 
 ```sh
-flake8 .
+poetry run flake8 .
 ```
 
 #### type
 
 ```sh
-mypy .
+poetry run mypy .
 ```
 
 #### test
 
 ```sh
-python -m pytest
+poetry run python -m pytest
 ```
 
 #### all
 
 Requires: format, lint, type, test
+
+### Run the Application
+
+To execute the main script, run the following command:
+
+```sh
+poetry run python main.py
+```

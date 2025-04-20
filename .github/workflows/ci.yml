@@ -72,8 +72,7 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run tests
         run: |
-          source .venv/bin/activate
-          python -m pytest
+          poetry run python -m pytest
 
   python-lint:
     runs-on: ubuntu-latest
@@ -83,8 +82,7 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run lint check
         run: |
-          source .venv/bin/activate
-          flake8 .
+          poetry run flake8 .
 
   python-type-check:
     runs-on: ubuntu-latest
@@ -94,8 +92,7 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run type check
         run: |
-          source .venv/bin/activate
-          mypy .
+          poetry run mypy .
 
   python-format:
     runs-on: ubuntu-latest
@@ -105,6 +102,5 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run format check
         run: |
-          source .venv/bin/activate
-          black --check .
-          isort --check-only .
+          poetry run black --check .
+          poetry run isort --check-only .

@@ -1,9 +1,19 @@
 [build-system]
-requires = ["setuptools>=77.0.3", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry>=1.5.0"]
+build-backend = "poetry.core.masonry.api"
 
-[tool.setuptools]
-packages = ["akari"]
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+flake8 = "*"
+mypy = "*"
+isort = "*"
+black = "*"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -16,7 +26,6 @@ profile = "black"
 strict = true
 ignore_missing_imports = true
 exclude = [".venv"]
-
 
 [tool.black]
 line-length = 120
