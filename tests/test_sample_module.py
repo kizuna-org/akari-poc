@@ -15,8 +15,8 @@ def sample_module(main_router: MainRouter) -> SampleModule:
 
 
 def test_sample_module_call(sample_module: SampleModule) -> None:
-    data = AkariData(last=AkariDataSet())
+    data = AkariData()
 
     result = sample_module.call(data, None)
 
-    assert result == data
+    assert isinstance(result, AkariDataSet)
