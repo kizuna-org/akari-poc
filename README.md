@@ -10,6 +10,12 @@ Setup the environment:
 poetry install
 ```
 
+`.env` file is required for the application to run. You can create it by copying `.env.example`:
+
+```sh
+cp .env.example .env
+```
+
 ### Tasks
 
 > [!NOTE]

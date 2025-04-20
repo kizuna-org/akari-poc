@@ -1,3 +1,6 @@
+import os
+
+import dotenv
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
 
@@ -5,6 +8,8 @@ import akari
 import modules
 import sample
 from modules import openai
+
+dotenv.load_dotenv()
 
 print("Hello, Akari!")
 
@@ -14,7 +19,7 @@ token_provider = get_bearer_token_provider(
 
 client = AzureOpenAI(
     api_version="2024-08-01-preview",
-    azure_endpoint="https://openai-edu-info-suzuka.openai.azure.com/",
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT") or "",
     azure_ad_token_provider=token_provider,
 )
 
