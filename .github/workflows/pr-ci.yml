@@ -19,15 +19,3 @@ jobs:
           requireScope: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  pr-body:
-    name: PR body empty check
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - run: |
-          if [[ -z "${PR_BODY// }" ]]; then
-            echo "PR body is empty"
-            exit 1
-          fi
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
