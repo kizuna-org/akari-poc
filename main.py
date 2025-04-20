@@ -4,12 +4,6 @@ import sample
 
 print("Hello, Akari!")
 
-akariDataSet = akari.AkariDataSet()
-akariDataSet.text = akari.AkariDataSetType(
-    main="Hello, Akari!", others={"greeting": "Hello, World!", "farewell": "Goodbye, World!"}
-)
-akariData = akari.AkariData(last=akariDataSet)
-
 akariRouter = akari.MainRouter()
 akariRouter.setModules(
     {
@@ -20,6 +14,6 @@ akariRouter.setModules(
 
 akariRouter.callModule(
     moduleType=modules.RootModule,
-    data=akari.AkariData(akari.AkariDataSet()),
+    data=akari.AkariData(),
     params=sample.SampleModule,
 )
