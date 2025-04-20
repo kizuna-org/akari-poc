@@ -9,11 +9,11 @@ package-mode = false
 python = "^3.13"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "*"
-flake8 = "*"
-mypy = "*"
-isort = "*"
-black = "*"
+pytest = "8.3.5"
+flake8 = "7.2.0"
+mypy = "1.15.0"
+isort = "6.0.1"
+black = "25.1.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
