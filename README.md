@@ -54,6 +54,7 @@ poetry run python -m pytest
 #### all
 
 Requires: format, lint, type, test
+RunDeps: async
 
 ### Run the Application
 
