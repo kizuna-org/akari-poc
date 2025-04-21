@@ -15,7 +15,11 @@ class MainRouter:
         self._modules = modules
 
     def callModule(
-        self, moduleType: module.AkariModuleType, data: data.AkariData, params: module.AkariModuleParams
+        self,
+        moduleType: module.AkariModuleType,
+        data: data.AkariData,
+        params: module.AkariModuleParams,
+        callback: module.AkariModuleType | None = None,
     ) -> data.AkariData:
         if self._modules is None:
             raise ValueError("Modules not set in router.")
@@ -28,7 +32,7 @@ class MainRouter:
 
         self._logger.info("\n\nCalling module: %s", selected_module.__class__.__name__)
 
-        dataset = selected_module.call(inputData, params)
+        dataset = selected_module.call(inputData, params, callback)
 
         data.add(dataset)
 

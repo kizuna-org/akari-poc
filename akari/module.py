@@ -19,5 +19,7 @@ class AkariModule(ABC):
         self._logger = logger
 
     @abstractmethod
-    def call(self, data: data.AkariData, params: AkariModuleParams) -> data.AkariDataSet:
+    def call(
+        self, data: data.AkariData, params: AkariModuleParams, callback: AkariModuleType | None = None
+    ) -> data.AkariDataSet:
         pass
