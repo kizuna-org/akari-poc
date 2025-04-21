@@ -12,6 +12,7 @@ class AkariDataSetType(Generic[T]):
 class AkariDataSet:
     def __init__(self) -> None:
         self.text: AkariDataSetType[str] | None = None
+        self.audio: AkariDataSetType[bytes] | None = None
         self.allData: Any | None = None
 
 
