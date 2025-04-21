@@ -9,6 +9,7 @@ from akari import AkariData, AkariDataSet, AkariDataSetType, AkariModule, MainRo
 
 @dataclasses.dataclass
 class LLMModuleParams:
+    model: str
     messages: Iterable[ChatCompletionMessageParam]
     temperature: float = 1.0
     max_tokens: int = 1024
@@ -29,7 +30,7 @@ class LLMModule(AkariModule):
         print("Params:", params)
 
         response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=params.model,
             messages=params.messages,
             temperature=params.temperature,
             max_tokens=params.max_tokens,

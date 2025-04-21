@@ -44,6 +44,7 @@ akariRouter.callModule(
 #     moduleType=openai.LLMModule,
 #     data=akari.AkariData(),
 #     params=openai.LLMModuleParams(
+#         model = "gpt-4o-mini",
 #         messages=[
 #             {"role": "user", "content": "Hello, Akari!"},
 #             {"role": "system", "content": "You are a helpful assistant."},
