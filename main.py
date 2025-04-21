@@ -43,6 +43,7 @@ akariRouter.callModule(
     moduleType=modules.RootModule,
     data=akari.AkariData(),
     params=sample.SampleModule,
+    with_stream=False,
 )
 
 # akariRouter.callModule(
@@ -90,6 +91,7 @@ data = akariRouter.callModule(
         response_format="mp3",
         speed=1.0,
     ),
+    with_stream=False,
 )
 
 with open("output.mp3", "wb") as audio_file:

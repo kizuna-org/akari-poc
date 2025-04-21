@@ -19,6 +19,7 @@ class MainRouter:
         moduleType: module.AkariModuleType,
         data: data.AkariData,
         params: module.AkariModuleParams,
+        with_stream: bool,
         callback: module.AkariModuleType | None = None,
     ) -> data.AkariData:
         if self._modules is None:
@@ -30,9 +31,14 @@ class MainRouter:
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
-        self._logger.info("\n\nCalling module: %s", selected_module.__class__.__name__)
+        self._logger.debug(
+            "\n\n[Router] Module %s: %s", "streaming" if with_stream else "calling", selected_module.__class__.__name__
+        )
 
-        dataset = selected_module.call(inputData, params, callback)
+        if with_stream:
+            dataset = selected_module.stream_call(inputData, params, callback)
+        else:
+            dataset = selected_module.call(inputData, params, callback)
 
         data.add(dataset)
 

@@ -17,6 +17,6 @@ class RootModule(AkariModule):
         self._logger.debug("RootModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
-        self._router.callModule(params, data, None)
+        self._router.callModule(moduleType=params, data=data, params=None, with_stream=False, callback=callback)
 
         return AkariDataSet()
