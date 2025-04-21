@@ -60,9 +60,9 @@ akariRouter.callModule(
 # input audio file from ./input.mp3
 data = akari.AkariData()
 dataset = akari.AkariDataSet()
-dataset.audio = akari.AkariDataSetType(main=open("input.mp3", "rb").read())
+with open("input.mp3", "rb") as audio_file:
+    dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 data.add(dataset)
-
 print(os.getenv("AZURE_OPENAI_ENDPOINT"))
 akariRouter.callModule(
     moduleType=openai.STTModule,
