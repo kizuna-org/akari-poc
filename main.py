@@ -31,6 +31,7 @@ akariRouter.setModules(
         sample.SampleModule: sample.SampleModule(akariRouter),
         openai.LLMModule: openai.LLMModule(akariRouter, client),
         openai.STTModule: openai.STTModule(akariRouter, client),
+        openai.TTSModule: openai.TTSModule(akariRouter, client),
     }
 )
 
@@ -58,20 +59,34 @@ akariRouter.callModule(
 #     ),
 # )
 
-# input audio file from ./input.mp3
-data = akari.AkariData()
-dataset = akari.AkariDataSet()
-with open("input.mp3", "rb") as audio_file:
-    dataset.audio = akari.AkariDataSetType(main=audio_file.read())
-data.add(dataset)
-print(os.getenv("AZURE_OPENAI_ENDPOINT"))
-akariRouter.callModule(
-    moduleType=openai.STTModule,
-    data=data,
-    params=openai.STTModuleParams(
-        model="whisper",
-        language="ja",
-        prompt="",
-        temperature=0.7,
+# data = akari.AkariData()
+# dataset = akari.AkariDataSet()
+# with open("input.mp3", "rb") as audio_file:
+#     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
+# data.add(dataset)
+# akariRouter.callModule(
+#     moduleType=openai.STTModule,
+#     data=data,
+#     params=openai.STTModuleParams(
+#         model="whisper",
+#         language="ja",
+#         prompt="",
+#         temperature=0.7,
+#     ),
+# )
+
+data = akariRouter.callModule(
+    moduleType=openai.TTSModule,
+    data=akari.AkariData(),
+    params=openai.TTSModuleParams(
+        model="gpt-4o-mini-tts",
+        input="あかりだよ、よろしくね！",
+        voice="alloy",
+        instructions="日本語で元気溌剌に話してください",
+        response_format="mp3",
+        speed=1.0,
     ),
 )
+
+with open("output.mp3", "wb") as audio_file:
+    audio_file.write(data.last().audio.main)  # type: ignore
