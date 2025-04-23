@@ -29,9 +29,9 @@ class TTSModule(AkariModule):
         self.client = client
 
     def call(self, data: AkariData, params: TTSModuleParams) -> AkariDataSet:
-        print("TTSModule called")
-        print("Data:", data)
-        print("Params:", params)
+        self._logger.debug("TTSModule called")
+        self._logger.debug("Data:", data)
+        self._logger.debug("Params:", params)
 
         response = self.client.audio.speech.create(
             model=params.model,

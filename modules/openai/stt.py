@@ -27,9 +27,9 @@ class STTModule(AkariModule):
         self.client = client
 
     def call(self, data: AkariData, params: STTModuleParams) -> AkariDataSet:
-        print("STTModule called")
-        print("Data:", data)
-        print("Params:", params)
+        self._logger.debug("STTModule called")
+        self._logger.debug("Data:", data)
+        self._logger.debug("Params:", params)
 
         audio = data.last().audio
         if audio is None:

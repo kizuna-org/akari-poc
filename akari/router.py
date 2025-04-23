@@ -2,6 +2,7 @@ import copy
 from typing import Dict
 
 import akari.data as data
+import akari.logger as logger
 import akari.module as module
 
 
@@ -24,9 +25,8 @@ class MainRouter:
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
-        print()
-        print("[Router] Module calling:", selected_module.__class__.__name__)
-        print()
+        akariLogger = logger.AkariLogger(__name__)
+        akariLogger.debug("Calling module:", selected_module.__class__.__name__)
 
         dataset = selected_module.call(inputData, params)
 

@@ -11,9 +11,11 @@ from modules import openai
 
 dotenv.load_dotenv()
 
-print("Hello, Akari!")
 
 akariLogger = akari.AkariLogger("Akari")
+
+akariLogger.info("Hello, Akari!")
+
 
 token_provider = get_bearer_token_provider(
     DefaultAzureCredential(exclude_managed_identity_credential=True), "https://cognitiveservices.azure.com/.default"

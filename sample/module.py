@@ -13,7 +13,7 @@ class SampleModule(AkariModule):
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: AkariModuleParams) -> AkariDataSet:
-        print("SampleModule called")
-        print("Data:", data)
-        print("Params:", params)
+        self._logger.debug("SampleModule called")
+        self._logger.debug("Data:", data)
+        self._logger.debug("Params:", params)
         return AkariDataSet()
