@@ -3,7 +3,14 @@ import io
 
 from openai import AzureOpenAI
 
-from akari import AkariData, AkariDataSet, AkariDataSetType, AkariModule, MainRouter
+from akari import (
+    AkariData,
+    AkariDataSet,
+    AkariDataSetType,
+    AkariLogger,
+    AkariModule,
+    MainRouter,
+)
 
 
 @dataclasses.dataclass
@@ -15,8 +22,8 @@ class STTModuleParams:
 
 
 class STTModule(AkariModule):
-    def __init__(self, router: MainRouter, client: AzureOpenAI) -> None:
-        super().__init__(router)
+    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+        super().__init__(router, logger)
         self.client = client
 
     def call(self, data: AkariData, params: STTModuleParams) -> AkariDataSet:

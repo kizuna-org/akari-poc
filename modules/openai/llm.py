@@ -4,7 +4,14 @@ from typing import Iterable
 from openai import AzureOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
-from akari import AkariData, AkariDataSet, AkariDataSetType, AkariModule, MainRouter
+from akari import (
+    AkariData,
+    AkariDataSet,
+    AkariDataSetType,
+    AkariLogger,
+    AkariModule,
+    MainRouter,
+)
 
 
 @dataclasses.dataclass
@@ -20,8 +27,8 @@ class LLMModuleParams:
 
 
 class LLMModule(AkariModule):
-    def __init__(self, router: MainRouter, client: AzureOpenAI) -> None:
-        super().__init__(router)
+    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+        super().__init__(router, logger)
         self.client = client
 
     def call(self, data: AkariData, params: LLMModuleParams) -> AkariDataSet:

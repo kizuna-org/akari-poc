@@ -13,6 +13,8 @@ dotenv.load_dotenv()
 
 print("Hello, Akari!")
 
+akariLogger = akari.AkariLogger("Akari")
+
 token_provider = get_bearer_token_provider(
     DefaultAzureCredential(exclude_managed_identity_credential=True), "https://cognitiveservices.azure.com/.default"
 )
@@ -27,11 +29,11 @@ client = AzureOpenAI(
 akariRouter = akari.MainRouter()
 akariRouter.setModules(
     {
-        modules.RootModule: modules.RootModule(akariRouter),
-        sample.SampleModule: sample.SampleModule(akariRouter),
-        openai.LLMModule: openai.LLMModule(akariRouter, client),
-        openai.STTModule: openai.STTModule(akariRouter, client),
-        openai.TTSModule: openai.TTSModule(akariRouter, client),
+        modules.RootModule: modules.RootModule(akariRouter, akariLogger),
+        sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
+        openai.LLMModule: openai.LLMModule(akariRouter, akariLogger, client),
+        openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
+        openai.TTSModule: openai.TTSModule(akariRouter, akariLogger, client),
     }
 )
 

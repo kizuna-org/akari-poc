@@ -1,9 +1,16 @@
-from akari import AkariData, AkariDataSet, AkariModule, AkariModuleParams, MainRouter
+from akari import (
+    AkariData,
+    AkariDataSet,
+    AkariLogger,
+    AkariModule,
+    AkariModuleParams,
+    MainRouter,
+)
 
 
 class RootModule(AkariModule):
-    def __init__(self, router: MainRouter) -> None:
-        super().__init__(router)
+    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+        super().__init__(router, logger)
 
     def call(self, data: AkariData, params: AkariModuleParams) -> AkariDataSet:
         print("RootModule called")
