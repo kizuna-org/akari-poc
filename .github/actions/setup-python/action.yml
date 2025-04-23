@@ -7,7 +7,7 @@ runs:
     - id: get-python-version
       shell: bash
       run: |
-        python_version="$(grep 'python = ' mise.toml | sed -e 's/python = //' -e 's/"//g')"
+        python_version="$(grep '^python\s*=\s*' pyproject.toml | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?')"
         echo "python-version=${python_version}" >> "$GITHUB_OUTPUT"
     - uses: actions/setup-python@v5.5.0
       with:
