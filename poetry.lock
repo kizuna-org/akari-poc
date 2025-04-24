@@ -732,6 +732,20 @@ files = [
 ]
 
 [[package]]
+name = "no-print-checker"
+version = "0.1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "plugins/no_print_checker"
+
+[[package]]
 name = "openai"
 version = "1.75.0"
 description = "The official Python library for the openai API"
@@ -1159,4 +1173,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13.3"
-content-hash = "a35567803f63650e6e4a4fd0c88624ae06b1380bddbc28e62b8535975f01eab2"
+content-hash = "27d20c1e5303387611fb7a5a875c51444dec741834ff0d3dbda4779bb3d139ed"
