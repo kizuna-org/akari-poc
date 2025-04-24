@@ -4,7 +4,14 @@ from typing import Iterable
 from openai import AzureOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
-from akari import AkariData, AkariDataSet, AkariDataSetType, AkariModule, MainRouter
+from akari import (
+    AkariData,
+    AkariDataSet,
+    AkariDataSetType,
+    AkariLogger,
+    AkariModule,
+    MainRouter,
+)
 
 
 @dataclasses.dataclass
@@ -20,14 +27,14 @@ class LLMModuleParams:
 
 
 class LLMModule(AkariModule):
-    def __init__(self, router: MainRouter, client: AzureOpenAI) -> None:
-        super().__init__(router)
+    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+        super().__init__(router, logger)
         self.client = client
 
     def call(self, data: AkariData, params: LLMModuleParams) -> AkariDataSet:
-        print("LLMModule called")
-        print("Data:", data)
-        print("Params:", params)
+        self._logger.debug("LLMModule called")
+        self._logger.debug("Data:", data)
+        self._logger.debug("Params:", params)
 
         response = self.client.chat.completions.create(
             model=params.model,
@@ -44,12 +51,12 @@ class LLMModule(AkariModule):
         if params.stream:
             for chunk in response:
                 if isinstance(chunk, ChatCompletion) and hasattr(chunk, "choices") and chunk.choices:
-                    print(chunk.choices[0].delta.content, end="", flush=True)
+                    pass
                 else:
                     raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
         else:
             if isinstance(response, ChatCompletion):
-                print(response.choices[0].message.content)
+                self._logger.debug(response.choices[0].message.content)
                 if response.choices[0].message.content:
                     text_main = response.choices[0].message.content
             else:

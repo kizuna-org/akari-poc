@@ -3,7 +3,14 @@ import dataclasses
 from openai import AzureOpenAI
 from typing_extensions import Literal
 
-from akari import AkariData, AkariDataSet, AkariDataSetType, AkariModule, MainRouter
+from akari import (
+    AkariData,
+    AkariDataSet,
+    AkariDataSetType,
+    AkariLogger,
+    AkariModule,
+    MainRouter,
+)
 
 
 @dataclasses.dataclass
@@ -17,14 +24,14 @@ class TTSModuleParams:
 
 
 class TTSModule(AkariModule):
-    def __init__(self, router: MainRouter, client: AzureOpenAI) -> None:
-        super().__init__(router)
+    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+        super().__init__(router, logger)
         self.client = client
 
     def call(self, data: AkariData, params: TTSModuleParams) -> AkariDataSet:
-        print("TTSModule called")
-        print("Data:", data)
-        print("Params:", params)
+        self._logger.debug("TTSModule called")
+        self._logger.debug("Data:", data)
+        self._logger.debug("Params:", params)
 
         response = self.client.audio.speech.create(
             model=params.model,
