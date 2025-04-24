@@ -5,8 +5,8 @@ from sample.module import SampleModule
 
 
 @pytest.fixture
-def main_router() -> MainRouter:
-    return MainRouter()
+def main_router(logger: AkariLogger) -> MainRouter:
+    return MainRouter(logger=logger)
 
 
 @pytest.fixture

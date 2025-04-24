@@ -7,8 +7,9 @@ import akari.module as module
 
 
 class MainRouter:
-    def __init__(self) -> None:
+    def __init__(self, logger: logger.AkariLogger) -> None:
         self._modules: Dict[module.AkariModuleType, module.AkariModule] | None = None
+        self._logger = logger
 
     def setModules(self, modules: Dict[module.AkariModuleType, module.AkariModule]) -> None:
         self._modules = modules
@@ -25,8 +26,7 @@ class MainRouter:
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
-        akariLogger = logger.AkariLogger(__name__)
-        akariLogger.debug("Calling module:", selected_module.__class__.__name__)
+        self._logger.debug("Calling module:", selected_module.__class__.__name__)
 
         dataset = selected_module.call(inputData, params)
 

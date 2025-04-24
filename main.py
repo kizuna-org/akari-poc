@@ -28,7 +28,7 @@ client = AzureOpenAI(
 )
 
 
-akariRouter = akari.MainRouter()
+akariRouter = akari.MainRouter(logger=akariLogger)
 akariRouter.setModules(
     {
         modules.RootModule: modules.RootModule(akariRouter, akariLogger),
