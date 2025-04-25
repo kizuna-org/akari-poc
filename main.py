@@ -75,23 +75,25 @@ akariRouter.callModule(
     streaming=False,
 )
 
-# akariRouter.callModule(
-#     moduleType=openai.LLMModule,
-#     data=akari.AkariData(),
-#     params=openai.LLMModuleParams(
-#         model = "gpt-4o-mini",
-#         messages=[
-#             {"role": "user", "content": "Hello, Akari!"},
-#             {"role": "system", "content": "You are a helpful assistant."},
-#         ],
-#         temperature=0.7,
-#         max_tokens=150,
-#         top_p=1.0,
-#         frequency_penalty=0.0,
-#         presence_penalty=0.0,
-#         stream=False,
-#     ),
-# )
+akariRouter.callModule(
+    moduleType=openai.LLMModule,
+    data=akari.AkariData(),
+    params=openai.LLMModuleParams(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": "Hello, Akari!"},
+            {"role": "system", "content": "You are a helpful assistant."},
+        ],
+        temperature=0.7,
+        max_tokens=150,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0,
+        stream=True,
+    ),
+    streaming=False,
+    callback=modules.PrintModule,
+)
 
 
 data = akariRouter.callModule(

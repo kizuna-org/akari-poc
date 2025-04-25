@@ -1,13 +1,19 @@
+import copy
 import dataclasses
 from typing import Iterable
 
 from openai import AzureOpenAI
-from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
+from openai.types.chat import (
+    ChatCompletion,
+    ChatCompletionChunk,
+    ChatCompletionMessageParam,
+)
 
 from akari import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
+    AkariDataStreamType,
     AkariLogger,
     AkariModule,
     AkariModuleType,
@@ -38,6 +44,9 @@ class LLMModule(AkariModule):
         self._logger.debug("Params: %s", params)
         self._logger.debug("Callback: %s", callback)
 
+        if params.stream and callback is None:
+            raise ValueError("Callback must be provided when streaming is enabled.")
+
         response = self.client.chat.completions.create(
             model=params.model,
             messages=params.messages,
@@ -49,11 +58,34 @@ class LLMModule(AkariModule):
             stream=params.stream,
         )
 
+        dataset = AkariDataSet()
         text_main = ""
         if params.stream:
+            texts: list[str] = []
             for chunk in response:
-                if isinstance(chunk, ChatCompletion) and hasattr(chunk, "choices") and chunk.choices:
-                    pass
+                if isinstance(chunk, ChatCompletionChunk) and hasattr(chunk, "choices"):
+                    for choice in chunk.choices:
+                        if hasattr(choice, "delta") and hasattr(choice.delta, "content"):
+                            text_main += choice.delta.content if choice.delta.content else ""
+                            if choice.delta.content is not None:
+                                texts.append(choice.delta.content)
+                            stream: AkariDataStreamType[str] = AkariDataStreamType(
+                                delta=texts,
+                            )
+                            dataset.text = AkariDataSetType(main=text_main, stream=stream)
+                            if callback is not None:
+                                callData = copy.deepcopy(data)
+                                callData.add(dataset)
+                                self._router.callModule(
+                                    moduleType=callback,
+                                    data=callData,
+                                    params=params,
+                                    streaming=True,
+                                )
+                            else:
+                                raise ValueError("Callback is None, but streaming is enabled.")
+                        else:
+                            raise TypeError("Chunk does not have 'delta' or 'content' attribute.")
                 else:
                     raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
         else:
@@ -64,7 +96,6 @@ class LLMModule(AkariModule):
             else:
                 raise TypeError("Response is not of type ChatCompletion.")
 
-        dataset = AkariDataSet()
         dataset.text = AkariDataSetType(main=text_main)
         dataset.allData = response
         return dataset
