@@ -91,7 +91,7 @@ akariRouter.callModule(
 #         input="あかりだよ、よろしくね！",
 #         voice="alloy",
 #         instructions="日本語で元気溌剌に話してください",
-#         response_format="mp3",
+#         response_format="wav",
 #         speed=1.0,
 #     ),
 #     streaming=False,
@@ -103,14 +103,12 @@ akariRouter.callModule(
 
 data = akari.AkariData()
 dataset = akari.AkariDataSet()
-with open("input.mp3", "rb") as audio_file:
+with open("input.wav", "rb") as audio_file:
     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 data.add(dataset)
 akariRouter.callModule(
     moduleType=audio.SpeakerModule,
     data=data,
-    params=audio.SpeakerModuleParams(
-        format="mp3",
-    ),
+    params=audio.SpeakerModuleParams(),
     streaming=False,
 )
