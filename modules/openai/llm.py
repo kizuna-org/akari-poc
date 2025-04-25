@@ -33,8 +33,8 @@ class LLMModule(AkariModule):
 
     def call(self, data: AkariData, params: LLMModuleParams) -> AkariDataSet:
         self._logger.debug("LLMModule called")
-        self._logger.debug("Data:", data)
-        self._logger.debug("Params:", params)
+        self._logger.debug("Data: %s", data)
+        self._logger.debug("Params: %s", params)
 
         response = self.client.chat.completions.create(
             model=params.model,

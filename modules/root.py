@@ -14,8 +14,8 @@ class RootModule(AkariModule):
 
     def call(self, data: AkariData, params: AkariModuleParams) -> AkariDataSet:
         self._logger.debug("RootModule called")
-        self._logger.debug("Data:", data)
-        self._logger.debug("Params:", params)
+        self._logger.debug("Data: %s", data)
+        self._logger.debug("Params: %s", params)
         self._router.callModule(params, data, None)
 
         return AkariDataSet()

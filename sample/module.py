@@ -14,6 +14,6 @@ class SampleModule(AkariModule):
 
     def call(self, data: AkariData, params: AkariModuleParams) -> AkariDataSet:
         self._logger.debug("SampleModule called")
-        self._logger.debug("Data:", data)
-        self._logger.debug("Params:", params)
+        self._logger.debug("Data: %s", data)
+        self._logger.debug("Params: %s", params)
         return AkariDataSet()
