@@ -46,10 +46,12 @@ class SpeakerModule(AkariModule):
                 output_device_index=params.output_device_index,
             )
 
-            audio_data = buffer.read(params.chunk)
+            sample_width = p.get_sample_size(params.format)
+            bytes_per_buffer = sample_width * params.channels
+            audio_data = buffer.read(params.chunk * bytes_per_buffer)
             while audio_data:
                 stream.write(audio_data)
-                audio_data = buffer.read(params.chunk)
+                audio_data = buffer.read(params.chunk * bytes_per_buffer)
 
             stream.stop_stream()
             stream.close()
