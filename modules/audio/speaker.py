@@ -4,7 +4,6 @@ import wave
 from typing import Any
 
 import pyaudio
-from pydub import AudioSegment
 
 from akari import (
     AkariData,
@@ -19,7 +18,10 @@ from akari import (
 
 @dataclasses.dataclass
 class SpeakerModuleParams:
-    format: str
+    format: int = pyaudio.paInt16
+    rate: int = 24000
+    channels: int = 1
+    chunk: int = 1024
 
 
 class SpeakerModule(AkariModule):
@@ -34,25 +36,21 @@ class SpeakerModule(AkariModule):
             raise ValueError("Audio data is missing or empty.")
 
         buffer = io.BytesIO(audio.main)
-
-        audio_segment = AudioSegment.from_file(buffer, format=params.format)
-        wav_io = io.BytesIO()
-        audio_segment.export(wav_io, format="wav")
-        wav_io.seek(0)
-        with wave.open(wav_io, "rb") as wf:
+        with wave.open(buffer, "rb") as wf:
             p = pyaudio.PyAudio()
             try:
                 stream = p.open(
-                    format=p.get_format_from_width(wf.getsampwidth()),
-                    channels=wf.getnchannels(),
-                    rate=wf.getframerate(),
+                    format=params.format,
+                    channels=params.channels,
+                    rate=params.rate,
                     output=True,
+                    frames_per_buffer=params.chunk,
                 )
 
-                audio_data = wf.readframes(1024)
+                audio_data = wf.readframes(params.chunk)
                 while audio_data:
                     stream.write(audio_data)
-                    audio_data = wf.readframes(1024)
+                    audio_data = wf.readframes(params.chunk)
 
                 stream.stop_stream()
                 stream.close()

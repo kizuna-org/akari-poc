@@ -1058,18 +1058,6 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
-name = "pydub"
-version = "0.25.1"
-description = "Manipulate audio with an simple and easy high level interface"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "pydub-0.25.1-py2.py3-none-any.whl", hash = "sha256:65617e33033874b59d87db603aa1ed450633288aefead953b30bded59cb599a6"},
-    {file = "pydub-0.25.1.tar.gz", hash = "sha256:980a33ce9949cab2a569606b65674d748ecbca4f0796887fd6f46173a7b0d30f"},
-]
-
-[[package]]
 name = "pyflakes"
 version = "3.3.2"
 description = "passive checker of Python programs"
@@ -1254,4 +1242,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13.3"
-content-hash = "a653fe73a5dfd80ae7ff1a28d60f191ae109e46041dac7332f64e8a9f971f3be"
+content-hash = "a230fd220743060e3cfb8850ae5b0bf6ddaa78af2b72df21a534d715be167e14"
