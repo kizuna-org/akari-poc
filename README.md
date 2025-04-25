@@ -10,6 +10,18 @@ Setup the environment:
 poetry install
 ```
 
+If you use Apple Silicon, you may need to install `portaudio` using Homebrew:
+
+```sh
+brew install portaudio
+```
+
+If you use Linux, you may need to install `portaudio` using your package manager. For example, on Ubuntu:
+
+```sh
+sudo apt-get install portaudio19-dev
+```
+
 `.env` file is required for the application to run. You can create it by copying `.env.example`:
 
 ```sh

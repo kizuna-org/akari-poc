@@ -1,13 +1,14 @@
 import os
 
 import dotenv
+import pyaudio
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
 
 import akari
 import modules
 import sample
-from modules import openai
+from modules import audio, openai
 
 dotenv.load_dotenv()
 
@@ -37,6 +38,7 @@ akariRouter.setModules(
         openai.LLMModule: openai.LLMModule(akariRouter, akariLogger, client),
         openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
         openai.TTSModule: openai.TTSModule(akariRouter, akariLogger, client),
+        audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
     }
 )
 
@@ -81,19 +83,34 @@ akariRouter.callModule(
 #     ),
 # )
 
-data = akariRouter.callModule(
-    moduleType=openai.TTSModule,
-    data=akari.AkariData(),
-    params=openai.TTSModuleParams(
-        model="gpt-4o-mini-tts",
-        input="あかりだよ、よろしくね！",
-        voice="alloy",
-        instructions="日本語で元気溌剌に話してください",
-        response_format="mp3",
-        speed=1.0,
+# data = akariRouter.callModule(
+#     moduleType=openai.TTSModule,
+#     data=akari.AkariData(),
+#     params=openai.TTSModuleParams(
+#         model="gpt-4o-mini-tts",
+#         input="あかりだよ、よろしくね！",
+#         voice="alloy",
+#         instructions="日本語で元気溌剌に話してください",
+#         response_format="mp3",
+#         speed=1.0,
+#     ),
+#     streaming=False,
+# )
+
+# with open("output.mp3", "wb") as audio_file:
+#     audio_file.write(data.last().audio.main)  # type: ignore
+
+
+data = akari.AkariData()
+dataset = akari.AkariDataSet()
+with open("input.mp3", "rb") as audio_file:
+    dataset.audio = akari.AkariDataSetType(main=audio_file.read())
+data.add(dataset)
+akariRouter.callModule(
+    moduleType=audio.SpeakerModule,
+    data=data,
+    params=audio.SpeakerModuleParams(
+        format="mp3",
     ),
     streaming=False,
 )
-
-with open("output.mp3", "wb") as audio_file:
-    audio_file.write(data.last().audio.main)  # type: ignore
