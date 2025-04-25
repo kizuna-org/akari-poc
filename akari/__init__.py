@@ -1,5 +1,5 @@
 from .data import AkariData, AkariDataSet, AkariDataSetType
-from .logger import AkariLogger
+from .logger import AkariLogger, getLogger
 from .module import AkariModule, AkariModuleParams, AkariModuleType
 from .router import MainRouter
 
@@ -12,4 +12,5 @@ __all__ = [
     "AkariModuleType",
     "MainRouter",
     "AkariLogger",
+    "getLogger",
 ]

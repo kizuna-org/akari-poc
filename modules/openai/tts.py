@@ -30,8 +30,8 @@ class TTSModule(AkariModule):
 
     def call(self, data: AkariData, params: TTSModuleParams) -> AkariDataSet:
         self._logger.debug("TTSModule called")
-        self._logger.debug("Data:", data)
-        self._logger.debug("Params:", params)
+        self._logger.debug("Data: %s", data)
+        self._logger.debug("Params: %s", params)
 
         response = self.client.audio.speech.create(
             model=params.model,

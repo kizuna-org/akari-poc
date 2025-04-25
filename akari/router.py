@@ -26,7 +26,7 @@ class MainRouter:
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
-        self._logger.debug("Calling module:", selected_module.__class__.__name__)
+        self._logger.debug("Calling module: %s", selected_module.__class__.__name__)
 
         dataset = selected_module.call(inputData, params)
 

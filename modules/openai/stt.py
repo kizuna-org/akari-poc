@@ -28,8 +28,8 @@ class STTModule(AkariModule):
 
     def call(self, data: AkariData, params: STTModuleParams) -> AkariDataSet:
         self._logger.debug("STTModule called")
-        self._logger.debug("Data:", data)
-        self._logger.debug("Params:", params)
+        self._logger.debug("Data: %s", data)
+        self._logger.debug("Params: %s", params)
 
         audio = data.last().audio
         if audio is None:
