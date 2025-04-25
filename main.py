@@ -13,6 +13,20 @@ from modules import audio, openai
 dotenv.load_dotenv()
 
 
+import pyaudio
+
+
+def list_audio_devices() -> None:
+    p = pyaudio.PyAudio()
+    for i in range(p.get_device_count()):
+        info = p.get_device_info_by_index(i)
+        print(f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})")
+    p.terminate()
+
+
+list_audio_devices()
+
+
 akariLogger = akari.getLogger("Akari")
 
 akariLogger.info("Hello, Akari!")
@@ -39,6 +53,7 @@ akariRouter.setModules(
         openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
         openai.TTSModule: openai.TTSModule(akariRouter, akariLogger, client),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
+        audio.MicModule: audio.MicModule(akariRouter, akariLogger),
     }
 )
 
@@ -101,14 +116,27 @@ akariRouter.callModule(
 #     audio_file.write(data.last().audio.main)  # type: ignore
 
 
-data = akari.AkariData()
-dataset = akari.AkariDataSet()
-with open("input.wav", "rb") as audio_file:
-    dataset.audio = akari.AkariDataSetType(main=audio_file.read())
-data.add(dataset)
+# data = akari.AkariData()
+# dataset = akari.AkariDataSet()
+# with open("input.wav", "rb") as audio_file:
+#     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
+# data.add(dataset)
+# akariRouter.callModule(
+#     moduleType=audio.SpeakerModule,
+#     data=data,
+#     params=audio.SpeakerModuleParams(),
+#     streaming=False,
+# )
+
+
 akariRouter.callModule(
-    moduleType=audio.SpeakerModule,
-    data=data,
-    params=audio.SpeakerModuleParams(),
+    moduleType=audio.MicModule,
+    data=akari.AkariData(),
+    params=audio.MicModuleParams(
+        streamDurationMilliseconds=1000,
+        destructionMilliseconds=5000,
+        callbackParams=audio.SpeakerModuleParams(),
+    ),
     streaming=False,
+    callback=audio.SpeakerModule,
 )
