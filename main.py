@@ -18,6 +18,19 @@ akariLogger = akari.getLogger("Akari")
 akariLogger.info("Hello, Akari!")
 
 
+def list_audio_devices() -> None:
+    p = pyaudio.PyAudio()
+    for i in range(p.get_device_count()):
+        info = p.get_device_info_by_index(i)
+        akariLogger.debug(
+            f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})"
+        )
+    p.terminate()
+
+
+list_audio_devices()
+
+
 token_provider = get_bearer_token_provider(
     DefaultAzureCredential(exclude_managed_identity_credential=True), "https://cognitiveservices.azure.com/.default"
 )
@@ -39,6 +52,7 @@ akariRouter.setModules(
         openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
         openai.TTSModule: openai.TTSModule(akariRouter, akariLogger, client),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
+        audio.MicModule: audio.MicModule(akariRouter, akariLogger),
     }
 )
 
@@ -101,14 +115,27 @@ akariRouter.callModule(
 #     audio_file.write(data.last().audio.main)  # type: ignore
 
 
-data = akari.AkariData()
-dataset = akari.AkariDataSet()
-with open("input.wav", "rb") as audio_file:
-    dataset.audio = akari.AkariDataSetType(main=audio_file.read())
-data.add(dataset)
+# data = akari.AkariData()
+# dataset = akari.AkariDataSet()
+# with open("input.wav", "rb") as audio_file:
+#     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
+# data.add(dataset)
+# akariRouter.callModule(
+#     moduleType=audio.SpeakerModule,
+#     data=data,
+#     params=audio.SpeakerModuleParams(),
+#     streaming=False,
+# )
+
+
 akariRouter.callModule(
-    moduleType=audio.SpeakerModule,
-    data=data,
-    params=audio.SpeakerModuleParams(),
+    moduleType=audio.MicModule,
+    data=akari.AkariData(),
+    params=audio.MicModuleParams(
+        streamDurationMilliseconds=1000,
+        destructionMilliseconds=5000,
+        callbackParams=audio.SpeakerModuleParams(),
+    ),
     streaming=False,
+    callback=audio.SpeakerModule,
 )
