@@ -21,7 +21,10 @@ class PrintModule(AkariModule):
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
 
-        self._logger.debug("Last Data: %s", json.dumps(data.last(), indent=4))
+        try:
+            self._logger.debug("Last Data: %s", json.dumps(data.last(), indent=4))
+        except:
+            self._logger.debug("Last Data: %s", repr(data.last()))
 
         return AkariDataSet()
 
