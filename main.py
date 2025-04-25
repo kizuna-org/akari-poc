@@ -2,13 +2,16 @@ import os
 
 import dotenv
 import pyaudio
+import vertexai
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from google.oauth2 import service_account
 from openai import AzureOpenAI
+from vertexai.generative_models import Content, Part
 
 import akari
 import modules
 import sample
-from modules import audio, openai
+from modules import audio, gemini, openai
 
 dotenv.load_dotenv()
 
@@ -41,6 +44,14 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider,
 )
 
+credentials = service_account.Credentials.from_service_account_file(
+    os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "",
+)  # type: ignore
+vertexai.init(
+    location=os.getenv("GOOGLE_LOCATION") or "us-central1",
+    credentials=credentials,
+)
+
 
 akariRouter = akari.MainRouter(logger=akariLogger)
 akariRouter.setModules(
@@ -51,6 +62,7 @@ akariRouter.setModules(
         openai.LLMModule: openai.LLMModule(akariRouter, akariLogger, client),
         openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
         openai.TTSModule: openai.TTSModule(akariRouter, akariLogger, client),
+        gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
     }
@@ -80,6 +92,20 @@ akariRouter.callModule(
 #         stream=False,
 #     ),
 # )
+
+
+data = akariRouter.callModule(
+    moduleType=gemini.LLMModule,
+    data=akari.AkariData(),
+    params=gemini.LLMModuleParams(
+        model="gemini-2.0-flash",
+        messages=[
+            Content(role="user", parts=[Part.from_text("Hello, Akari!")]),
+        ],
+    ),
+    streaming=False,
+)
+
 
 # data = akari.AkariData()
 # dataset = akari.AkariDataSet()
@@ -128,14 +154,14 @@ akariRouter.callModule(
 # )
 
 
-akariRouter.callModule(
-    moduleType=audio.MicModule,
-    data=akari.AkariData(),
-    params=audio.MicModuleParams(
-        streamDurationMilliseconds=1000,
-        destructionMilliseconds=5000,
-        callbackParams=audio.SpeakerModuleParams(),
-    ),
-    streaming=False,
-    callback=audio.SpeakerModule,
-)
+# akariRouter.callModule(
+#     moduleType=audio.MicModule,
+#     data=akari.AkariData(),
+#     params=audio.MicModuleParams(
+#         streamDurationMilliseconds=1000,
+#         destructionMilliseconds=5000,
+#         callbackParams=audio.SpeakerModuleParams(),
+#     ),
+#     streaming=False,
+#     callback=audio.SpeakerModule,
+# )
