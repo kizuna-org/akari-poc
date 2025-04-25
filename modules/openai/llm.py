@@ -10,6 +10,7 @@ from akari import (
     AkariDataSetType,
     AkariLogger,
     AkariModule,
+    AkariModuleType,
     MainRouter,
 )
 
@@ -31,10 +32,11 @@ class LLMModule(AkariModule):
         super().__init__(router, logger)
         self.client = client
 
-    def call(self, data: AkariData, params: LLMModuleParams) -> AkariDataSet:
+    def call(self, data: AkariData, params: LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         self._logger.debug("LLMModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
+        self._logger.debug("Callback: %s", callback)
 
         response = self.client.chat.completions.create(
             model=params.model,

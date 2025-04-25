@@ -9,6 +9,7 @@ from akari import (
     AkariDataSetType,
     AkariLogger,
     AkariModule,
+    AkariModuleType,
     MainRouter,
 )
 
@@ -28,7 +29,7 @@ class TTSModule(AkariModule):
         super().__init__(router, logger)
         self.client = client
 
-    def call(self, data: AkariData, params: TTSModuleParams) -> AkariDataSet:
+    def call(self, data: AkariData, params: TTSModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         self._logger.debug("TTSModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
