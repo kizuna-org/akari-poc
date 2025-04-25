@@ -32,6 +32,7 @@ akariRouter = akari.MainRouter(logger=akariLogger)
 akariRouter.setModules(
     {
         modules.RootModule: modules.RootModule(akariRouter, akariLogger),
+        modules.PrintModule: modules.PrintModule(akariRouter, akariLogger),
         sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
         openai.LLMModule: openai.LLMModule(akariRouter, akariLogger, client),
         openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
