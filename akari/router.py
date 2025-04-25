@@ -19,9 +19,13 @@ class MainRouter:
         moduleType: module.AkariModuleType,
         data: data.AkariData,
         params: module.AkariModuleParams,
-        with_stream: bool,
+        streaming: bool,
         callback: module.AkariModuleType | None = None,
     ) -> data.AkariData:
+        """
+        Args:
+            streaming (bool): 呼び出し元がストリームしているかどうかのフラグ(=呼び出し先がストリームするかどうかの制御)
+        """
         if self._modules is None:
             raise ValueError("Modules not set in router.")
 
@@ -32,10 +36,12 @@ class MainRouter:
             raise ValueError(f"Module {moduleType} not found in router.")
 
         self._logger.debug(
-            "\n\n[Router] Module %s: %s", "streaming" if with_stream else "calling", selected_module.__class__.__name__
+            "\n\n[Router] Module %s: %s",
+            "streaming" if streaming else "calling",
+            selected_module.__class__.__name__,
         )
 
-        if with_stream:
+        if streaming:
             dataset = selected_module.stream_call(inputData, params, callback)
         else:
             dataset = selected_module.call(inputData, params, callback)
