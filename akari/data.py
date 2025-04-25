@@ -20,6 +20,9 @@ class AkariDataStreamType(Generic[T]):
             raise IndexError("Index out of range")
         return self._delta[index]
 
+    def __repr__(self) -> str:
+        return f"AkariDataStreamType(delta={self._delta})"
+
 
 class AkariDataSetType(Generic[T]):
     def __init__(
@@ -28,6 +31,9 @@ class AkariDataSetType(Generic[T]):
         self.main = main
         self.stream = stream
         self.others = others if others is not None else {}
+
+    def __repr__(self) -> str:
+        return f"AkariDataSetType(main={self.main}, stream={self.stream}, others={self.others})"
 
 
 class AkariDataSet:
