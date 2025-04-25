@@ -1,6 +1,5 @@
 import dataclasses
 import io
-import wave
 from typing import Any
 
 import pyaudio
@@ -8,7 +7,6 @@ import pyaudio
 from akari import (
     AkariData,
     AkariDataSet,
-    AkariDataSetType,
     AkariLogger,
     AkariModule,
     AkariModuleType,
@@ -22,6 +20,7 @@ class SpeakerModuleParams:
     rate: int = 24000
     channels: int = 1
     chunk: int = 1024
+    output_device_index: int | None = None
 
 
 class SpeakerModule(AkariModule):
@@ -36,26 +35,59 @@ class SpeakerModule(AkariModule):
             raise ValueError("Audio data is missing or empty.")
 
         buffer = io.BytesIO(audio.main)
-        with wave.open(buffer, "rb") as wf:
-            p = pyaudio.PyAudio()
-            try:
-                stream = p.open(
-                    format=params.format,
-                    channels=params.channels,
-                    rate=params.rate,
-                    output=True,
-                    frames_per_buffer=params.chunk,
-                )
+        p = pyaudio.PyAudio()
+        try:
+            stream = p.open(
+                format=params.format,
+                channels=params.channels,
+                rate=params.rate,
+                output=True,
+                frames_per_buffer=params.chunk,
+                output_device_index=params.output_device_index,
+            )
 
-                audio_data = wf.readframes(params.chunk)
-                while audio_data:
-                    stream.write(audio_data)
-                    audio_data = wf.readframes(params.chunk)
+            audio_data = buffer.read(params.chunk)
+            while audio_data:
+                stream.write(audio_data)
+                audio_data = buffer.read(params.chunk)
 
-                stream.stop_stream()
-                stream.close()
-            finally:
-                p.terminate()
+            stream.stop_stream()
+            stream.close()
+        finally:
+            p.terminate()
+
+        dataset = AkariDataSet()
+        return dataset
+
+    def stream_call(
+        self, data: AkariData, params: SpeakerModuleParams, callback: AkariModuleType | None = None
+    ) -> AkariDataSet:
+        audio = data.last().audio
+        if audio is None:
+            raise ValueError("Audio data is missing or empty.")
+
+        if audio.stream is None:
+            raise ValueError("Audio stream data is missing or empty.")
+        buffer = io.BytesIO(audio.stream.last())
+        p = pyaudio.PyAudio()
+        try:
+            stream = p.open(
+                format=params.format,
+                channels=params.channels,
+                rate=params.rate,
+                output=True,
+                frames_per_buffer=params.chunk,
+            )
+
+            audio_data = buffer.read(params.chunk)
+            while audio_data:
+                stream.write(audio_data)
+                audio_data = buffer.read(params.chunk)
+
+            stream.stop_stream()
+            stream.close()
+        finally:
+            p.terminate()
 
         dataset = AkariDataSet()
         return dataset
