@@ -13,23 +13,22 @@ from modules import audio, openai
 dotenv.load_dotenv()
 
 
-import pyaudio
+akariLogger = akari.getLogger("Akari")
+
+akariLogger.info("Hello, Akari!")
 
 
 def list_audio_devices() -> None:
     p = pyaudio.PyAudio()
     for i in range(p.get_device_count()):
         info = p.get_device_info_by_index(i)
-        print(f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})")
+        akariLogger.debug(
+            f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})"
+        )
     p.terminate()
 
 
 list_audio_devices()
-
-
-akariLogger = akari.getLogger("Akari")
-
-akariLogger.info("Hello, Akari!")
 
 
 token_provider = get_bearer_token_provider(

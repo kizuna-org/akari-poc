@@ -1,9 +1,9 @@
 import dataclasses
-from typing import Any
+import threading
 import time
+from typing import Any
 
 import pyaudio
-import threading
 
 from akari import (
     AkariData,
@@ -54,7 +54,6 @@ class MicModule(AkariModule):
             frame_time = time.time()
             streamer.start_stream()
 
-            abc = 0
             while True:
                 data_chunk = streamer.read(params.frames_per_buffer, exception_on_overflow=False)
                 frame += data_chunk
@@ -71,9 +70,6 @@ class MicModule(AkariModule):
                     if callback is not None:
 
                         def call_module_in_thread() -> None:
-                            nonlocal abc
-                            print(abc)
-                            abc += 1
                             self._router.callModule(
                                 moduleType=callback,
                                 data=data,
