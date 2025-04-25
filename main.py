@@ -12,7 +12,7 @@ from modules import openai
 dotenv.load_dotenv()
 
 
-akariLogger = akari.AkariLogger("Akari")
+akariLogger = akari.getLogger("Akari")
 
 akariLogger.info("Hello, Akari!")
 
