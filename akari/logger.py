@@ -10,6 +10,6 @@ def getLogger(name: str, level: int = logging.DEBUG) -> AkariLogger:
     logger.addHandler(logging.NullHandler())
 
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(level)
     logger.addHandler(handler)
     return logger
