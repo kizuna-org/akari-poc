@@ -111,7 +111,7 @@ data = akariRouter.callModule(
 
 # data = akari.AkariData()
 # dataset = akari.AkariDataSet()
-# with open("input.mp3", "rb") as audio_file:
+# with open("input.wav", "rb") as audio_file:
 #     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 # data.add(dataset)
 # akariRouter.callModule(
@@ -139,7 +139,7 @@ data = akariRouter.callModule(
 #     streaming=False,
 # )
 
-# with open("output.mp3", "wb") as audio_file:
+# with open("output.wav", "wb") as audio_file:
 #     audio_file.write(data.last().audio.main)  # type: ignore
 
 
