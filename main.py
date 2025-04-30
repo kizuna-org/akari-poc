@@ -11,7 +11,7 @@ from vertexai.generative_models import Content, Part
 import akari
 import modules
 import sample
-from modules import audio, gemini, openai
+from modules import audio, azure_openai, gemini
 
 dotenv.load_dotenv()
 
@@ -59,9 +59,9 @@ akariRouter.setModules(
         modules.RootModule: modules.RootModule(akariRouter, akariLogger),
         modules.PrintModule: modules.PrintModule(akariRouter, akariLogger),
         sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
-        openai.LLMModule: openai.LLMModule(akariRouter, akariLogger, client),
-        openai.STTModule: openai.STTModule(akariRouter, akariLogger, client),
-        openai.TTSModule: openai.TTSModule(akariRouter, akariLogger, client),
+        azure_openai.LLMModule: azure_openai.LLMModule(akariRouter, akariLogger, client),
+        azure_openai.STTModule: azure_openai.STTModule(akariRouter, akariLogger, client),
+        azure_openai.TTSModule: azure_openai.TTSModule(akariRouter, akariLogger, client),
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
@@ -76,9 +76,9 @@ akariRouter.callModule(
 )
 
 akariRouter.callModule(
-    moduleType=openai.LLMModule,
+    moduleType=azure_openai.LLMModule,
     data=akari.AkariData(),
-    params=openai.LLMModuleParams(
+    params=azure_openai.LLMModuleParams(
         model="gpt-4o-mini",
         messages=[
             {"role": "user", "content": "Hello, Akari!"},
@@ -115,9 +115,9 @@ data = akariRouter.callModule(
 #     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 # data.add(dataset)
 # akariRouter.callModule(
-#     moduleType=openai.STTModule,
+#     moduleType=azure_openai.STTModule,
 #     data=data,
-#     params=openai.STTModuleParams(
+#     params=azure_openai.STTModuleParams(
 #         model="whisper",
 #         language="ja",
 #         prompt="",
@@ -126,9 +126,9 @@ data = akariRouter.callModule(
 # )
 
 # data = akariRouter.callModule(
-#     moduleType=openai.TTSModule,
+#     moduleType=azure_openai.TTSModule,
 #     data=akari.AkariData(),
-#     params=openai.TTSModuleParams(
+#     params=azure_openai.TTSModuleParams(
 #         model="gpt-4o-mini-tts",
 #         input="あかりだよ、よろしくね！",
 #         voice="alloy",
