@@ -12,7 +12,7 @@ from akari import (
 )
 
 
-class PrintModule(AkariModule):
+class _PrintModule(AkariModule):
     def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
