@@ -10,24 +10,24 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
 @dataclasses.dataclass
-class STTModuleParams:
+class _STTModuleParams:
     model: str
     language: str | None
     prompt: str | None
     temperature: float
 
 
-class STTModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+class _STTModule(AkariModule):
+    def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
         super().__init__(router, logger)
         self.client = client
 
-    def call(self, data: AkariData, params: STTModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
+    def call(self, data: AkariData, params: _STTModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         self._logger.debug("STTModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)

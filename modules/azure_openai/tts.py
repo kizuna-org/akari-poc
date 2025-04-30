@@ -10,12 +10,12 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
 @dataclasses.dataclass
-class TTSModuleParams:
+class _TTSModuleParams:
     model: str
     input: str
     voice: str
@@ -24,12 +24,12 @@ class TTSModuleParams:
     speed: float = 1.0
 
 
-class TTSModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+class _TTSModule(AkariModule):
+    def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
         super().__init__(router, logger)
         self.client = client
 
-    def call(self, data: AkariData, params: TTSModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
+    def call(self, data: AkariData, params: _TTSModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         self._logger.debug("TTSModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)

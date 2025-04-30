@@ -8,12 +8,12 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
-class PrintModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+class _PrintModule(AkariModule):
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: Any, callback: AkariModuleType | None = None) -> AkariDataSet:

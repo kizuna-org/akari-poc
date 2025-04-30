@@ -10,12 +10,12 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
 @dataclasses.dataclass
-class SpeakerModuleParams:
+class _SpeakerModuleParams:
     format: int = pyaudio.paInt16
     rate: int = 24000
     channels: int = 1
@@ -23,12 +23,12 @@ class SpeakerModuleParams:
     output_device_index: int | None = None
 
 
-class SpeakerModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+class _SpeakerModule(AkariModule):
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
     def call(
-        self, data: AkariData, params: SpeakerModuleParams, callback: AkariModuleType | None = None
+        self, data: AkariData, params: _SpeakerModuleParams, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
         audio = data.last().audio
         if audio is None:
@@ -62,7 +62,7 @@ class SpeakerModule(AkariModule):
         return dataset
 
     def stream_call(
-        self, data: AkariData, params: SpeakerModuleParams, callback: AkariModuleType | None = None
+        self, data: AkariData, params: _SpeakerModuleParams, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
         audio = data.last().audio
         if audio is None:

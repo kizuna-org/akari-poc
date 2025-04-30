@@ -3,7 +3,7 @@ from typing import Any, Dict, Generic, TypeVar
 T = TypeVar("T")
 
 
-class AkariDataStreamType(Generic[T]):
+class _AkariDataStreamType(Generic[T]):
     def __init__(self, delta: list[T]) -> None:
         self._delta = delta
 
@@ -24,9 +24,9 @@ class AkariDataStreamType(Generic[T]):
         return f"AkariDataStreamType(delta={self._delta})"
 
 
-class AkariDataSetType(Generic[T]):
+class _AkariDataSetType(Generic[T]):
     def __init__(
-        self, main: T, stream: AkariDataStreamType[T] | None = None, others: Dict[str, T] | None = None
+        self, main: T, stream: _AkariDataStreamType[T] | None = None, others: Dict[str, T] | None = None
     ) -> None:
         self.main = main
         self.stream = stream
@@ -36,31 +36,31 @@ class AkariDataSetType(Generic[T]):
         return f"AkariDataSetType(main={self.main}, stream={self.stream}, others={self.others})"
 
 
-class AkariDataSet:
+class _AkariDataSet:
     def __init__(self) -> None:
-        self.text: AkariDataSetType[str] | None = None
-        self.audio: AkariDataSetType[bytes] | None = None
+        self.text: _AkariDataSetType[str] | None = None
+        self.audio: _AkariDataSetType[bytes] | None = None
         self.allData: Any | None = None
 
 
-class AkariData:
+class _AkariData:
     def __init__(self) -> None:
-        self.datasets: list[AkariDataSet] = []
+        self.datasets: list[_AkariDataSet] = []
 
-    def add(self, dataset: AkariDataSet) -> None:
+    def add(self, dataset: _AkariDataSet) -> None:
         self.datasets.append(dataset)
 
-    def get(self, index: int) -> AkariDataSet:
+    def get(self, index: int) -> _AkariDataSet:
         if index < 0 or index >= len(self.datasets):
             raise IndexError("Index out of range")
         return self.datasets[index]
 
-    def last(self) -> AkariDataSet:
+    def last(self) -> _AkariDataSet:
         if not self.datasets:
             raise IndexError("No datasets available")
         return self.datasets[-1]
 
-    def __getitem__(self, index: int) -> AkariDataSet:
+    def __getitem__(self, index: int) -> _AkariDataSet:
         return self.get(index)
 
     def __len__(self) -> int:

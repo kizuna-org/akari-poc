@@ -13,12 +13,12 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
 @dataclasses.dataclass
-class MicModuleParams:
+class _MicModuleParams:
     format: int = pyaudio.paInt16
     rate: int = 24000
     channels: int = 1
@@ -29,11 +29,11 @@ class MicModuleParams:
     callbackParams: Any | None = None
 
 
-class MicModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+class _MicModule(AkariModule):
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
-    def call(self, data: AkariData, params: MicModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
+    def call(self, data: AkariData, params: _MicModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         dataset = AkariDataSet()
 
         audio = pyaudio.PyAudio()

@@ -6,22 +6,22 @@ import akari.logger as logger
 import akari.module as module
 
 
-class MainRouter:
-    def __init__(self, logger: logger.AkariLogger) -> None:
-        self._modules: Dict[module.AkariModuleType, module.AkariModule] | None = None
+class _MainRouter:
+    def __init__(self, logger: logger._AkariLogger) -> None:
+        self._modules: Dict[module._AkariModuleType, module._AkariModule] | None = None
         self._logger = logger
 
-    def setModules(self, modules: Dict[module.AkariModuleType, module.AkariModule]) -> None:
+    def setModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
         self._modules = modules
 
     def callModule(
         self,
-        moduleType: module.AkariModuleType,
-        data: data.AkariData,
-        params: module.AkariModuleParams,
+        moduleType: module._AkariModuleType,
+        data: data._AkariData,
+        params: module._AkariModuleParams,
         streaming: bool,
-        callback: module.AkariModuleType | None = None,
-    ) -> data.AkariData:
+        callback: module._AkariModuleType | None = None,
+    ) -> data._AkariData:
         """
         Args:
             streaming (bool): 呼び出し元がストリームしているかどうかのフラグ(=呼び出し先がストリームするかどうかの制御)
