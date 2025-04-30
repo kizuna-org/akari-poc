@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     import akari.router as router
 
 _AkariModuleParams = Any
-_AkariModuleType = type["AkariModule"]
+_AkariModuleType = type["_AkariModule"]
 
 
 class _AkariModule(ABC):
