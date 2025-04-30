@@ -9,22 +9,22 @@ import akari.logger as logger
 if TYPE_CHECKING:
     import akari.router as router
 
-AkariModuleParams = Any
-AkariModuleType = type["AkariModule"]
+_AkariModuleParams = Any
+_AkariModuleType = type["AkariModule"]
 
 
-class AkariModule(ABC):
-    def __init__(self, router: router.MainRouter, logger: logger.AkariLogger) -> None:
+class _AkariModule(ABC):
+    def __init__(self, router: router._MainRouter, logger: logger._AkariLogger) -> None:
         self._router = router
         self._logger = logger
 
     @abstractmethod
     def call(
-        self, data: data.AkariData, params: AkariModuleParams, callback: AkariModuleType | None = None
-    ) -> data.AkariDataSet:
+        self, data: data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
+    ) -> data._AkariDataSet:
         pass
 
     def stream_call(
-        self, data: data.AkariData, params: AkariModuleParams, callback: AkariModuleType | None = None
-    ) -> data.AkariDataSet:
+        self, data: data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
+    ) -> data._AkariDataSet:
         raise NotImplementedError("stream_call is not implemented in this module.")

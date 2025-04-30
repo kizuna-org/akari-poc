@@ -13,7 +13,7 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
@@ -30,7 +30,7 @@ class _MicModuleParams:
 
 
 class _MicModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: _MicModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:

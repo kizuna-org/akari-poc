@@ -10,7 +10,7 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
@@ -23,7 +23,7 @@ class _STTModuleParams:
 
 
 class _STTModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+    def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
         super().__init__(router, logger)
         self.client = client
 

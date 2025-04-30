@@ -1,12 +1,12 @@
 import pytest
 
-from akari import AkariData, AkariDataSet, AkariLogger, MainRouter
+from akari import AkariData, AkariDataSet, AkariLogger, AkariRouter
 from sample.module import _SampleModule
 
 
 @pytest.fixture
-def main_router(logger: AkariLogger) -> MainRouter:
-    return MainRouter(logger=logger)
+def main_router(logger: AkariLogger) -> AkariRouter:
+    return AkariRouter(logger=logger)
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def logger() -> AkariLogger:
 
 
 @pytest.fixture
-def sample_module(main_router: MainRouter, logger: AkariLogger) -> _SampleModule:
+def sample_module(main_router: AkariRouter, logger: AkariLogger) -> _SampleModule:
     return _SampleModule(main_router, logger)
 
 

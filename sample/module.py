@@ -5,12 +5,12 @@ from akari import (
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 
 class _SampleModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: AkariModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:

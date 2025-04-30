@@ -1,10 +1,10 @@
 import logging
 import sys
 
-AkariLogger = logging.Logger
+_AkariLogger = logging.Logger
 
 
-def getLogger(name: str, level: int = logging.DEBUG) -> AkariLogger:
+def _getLogger(name: str, level: int = logging.DEBUG) -> _AkariLogger:
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(logging.NullHandler())

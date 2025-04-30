@@ -10,7 +10,7 @@ from akari import (
     AkariLogger,
     AkariModule,
     AkariModuleType,
-    MainRouter,
+    AkariRouter,
 )
 
 _models: dict[str, GenerativeModel] = {}
@@ -23,7 +23,7 @@ class _LLMModuleParams:
 
 
 class _LLMModule(AkariModule):
-    def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: _LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:

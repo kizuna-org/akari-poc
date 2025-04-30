@@ -53,7 +53,7 @@ vertexai.init(
 )
 
 
-akariRouter = akari.MainRouter(logger=akariLogger)
+akariRouter = akari.AkariRouter(logger=akariLogger)
 akariRouter.setModules(
     {
         modules.RootModule: modules.RootModule(akariRouter, akariLogger),
