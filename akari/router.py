@@ -12,8 +12,6 @@ class _AkariRouter:
         self._logger = logger
 
     def addModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
-        if self._modules is None:
-            self._modules = {}
         for moduleType, moduleInstance in modules.items():
             if moduleType not in self._modules:
                 self._modules[moduleType] = moduleInstance
