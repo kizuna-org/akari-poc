@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-import akari.data as data
+import akari.data as akari_data
 import akari.logger as logger
 
 if TYPE_CHECKING:
@@ -20,11 +20,11 @@ class _AkariModule(ABC):
 
     @abstractmethod
     def call(
-        self, data: data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
-    ) -> data._AkariDataSet:
+        self, data: akari_data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
+    ) -> akari_data._AkariDataSet | akari_data._AkariData:
         pass
 
     def stream_call(
-        self, data: data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
-    ) -> data._AkariDataSet:
+        self, data: akari_data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
+    ) -> akari_data._AkariDataSet | akari_data._AkariData:
         raise NotImplementedError("stream_call is not implemented in this module.")

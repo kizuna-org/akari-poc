@@ -1,7 +1,7 @@
 import copy
 from typing import Dict
 
-import akari.data as data
+import akari.data as akari_data
 import akari.logger as logger
 import akari.module as module
 
@@ -21,11 +21,11 @@ class _AkariRouter:
     def callModule(
         self,
         moduleType: module._AkariModuleType,
-        data: data._AkariData,
+        data: akari_data._AkariData,
         params: module._AkariModuleParams,
         streaming: bool,
         callback: module._AkariModuleType | None = None,
-    ) -> data._AkariData:
+    ) -> akari_data._AkariData:
         """
         Args:
             streaming (bool): 呼び出し元がストリームしているかどうかのフラグ(=呼び出し先がストリームするかどうかの制御)
@@ -46,10 +46,15 @@ class _AkariRouter:
         )
 
         if streaming:
-            dataset = selected_module.stream_call(inputData, params, callback)
+            result = selected_module.stream_call(inputData, params, callback)
         else:
-            dataset = selected_module.call(inputData, params, callback)
+            result = selected_module.call(inputData, params, callback)
 
-        data.add(dataset)
+        if isinstance(result, akari_data._AkariDataSet):
+            data.add(result)
+        elif isinstance(result, akari_data._AkariData):
+            data = result
+        else:
+            raise ValueError(f"Invalid result type: {type(result)}")
 
         return data
