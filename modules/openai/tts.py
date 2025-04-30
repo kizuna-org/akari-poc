@@ -20,7 +20,7 @@ class TTSModuleParams:
     input: str
     voice: str
     instructions: str | None
-    response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "wav"
+    response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "pcm"
     speed: float = 1.0
 
 
