@@ -7,7 +7,7 @@ from .logger import _getLogger as getLogger
 from .module import _AkariModule as AkariModule
 from .module import _AkariModuleParams as AkariModuleParams
 from .module import _AkariModuleType as AkariModuleType
-from .router import _MainRouter as AkariRouter
+from .router import _AkariRouter as AkariRouter
 
 __all__ = [
     "AkariData",
