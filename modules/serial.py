@@ -2,7 +2,6 @@ import dataclasses
 
 from akari import (
     AkariData,
-    AkariDataSet,
     AkariLogger,
     AkariModule,
     AkariModuleParams,
