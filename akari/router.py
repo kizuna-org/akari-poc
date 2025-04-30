@@ -6,13 +6,19 @@ import akari.logger as logger
 import akari.module as module
 
 
-class _MainRouter:
+class _AkariRouter:
     def __init__(self, logger: logger._AkariLogger) -> None:
-        self._modules: Dict[module._AkariModuleType, module._AkariModule] | None = None
+        self._modules: Dict[module._AkariModuleType, module._AkariModule] = {}
         self._logger = logger
 
-    def setModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
-        self._modules = modules
+    def addModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
+        if self._modules is None:
+            self._modules = {}
+        for moduleType, moduleInstance in modules.items():
+            if moduleType not in self._modules:
+                self._modules[moduleType] = moduleInstance
+            else:
+                raise ValueError(f"Module {moduleType} already exists in router.")
 
     def callModule(
         self,

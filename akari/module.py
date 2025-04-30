@@ -14,7 +14,7 @@ _AkariModuleType = type["_AkariModule"]
 
 
 class _AkariModule(ABC):
-    def __init__(self, router: router._MainRouter, logger: logger._AkariLogger) -> None:
+    def __init__(self, router: router._AkariRouter, logger: logger._AkariLogger) -> None:
         self._router = router
         self._logger = logger
 
