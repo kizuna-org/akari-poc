@@ -75,23 +75,25 @@ akariRouter.callModule(
     streaming=False,
 )
 
-# akariRouter.callModule(
-#     moduleType=openai.LLMModule,
-#     data=akari.AkariData(),
-#     params=openai.LLMModuleParams(
-#         model = "gpt-4o-mini",
-#         messages=[
-#             {"role": "user", "content": "Hello, Akari!"},
-#             {"role": "system", "content": "You are a helpful assistant."},
-#         ],
-#         temperature=0.7,
-#         max_tokens=150,
-#         top_p=1.0,
-#         frequency_penalty=0.0,
-#         presence_penalty=0.0,
-#         stream=False,
-#     ),
-# )
+akariRouter.callModule(
+    moduleType=openai.LLMModule,
+    data=akari.AkariData(),
+    params=openai.LLMModuleParams(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": "Hello, Akari!"},
+            {"role": "system", "content": "You are a helpful assistant."},
+        ],
+        temperature=0.7,
+        max_tokens=150,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0,
+        stream=True,
+    ),
+    streaming=False,
+    callback=modules.PrintModule,
+)
 
 
 data = akariRouter.callModule(
@@ -109,7 +111,7 @@ data = akariRouter.callModule(
 
 # data = akari.AkariData()
 # dataset = akari.AkariDataSet()
-# with open("input.mp3", "rb") as audio_file:
+# with open("input.wav", "rb") as audio_file:
 #     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 # data.add(dataset)
 # akariRouter.callModule(
@@ -137,7 +139,7 @@ data = akariRouter.callModule(
 #     streaming=False,
 # )
 
-# with open("output.mp3", "wb") as audio_file:
+# with open("output.wav", "wb") as audio_file:
 #     audio_file.write(data.last().audio.main)  # type: ignore
 
 

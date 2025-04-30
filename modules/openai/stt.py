@@ -36,7 +36,7 @@ class STTModule(AkariModule):
         if audio is None:
             raise ValueError("Audio data is missing or empty.")
         buffer = io.BytesIO(audio.main)
-        buffer.name = "input.mp3"
+        buffer.name = "input.pcm"
 
         response = self.client.audio.transcriptions.create(
             model=params.model,
