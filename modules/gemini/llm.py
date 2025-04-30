@@ -17,16 +17,16 @@ _models: dict[str, GenerativeModel] = {}
 
 
 @dataclasses.dataclass
-class LLMModuleParams:
+class _LLMModuleParams:
     model: str
     messages: Iterable[Content]
 
 
-class LLMModule(AkariModule):
+class _LLMModule(AkariModule):
     def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
-    def call(self, data: AkariData, params: LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
+    def call(self, data: AkariData, params: _LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         self._logger.debug("LLMModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
