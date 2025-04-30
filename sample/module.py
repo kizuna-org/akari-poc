@@ -9,7 +9,7 @@ from akari import (
 )
 
 
-class SampleModule(AkariModule):
+class _SampleModule(AkariModule):
     def __init__(self, router: MainRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
 
