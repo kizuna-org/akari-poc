@@ -1,4 +1,6 @@
-from .mic import _MicModule as MicModule, _MicModuleParams as MicModuleParams
-from .speaker import _SpeakerModule as SpeakerModule, _SpeakerModuleParams as SpeakerModuleParams
+from .mic import _MicModule as MicModule
+from .mic import _MicModuleParams as MicModuleParams
+from .speaker import _SpeakerModule as SpeakerModule
+from .speaker import _SpeakerModuleParams as SpeakerModuleParams
 
 __all__ = ["SpeakerModule", "SpeakerModuleParams", "MicModule", "MicModuleParams"]
