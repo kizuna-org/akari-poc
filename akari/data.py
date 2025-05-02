@@ -43,9 +43,7 @@ class _AkariDataSetType(Generic[T]):
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, _AkariDataSetType):
             return NotImplemented
-        return (self.main == value.main and
-                self.stream == value.stream and
-                self.others == value.others)
+        return self.main == value.main and self.stream == value.stream and self.others == value.others
 
 
 class _AkariDataSet:

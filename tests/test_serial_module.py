@@ -1,15 +1,15 @@
 from typing import List
 
 import pytest
+from faker import Faker
 
-from akari import AkariData, AkariDataSet, AkariLogger, AkariRouter, AkariDataSetType
+from akari import AkariData, AkariDataSet, AkariDataSetType, AkariLogger, AkariRouter
 from modules import (
     PrintModule,
     SerialModule,
     SerialModuleParamModule,
     SerialModuleParams,
 )
-from faker import Faker
 
 
 @pytest.fixture(scope="session")
