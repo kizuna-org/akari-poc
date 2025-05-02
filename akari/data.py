@@ -24,7 +24,9 @@ class _AkariDataStreamType(Generic[T]):
         return f"AkariDataStreamType(delta={self._delta})"
 
     def __eq__(self, value: object) -> bool:
-        return self.__repr__() == value.__repr__()
+        if not isinstance(value, _AkariDataStreamType):
+            return NotImplemented
+        return self._delta == value._delta
 
 
 class _AkariDataSetType(Generic[T]):
