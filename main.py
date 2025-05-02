@@ -164,6 +164,7 @@ akariRouter.callModule(
         streamDurationMilliseconds=1000,
         destructionMilliseconds=5000,
         callbackParams=webrtcvad.WebRTCVadParams(),
+        callback_callback=modules.PrintModule,
     ),
     streaming=False,
     callback=webrtcvad.WebRTCVadModule,

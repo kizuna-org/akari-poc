@@ -27,6 +27,7 @@ class _MicModuleParams:
     streamDurationMilliseconds: int = 5 * 100
     destructionMilliseconds: int = 5 * 100
     callbackParams: Any | None = None
+    callback_callback: AkariModuleType | None = None
 
 
 class _MicModule(AkariModule):
@@ -75,6 +76,7 @@ class _MicModule(AkariModule):
                                 data=data,
                                 params=params.callbackParams,
                                 streaming=True,
+                                callback=params.callback_callback,
                             )
 
                         thread = threading.Thread(target=call_module_in_thread)

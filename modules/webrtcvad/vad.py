@@ -55,19 +55,20 @@ class _WebRTCVadModule(AkariModule):
         self._vad.set_mode(params.mode.value)
 
         buffer = io.BytesIO(audio.main)
-        frame_size = int(params.sample_rate * params.frame_duration_ms / 1000)
-        if len(audio.main) < frame_size:
+        frame_size_bytes = int(params.sample_rate * params.frame_duration_ms / 1000 * 2)
+
+        if len(audio.main) < frame_size_bytes:
             raise ValueError(
-                f"Audio data is too short. Expected at least {frame_size} bytes, but got {len(audio.main)} bytes."
+                f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
             )
 
-        buffer.seek(-frame_size, io.SEEK_END)
-        audio_data = buffer.read(frame_size)
+        buffer.seek(-frame_size_bytes, io.SEEK_END)
+        audio_data = buffer.read(frame_size_bytes)
 
         try:
             is_speech = self._vad.is_speech(audio_data, params.sample_rate)
         except Exception as e:
-            raise ValueError(f"Error processing audio data: {e}")
+            raise ValueError(f"Error processing audio data with WebRTC VAD: {e}")
 
         dataset = AkariDataSet()
         dataset.bool = AkariDataSetType(is_speech)
