@@ -68,7 +68,7 @@ class _WebRTCVadModule(AkariModule):
         try:
             is_speech = self._vad.is_speech(audio_data, params.sample_rate)
         except Exception as e:
-            raise ValueError(f"Error processing audio data with WebRTC VAD: {e}")
+            raise ValueError(f"Error processing audio data with WebRTC VAD: {e}") from e
 
         dataset = AkariDataSet()
         dataset.bool = AkariDataSetType(is_speech)
