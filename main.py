@@ -11,7 +11,7 @@ from vertexai.generative_models import Content, Part
 import akari
 import modules
 import sample
-from modules import audio, azure_openai, gemini
+from modules import audio, azure_openai, gemini, webrtcvad
 
 dotenv.load_dotenv()
 
@@ -65,48 +65,49 @@ akariRouter.addModules(
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
+        webrtcvad.WebRTCVadModule: webrtcvad.WebRTCVadModule(akariRouter, akariLogger),
     }
 )
 
-akariRouter.callModule(
-    moduleType=modules.RootModule,
-    data=akari.AkariData(),
-    params=sample.SampleModule,
-    streaming=False,
-)
+# akariRouter.callModule(
+#     moduleType=modules.RootModule,
+#     data=akari.AkariData(),
+#     params=sample.SampleModule,
+#     streaming=False,
+# )
 
-akariRouter.callModule(
-    moduleType=azure_openai.LLMModule,
-    data=akari.AkariData(),
-    params=azure_openai.LLMModuleParams(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "user", "content": "Hello, Akari!"},
-            {"role": "system", "content": "You are a helpful assistant."},
-        ],
-        temperature=0.7,
-        max_tokens=150,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0,
-        stream=True,
-    ),
-    streaming=False,
-    callback=modules.PrintModule,
-)
+# akariRouter.callModule(
+#     moduleType=azure_openai.LLMModule,
+#     data=akari.AkariData(),
+#     params=azure_openai.LLMModuleParams(
+#         model="gpt-4o-mini",
+#         messages=[
+#             {"role": "user", "content": "Hello, Akari!"},
+#             {"role": "system", "content": "You are a helpful assistant."},
+#         ],
+#         temperature=0.7,
+#         max_tokens=150,
+#         top_p=1.0,
+#         frequency_penalty=0.0,
+#         presence_penalty=0.0,
+#         stream=True,
+#     ),
+#     streaming=False,
+#     callback=modules.PrintModule,
+# )
 
 
-data = akariRouter.callModule(
-    moduleType=gemini.LLMModule,
-    data=akari.AkariData(),
-    params=gemini.LLMModuleParams(
-        model="gemini-2.0-flash",
-        messages=[
-            Content(role="user", parts=[Part.from_text("Hello, Akari!")]),
-        ],
-    ),
-    streaming=False,
-)
+# data = akariRouter.callModule(
+#     moduleType=gemini.LLMModule,
+#     data=akari.AkariData(),
+#     params=gemini.LLMModuleParams(
+#         model="gemini-2.0-flash",
+#         messages=[
+#             Content(role="user", parts=[Part.from_text("Hello, Akari!")]),
+#         ],
+#     ),
+#     streaming=False,
+# )
 
 
 # data = akari.AkariData()
@@ -156,14 +157,15 @@ data = akariRouter.callModule(
 # )
 
 
-# akariRouter.callModule(
-#     moduleType=audio.MicModule,
-#     data=akari.AkariData(),
-#     params=audio.MicModuleParams(
-#         streamDurationMilliseconds=1000,
-#         destructionMilliseconds=5000,
-#         callbackParams=audio.SpeakerModuleParams(),
-#     ),
-#     streaming=False,
-#     callback=audio.SpeakerModule,
-# )
+akariRouter.callModule(
+    moduleType=audio.MicModule,
+    data=akari.AkariData(),
+    params=audio.MicModuleParams(
+        streamDurationMilliseconds=1000,
+        destructionMilliseconds=5000,
+        callbackParams=webrtcvad.WebRTCVadParams(),
+        callback_callback=modules.PrintModule,
+    ),
+    streaming=False,
+    callback=webrtcvad.WebRTCVadModule,
+)

@@ -14,6 +14,8 @@ pyaudio = "^0.2.14"
 audioop-lts = "^0.2.1"
 google-cloud-aiplatform = "^1.90.0"
 google-auth = "^2.39.0"
+webrtcvad = "^2.0.10"
+setuptools = "^80.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.3.5"
