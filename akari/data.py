@@ -50,6 +50,7 @@ class _AkariDataSet:
     def __init__(self) -> None:
         self.text: _AkariDataSetType[str] | None = None
         self.audio: _AkariDataSetType[bytes] | None = None
+        self.bool: _AkariDataSetType[bool] | None = None
         self.allData: Any | None = None
 
 
