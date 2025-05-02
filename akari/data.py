@@ -23,6 +23,9 @@ class _AkariDataStreamType(Generic[T]):
     def __repr__(self) -> str:
         return f"AkariDataStreamType(delta={self._delta})"
 
+    def __eq__(self, value: object) -> bool:
+        return self.__repr__() == value.__repr__()
+
 
 class _AkariDataSetType(Generic[T]):
     def __init__(
@@ -34,6 +37,9 @@ class _AkariDataSetType(Generic[T]):
 
     def __repr__(self) -> str:
         return f"AkariDataSetType(main={self.main}, stream={self.stream}, others={self.others})"
+
+    def __eq__(self, value: object) -> bool:
+        return self.__repr__() == value.__repr__()
 
 
 class _AkariDataSet:
