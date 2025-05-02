@@ -1,7 +1,7 @@
 import dataclasses
 import io
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 import pyaudio
 import webrtcvad
@@ -12,9 +12,9 @@ from akari import (
     AkariDataSetType,
     AkariLogger,
     AkariModule,
+    AkariModuleParams,
     AkariModuleType,
     AkariRouter,
-    AkariModuleParams,
 )
 
 
@@ -28,8 +28,8 @@ class _WebRTCVadMode(Enum):
 @dataclasses.dataclass
 class _WebRTCVadParams:
     mode: _WebRTCVadMode = _WebRTCVadMode.VERY_SENSITIVE
-    sample_rate: int = 16000
-    frame_duration_ms: int = 30
+    sample_rate: Literal[8000, 16000, 32000, 48000] = 16000
+    frame_duration_ms: Literal[10, 20, 30] = 30
     callback_params: AkariModuleParams | None = None
 
 
@@ -40,7 +40,7 @@ class _WebRTCVadModule(AkariModule):
         logger: AkariLogger,
     ) -> None:
         super().__init__(router, logger)
-        self.vad = webrtcvad.Vad()
+        self._vad = webrtcvad.Vad()
 
     def call(self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         raise NotImplementedError("WebRTCVadModule does not support call method. Use stream_call instead.")
@@ -51,6 +51,8 @@ class _WebRTCVadModule(AkariModule):
         audio = data.last().audio
         if audio is None:
             raise ValueError("Audio data is missing or empty.")
+
+        self._vad.set_mode(params.mode.value)
 
         buffer = io.BytesIO(audio.main)
         frame_size = int(params.sample_rate * params.frame_duration_ms / 1000)
@@ -63,7 +65,7 @@ class _WebRTCVadModule(AkariModule):
         audio_data = buffer.read(frame_size)
 
         try:
-            is_speech = self.vad.is_speech(audio_data, params.sample_rate)
+            is_speech = self._vad.is_speech(audio_data, params.sample_rate)
         except Exception as e:
             raise ValueError(f"Error processing audio data: {e}")
 
