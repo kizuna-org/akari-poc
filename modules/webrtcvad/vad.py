@@ -18,15 +18,15 @@ from akari import (
 
 
 class _WebRTCVadMode(Enum):
-    NORMAL = 1
-    LOW_BITRATE = 2
-    AGGRESSIVE = 3
-    VERY_AGGRESSIVE = 4
+    VERY_SENSITIVE = 0
+    SENSITIVE = 1
+    LOW_SENSITIVE = 2
+    STRICT = 3
 
 
 @dataclasses.dataclass
 class _WebRTCVadParams:
-    mode: _WebRTCVadMode = _WebRTCVadMode.NORMAL
+    mode: _WebRTCVadMode = _WebRTCVadMode.VERY_SENSITIVE
     sample_rate: int = 16000
     frame_duration_ms: int = 30
 
