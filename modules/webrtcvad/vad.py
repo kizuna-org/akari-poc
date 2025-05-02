@@ -14,6 +14,7 @@ from akari import (
     AkariModule,
     AkariModuleType,
     AkariRouter,
+    AkariModuleParams,
 )
 
 
@@ -29,6 +30,7 @@ class _WebRTCVadParams:
     mode: _WebRTCVadMode = _WebRTCVadMode.VERY_SENSITIVE
     sample_rate: int = 16000
     frame_duration_ms: int = 30
+    callback_params: AkariModuleParams | None = None
 
 
 class _WebRTCVadModule(AkariModule):
@@ -45,7 +47,7 @@ class _WebRTCVadModule(AkariModule):
 
     def stream_call(
         self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None
-    ) -> AkariDataSet:
+    ) -> AkariData:
         audio = data.last().audio
         if audio is None:
             raise ValueError("Audio data is missing or empty.")
@@ -67,5 +69,9 @@ class _WebRTCVadModule(AkariModule):
 
         dataset = AkariDataSet()
         dataset.bool = AkariDataSetType(is_speech)
+        data.add(dataset)
 
-        return dataset
+        if is_speech and callback:
+            data = self._router.callModule(callback, data, params.callback_params, True, None)
+
+        return data
