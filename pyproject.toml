@@ -23,7 +23,7 @@ isort = "6.0.1"
 black = "25.1.0"
 
 no-print-checker = { path = "./plugins/no_print_checker", develop = true }
-faker = "^37.1.0"
+faker = "37.1.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
