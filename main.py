@@ -163,8 +163,8 @@ akariRouter.callModule(
     params=audio.MicModuleParams(
         streamDurationMilliseconds=1000,
         destructionMilliseconds=5000,
-        callbackParams=audio.SpeakerModuleParams(),
+        callbackParams=webrtcvad.WebRTCVadParams(),
     ),
     streaming=False,
-    callback=audio.SpeakerModule,
+    callback=webrtcvad.WebRTCVadModule,
 )
