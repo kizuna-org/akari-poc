@@ -1933,4 +1933,4 @@ dev = ["check-manifest", "memory_profiler", "nose", "psutil", "unittest2", "zest
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13.3"
-content-hash = "2938bec54c686e50ff79e0dbf6167978d3d32df50aed08fb69e887a31322afe4"
+content-hash = "638431dce93ff408ba17545e0998fb0521ee86ba7709b0fe930e672f53c3a543"
