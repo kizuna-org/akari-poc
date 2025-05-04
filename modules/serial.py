@@ -37,3 +37,17 @@ class _SerialModule(AkariModule):
             )
 
         return data
+
+    def stream_call(
+        self, data: AkariData, params: _SerialModuleParams, callback: AkariModuleType | None = None
+    ) -> AkariData:
+        for module in params.modules:
+            data = self._router.callModule(
+                moduleType=module.moduleType,
+                data=data,
+                params=module.moduleParams,
+                callback=module.moduleCallback,
+                streaming=False,
+            )
+
+        return data
