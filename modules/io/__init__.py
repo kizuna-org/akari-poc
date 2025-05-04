@@ -1,3 +1,4 @@
-from .save import _SaveModule as SaveModule, _SaveModuleParams as SaveModuleParams
+from .save import _SaveModule as SaveModule
+from .save import _SaveModuleParams as SaveModuleParams
 
 __all__ = ["SaveModule", "SaveModuleParams"]
