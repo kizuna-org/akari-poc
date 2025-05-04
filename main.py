@@ -58,6 +58,7 @@ akariRouter.addModules(
     {
         modules.RootModule: modules.RootModule(akariRouter, akariLogger),
         modules.PrintModule: modules.PrintModule(akariRouter, akariLogger),
+        modules.SerialModule: modules.SerialModule(akariRouter, akariLogger),
         sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
         azure_openai.LLMModule: azure_openai.LLMModule(akariRouter, akariLogger, client),
         azure_openai.STTModule: azure_openai.STTModule(akariRouter, akariLogger, client),
@@ -66,6 +67,7 @@ akariRouter.addModules(
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
         webrtcvad.WebRTCVadModule: webrtcvad.WebRTCVadModule(akariRouter, akariLogger),
+        io.SaveModule: io.SaveModule(akariRouter, akariLogger),
     }
 )
 
