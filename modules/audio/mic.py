@@ -26,6 +26,7 @@ class _MicModuleParams:
     input_device_index: int | None = None
     streamDurationMilliseconds: int = 5 * 100
     destructionMilliseconds: int = 5 * 100
+    callback_when_thread_is_alive: bool = False
     callbackParams: Any | None = None
     callback_callback: AkariModuleType | None = None
 
@@ -33,6 +34,7 @@ class _MicModuleParams:
 class _MicModule(AkariModule):
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
+        self._thread: threading.Thread = threading.Thread()
 
     def call(self, data: AkariData, params: _MicModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         dataset = AkariDataSet()
@@ -79,8 +81,9 @@ class _MicModule(AkariModule):
                                 callback=params.callback_callback,
                             )
 
-                        thread = threading.Thread(target=call_module_in_thread)
-                        thread.start()
+                        if not self._thread.is_alive() or params.callback_when_thread_is_alive:
+                            self._thread = threading.Thread(target=call_module_in_thread)
+                            self._thread.start()
 
                     frame_time = current_time
                     frame = b""
