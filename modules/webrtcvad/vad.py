@@ -1,5 +1,6 @@
 import dataclasses
 import io
+import time
 from enum import Enum
 from typing import Any, Literal
 
@@ -30,6 +31,8 @@ class _WebRTCVadParams:
     mode: _WebRTCVadMode = _WebRTCVadMode.VERY_SENSITIVE
     sample_rate: Literal[8000, 16000, 32000, 48000] = 16000
     frame_duration_ms: Literal[10, 20, 30] = 30
+    speech_sleep_duration_ms: int = 0
+    callback_when_speech_ended: bool = False
     callback_params: AkariModuleParams | None = None
 
 
@@ -41,6 +44,9 @@ class _WebRTCVadModule(AkariModule):
     ) -> None:
         super().__init__(router, logger)
         self._vad = webrtcvad.Vad()
+        self._last_speech_time = time.mktime(time.gmtime(0))
+        self._callbacked = False
+        self._audio_buffer: bytes = b""
 
     def call(self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         raise NotImplementedError("WebRTCVadModule does not support call method. Use stream_call instead.")
@@ -67,14 +73,32 @@ class _WebRTCVadModule(AkariModule):
 
         try:
             is_speech = self._vad.is_speech(audio_data, params.sample_rate)
+            self._logger.debug("WebRTC VAD detected speech: %s", is_speech)
         except Exception as e:
             raise ValueError(f"Error processing audio data with WebRTC VAD: {e}") from e
 
         dataset = AkariDataSet()
         dataset.bool = AkariDataSetType(is_speech)
+        dataset.audio = audio
         data.add(dataset)
 
-        if is_speech and callback:
-            data = self._router.callModule(callback, data, params.callback_params, True, None)
+        if is_speech:
+            self._last_speech_time = time.time()
+            self._callbacked = False
+            if audio.stream is not None:
+                self._audio_buffer += audio.stream.last()
+        else:
+            if time.time() - self._last_speech_time < params.speech_sleep_duration_ms / 1000:
+                is_speech = True
+
+        self._logger.debug("WebRTC VAD functional detected speech: %s", is_speech)
+
+        if callback:
+            if (not params.callback_when_speech_ended and is_speech) or (
+                params.callback_when_speech_ended and not is_speech and not self._callbacked
+            ):
+                data = self._router.callModule(callback, data, params.callback_params, True, None)
+                self._callbacked = True
+                self._audio_buffer = b""
 
         return data
