@@ -1,5 +1,6 @@
 import dataclasses
 import io
+import wave
 
 from openai import AzureOpenAI
 
@@ -20,6 +21,9 @@ class _STTModuleParams:
     language: str | None
     prompt: str | None
     temperature: float
+    channels: int = 1
+    sample_width: int = 2
+    rate: int = 24000
 
 
 class _STTModule(AkariModule):
@@ -35,12 +39,21 @@ class _STTModule(AkariModule):
         audio = data.last().audio
         if audio is None:
             raise ValueError("Audio data is missing or empty.")
-        buffer = io.BytesIO(audio.main)
-        buffer.name = "input.pcm"
+
+        pcm_buffer = io.BytesIO(audio.main)
+        wav_buffer = io.BytesIO()
+        with wave.open(wav_buffer, "wb") as wav_file:
+            wav_file.setnchannels(params.channels)
+            wav_file.setsampwidth(params.sample_width)
+            wav_file.setframerate(params.rate)
+            wav_file.writeframes(pcm_buffer.read())
+
+        wav_buffer.seek(0)
+        wav_buffer.name = "input.wav"
 
         response = self.client.audio.transcriptions.create(
             model=params.model,
-            file=buffer,
+            file=wav_buffer,
             language=params.language if params.language else "",
             prompt=params.prompt if params.prompt else "",
             response_format="text",
