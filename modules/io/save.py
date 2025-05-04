@@ -32,10 +32,10 @@ class _SaveModule(AkariModule):
 
     def call(self, data: AkariData, params: _SaveModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
         try:
-            data.last().__dict__[params.save_from_data]
+            save_data = data.last().__dict__[params.save_from_data]
         except KeyError:
             raise ValueError(f"Data does not contain the key '{params.save_from_data}'.")
-        if not data.last().__dict__[params.save_from_data]:
+        if not save_data:
             raise ValueError(f"Data does not contain the key '{params.save_from_data}' or it is empty.")
 
         path = params.file_path
