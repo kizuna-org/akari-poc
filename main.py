@@ -11,7 +11,7 @@ from vertexai.generative_models import Content, Part
 import akari
 import modules
 import sample
-from modules import audio, azure_openai, gemini, webrtcvad
+from modules import audio, azure_openai, gemini, io, webrtcvad
 
 dotenv.load_dotenv()
 
