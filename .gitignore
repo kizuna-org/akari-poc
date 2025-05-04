@@ -179,3 +179,4 @@ pyrightconfig.json
 
 *.mp3
 *.wav
+/tmp/*
