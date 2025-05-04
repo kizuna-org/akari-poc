@@ -45,7 +45,7 @@ class _WebRTCVadModule(AkariModule):
         super().__init__(router, logger)
         self._vad = webrtcvad.Vad()
         self._last_speech_time = time.mktime(time.gmtime(0))
-        self._callbacked = False
+        self._callbacked = True
         self._audio_buffer: bytes = b""
 
     def call(self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None) -> AkariDataSet:
@@ -79,7 +79,8 @@ class _WebRTCVadModule(AkariModule):
 
         dataset = AkariDataSet()
         dataset.bool = AkariDataSetType(is_speech)
-        dataset.audio = audio
+        dataset.audio = AkariDataSetType(main=self._audio_buffer, others={"all": audio_data})
+        dataset.meta = data.last().meta
         data.add(dataset)
 
         if is_speech:

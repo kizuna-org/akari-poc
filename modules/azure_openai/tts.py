@@ -17,7 +17,6 @@ from akari import (
 @dataclasses.dataclass
 class _TTSModuleParams:
     model: str
-    input: str
     voice: str
     instructions: str | None
     response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "pcm"
@@ -34,9 +33,13 @@ class _TTSModule(AkariModule):
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
 
+        input_data = data.last().text
+        if input_data is None:
+            raise ValueError("Input data is missing or empty.")
+
         response = self.client.audio.speech.create(
             model=params.model,
-            input=params.input,
+            input=input_data.main,
             voice=params.voice,
             instructions=params.instructions if params.instructions else "",
             response_format=params.response_format,
@@ -45,5 +48,6 @@ class _TTSModule(AkariModule):
 
         dataset = AkariDataSet()
         dataset.audio = AkariDataSetType(main=response.read())
+        dataset.meta = AkariDataSetType(main={"channels": 1, "rate": 24000})
         dataset.allData = response
         return dataset

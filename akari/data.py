@@ -51,6 +51,7 @@ class _AkariDataSet:
         self.text: _AkariDataSetType[str] | None = None
         self.audio: _AkariDataSetType[bytes] | None = None
         self.bool: _AkariDataSetType[bool] | None = None
+        self.meta: _AkariDataSetType[dict[str, Any]] | None = None
         self.allData: Any | None = None
 
 

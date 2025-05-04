@@ -2,6 +2,7 @@ import dataclasses
 import time
 import wave
 from datetime import datetime
+from typing import Any
 
 from akari import (
     AkariData,
@@ -48,11 +49,12 @@ class _SaveModule(AkariModule):
                 path = f"{path}_{timestamp}"
 
         if path.endswith(".wav") and params.save_from_data == "audio":
-            audio_data = data.last().__dict__[params.save_from_data]
+            audio_data: AkariDataSetType[bytes] = data.last().__dict__[params.save_from_data]
+            meta: AkariDataSetType[dict[str, Any]] | None = data.last().meta
             with wave.open(path, "wb") as wav_file:
-                wav_file.setnchannels(audio_data.channels if hasattr(audio_data, "channels") else 1)
-                wav_file.setsampwidth(audio_data.sample_width if hasattr(audio_data, "sample_width") else 2)
-                wav_file.setframerate(audio_data.rate if hasattr(audio_data, "rate") else 16000)
+                wav_file.setnchannels(meta.main["channels"] if meta and "channels" in meta.main else 1)
+                wav_file.setsampwidth(meta.main["sample_width"] if meta and "sample_width" in meta.main else 2)
+                wav_file.setframerate(meta.main["rate"] if meta and "rate" in meta.main else 16000)
                 wav_file.writeframes(audio_data.main)
             self._logger.debug("Audio data saved as WAV to %s", path)
         else:

@@ -1,6 +1,6 @@
 import copy
 import dataclasses
-from typing import Iterable
+from typing import Callable, Iterable
 
 from openai import AzureOpenAI
 from openai.types.chat import (
@@ -24,7 +24,8 @@ from akari import (
 @dataclasses.dataclass
 class _LLMModuleParams:
     model: str
-    messages: Iterable[ChatCompletionMessageParam]
+    messages: Iterable[ChatCompletionMessageParam] | None = None
+    messages_function: Callable[[AkariData], Iterable[ChatCompletionMessageParam]] | None = None
     temperature: float = 1.0
     max_tokens: int = 1024
     top_p: float = 1.0
@@ -46,6 +47,11 @@ class _LLMModule(AkariModule):
 
         if params.stream and callback is None:
             raise ValueError("Callback must be provided when streaming is enabled.")
+
+        if params.messages_function is not None:
+            params.messages = params.messages_function(data)
+        if params.messages is None:
+            raise ValueError("Messages cannot be None. Please provide a valid list of messages.")
 
         response = self.client.chat.completions.create(
             model=params.model,

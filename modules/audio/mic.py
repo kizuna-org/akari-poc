@@ -69,6 +69,13 @@ class _MicModule(AkariModule):
                     dataset = AkariDataSet()
                     stream = AkariDataStreamType(frames)
                     dataset.audio = AkariDataSetType(main=b"".join(frames), stream=stream)
+                    dataset.meta = AkariDataSetType(
+                        main={
+                            "channels": params.channels,
+                            "sample_width": audio.get_sample_size(params.format),
+                            "rate": params.rate,
+                        }
+                    )
                     data.add(dataset)
                     if callback is not None:
 
