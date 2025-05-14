@@ -5,6 +5,7 @@ import dotenv
 import pyaudio
 import vertexai
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from google.cloud import speech
 from google.oauth2 import service_account
 from openai import AzureOpenAI
 from vertexai.generative_models import Content, Part
@@ -12,14 +13,14 @@ from vertexai.generative_models import Content, Part
 import akari
 import modules
 import sample
-from modules import audio, azure_openai, gemini, io, webrtcvad
+from modules import audio, azure_openai, gemini, google, io, webrtcvad
 
 dotenv.load_dotenv()
 
 
 akariLogger = akari.getLogger(
     "Akari",
-    logging.INFO,
+    logging.DEBUG,
 )
 
 akariLogger.info("Hello, Akari!")
@@ -61,6 +62,9 @@ client = AzureOpenAI(
 credentials = service_account.Credentials.from_service_account_file(
     os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "",
 )  # type: ignore
+
+speech_client = speech.SpeechClient(credentials=credentials)
+
 vertexai.init(
     location=os.getenv("GOOGLE_LOCATION") or "us-central1",
     credentials=credentials,
@@ -75,8 +79,8 @@ akariRouter.addModules(
         modules.SerialModule: modules.SerialModule(akariRouter, akariLogger),
         sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
         azure_openai.LLMModule: azure_openai.LLMModule(akariRouter, akariLogger, client),
-        azure_openai.STTModule: azure_openai.STTModule(akariRouter, akariLogger, client),
         azure_openai.TTSModule: azure_openai.TTSModule(akariRouter, akariLogger, client),
+        google.STTModule: google.STTModule(akariRouter, akariLogger, speech_client),
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
@@ -200,17 +204,13 @@ akariRouter.callModule(
             callback_params=modules.SerialModuleParams(
                 modules=[
                     modules.SerialModuleParamModule(
-                        moduleType=azure_openai.STTModule,
-                        moduleParams=azure_openai.STTModuleParams(
-                            model="whisper",
-                            language="ja",
+                        moduleType=google.STTModule,
+                        moduleParams=google.STTModuleParams(
+                            model="default",
+                            language="ja-JP",
                             prompt="",
                             temperature=0.7,
                         ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=modules.PrintModule,
-                        moduleParams=None,
                     ),
                     modules.SerialModuleParamModule(
                         moduleType=azure_openai.LLMModule,
@@ -229,10 +229,6 @@ akariRouter.callModule(
                             ],
                             temperature=0.7,
                         ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=modules.PrintModule,
-                        moduleParams=None,
                     ),
                     modules.SerialModuleParamModule(
                         moduleType=azure_openai.TTSModule,
