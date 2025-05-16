@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import time
 from typing import Dict
 
@@ -7,10 +8,19 @@ import akari.logger as logger
 import akari.module as module
 
 
+@dataclasses.dataclass
+class _AkariRouterLoggerOptions:
+    info: bool = False
+    duration: bool = False
+
+
 class _AkariRouter:
-    def __init__(self, logger: logger._AkariLogger) -> None:
+    def __init__(
+        self, logger: logger._AkariLogger, options: _AkariRouterLoggerOptions = _AkariRouterLoggerOptions()
+    ) -> None:
         self._modules: Dict[module._AkariModuleType, module._AkariModule] = {}
         self._logger = logger
+        self._options = options
 
     def addModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
         for moduleType, moduleInstance in modules.items():
@@ -40,11 +50,12 @@ class _AkariRouter:
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
-        self._logger.debug(
-            "\n\n[Router] Module %s: %s",
-            "streaming" if streaming else "calling",
-            selected_module.__class__.__name__,
-        )
+        if self._options.info:
+            self._logger.info(
+                "\n\n[Router] Module %s: %s",
+                "streaming" if streaming else "calling",
+                selected_module.__class__.__name__,
+            )
 
         startTime = time.process_time()
         if streaming:
