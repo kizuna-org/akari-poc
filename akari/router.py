@@ -77,4 +77,12 @@ class _AkariRouter:
         else:
             raise ValueError(f"Invalid result type: {type(result)}")
 
+        if self._options.duration:
+            self._logger.info(
+                "[Router] Module %s: %s took %.2f seconds",
+                "streaming" if streaming else "calling",
+                selected_module.__class__.__name__,
+                endTime - startTime,
+            )
+
         return data
