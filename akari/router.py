@@ -1,4 +1,5 @@
 import copy
+import time
 from typing import Dict
 
 import akari.data as akari_data
@@ -45,14 +46,22 @@ class _AkariRouter:
             selected_module.__class__.__name__,
         )
 
+        startTime = time.process_time()
         if streaming:
             result = selected_module.stream_call(inputData, params, callback)
         else:
             result = selected_module.call(inputData, params, callback)
+        endTime = time.process_time()
 
         if isinstance(result, akari_data._AkariDataSet):
+            result.setModule(
+                akari_data._AkariDataModuleType(moduleType, params, streaming, callback, startTime, endTime)
+            )
             data.add(result)
         elif isinstance(result, akari_data._AkariData):
+            result.last().setModule(
+                akari_data._AkariDataModuleType(moduleType, params, streaming, callback, startTime, endTime)
+            )
             data = result
         else:
             raise ValueError(f"Invalid result type: {type(result)}")
