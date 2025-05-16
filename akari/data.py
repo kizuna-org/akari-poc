@@ -1,5 +1,7 @@
 from typing import Any, Dict, Generic, TypeVar
 
+from akari.module import _AkariModuleParams, _AkariModuleType
+
 T = TypeVar("T")
 
 
@@ -29,6 +31,24 @@ class _AkariDataStreamType(Generic[T]):
         return self._delta == value._delta
 
 
+class _AkariDataModuleType:
+    def __init__(
+        self,
+        moduleType: _AkariModuleType,
+        params: _AkariModuleParams,
+        streaming: bool,
+        callback: _AkariModuleType | None,
+        startTime: float,
+        endTime: float,
+    ) -> None:
+        self.moduleType = moduleType
+        self.params = params
+        self.streaming = streaming
+        self.callback = callback
+        self.startTime = startTime
+        self.endTime = endTime
+
+
 class _AkariDataSetType(Generic[T]):
     def __init__(
         self, main: T, stream: _AkariDataStreamType[T] | None = None, others: Dict[str, T] | None = None
@@ -47,12 +67,21 @@ class _AkariDataSetType(Generic[T]):
 
 
 class _AkariDataSet:
+    module: _AkariDataModuleType
+
     def __init__(self) -> None:
         self.text: _AkariDataSetType[str] | None = None
         self.audio: _AkariDataSetType[bytes] | None = None
         self.bool: _AkariDataSetType[bool] | None = None
         self.meta: _AkariDataSetType[dict[str, Any]] | None = None
         self.allData: Any | None = None
+
+    """
+    This function is only for Router.
+    """
+
+    def setModule(self, module: _AkariDataModuleType) -> None:
+        self.module = module
 
 
 class _AkariData:
