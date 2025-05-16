@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Any, Dict, Generic, TypeVar
 
 from akari.module import _AkariModuleParams, _AkariModuleType
@@ -31,22 +32,14 @@ class _AkariDataStreamType(Generic[T]):
         return self._delta == value._delta
 
 
+@dataclasses.dataclass
 class _AkariDataModuleType:
-    def __init__(
-        self,
-        moduleType: _AkariModuleType,
-        params: _AkariModuleParams,
-        streaming: bool,
-        callback: _AkariModuleType | None,
-        startTime: float,
-        endTime: float,
-    ) -> None:
-        self.moduleType = moduleType
-        self.params = params
-        self.streaming = streaming
-        self.callback = callback
-        self.startTime = startTime
-        self.endTime = endTime
+    moduleType: _AkariModuleType
+    params: _AkariModuleParams
+    streaming: bool
+    callback: _AkariModuleType | None
+    startTime: float
+    endTime: float
 
 
 class _AkariDataSetType(Generic[T]):
