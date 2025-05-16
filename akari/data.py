@@ -76,11 +76,10 @@ class _AkariDataSet:
         self.meta: _AkariDataSetType[dict[str, Any]] | None = None
         self.allData: Any | None = None
 
-    """
-    This function is only for Router.
-    """
-
     def setModule(self, module: _AkariDataModuleType) -> None:
+        """
+        This function is only for Router.
+        """
         self.module = module
 
 
