@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Iterable
+from typing import Callable, Iterable
 
 from vertexai.generative_models import Content, GenerativeModel
 
@@ -19,7 +19,8 @@ _models: dict[str, GenerativeModel] = {}
 @dataclasses.dataclass
 class _LLMModuleParams:
     model: str
-    messages: Iterable[Content]
+    messages: Iterable[Content] | None = None
+    messages_function: Callable[[AkariData], Iterable[Content]] | None = None
 
 
 class _LLMModule(AkariModule):
@@ -31,6 +32,11 @@ class _LLMModule(AkariModule):
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
         self._logger.debug("Callback: %s", callback)
+
+        if params.messages_function is not None:
+            params.messages = params.messages_function(data)
+        if params.messages is None:
+            raise ValueError("Messages cannot be None. Please provide a valid list of messages.")
 
         if params.model not in _models:
             _models[params.model] = GenerativeModel(params.model)
