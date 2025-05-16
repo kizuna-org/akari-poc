@@ -15,9 +15,9 @@ class _AkariRouterLoggerOptions:
 
 
 class _AkariRouter:
-    def __init__(
-        self, logger: logger._AkariLogger, options: _AkariRouterLoggerOptions = _AkariRouterLoggerOptions()
-    ) -> None:
+    def __init__(self, logger: logger._AkariLogger, options: _AkariRouterLoggerOptions | None = None) -> None:
+        if options is None:
+            options = _AkariRouterLoggerOptions()
         self._modules: Dict[module._AkariModuleType, module._AkariModule] = {}
         self._logger = logger
         self._options = options
