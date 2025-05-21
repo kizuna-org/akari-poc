@@ -26,6 +26,16 @@ akariLogger.info("Hello, Akari!")
 
 
 def list_audio_devices() -> None:
+    """Enumerates and logs details of all audio devices discoverable by PyAudio.
+
+    Initializes the PyAudio library to query for available audio hardware.
+    For each detected device, it logs its unique index, human-readable name,
+    maximum number of input channels, and maximum number of output channels.
+    This information is logged at the DEBUG level using the globally configured
+    Akari logger. This utility is helpful for debugging audio configurations or
+    allowing users to select specific audio devices. The PyAudio instance is
+    properly terminated before the function exits.
+    """
     p = pyaudio.PyAudio()
     for i in range(p.get_device_count()):
         info = p.get_device_info_by_index(i)
