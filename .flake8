@@ -1,4 +1,8 @@
 [flake8]
 exclude = .git,__pycache__,.venv
 max-line-length = 120
-select = N
+select = N,D
+docstring-convention = google
+ignore = D100,D104
+per-file-ignores =
+    tests/*,plugins/*: D100,D101,D102,D103,D104,D107
