@@ -1792,14 +1792,14 @@ pyasn1 = ">=0.1.3"
 
 [[package]]
 name = "setuptools"
-version = "80.7.1"
+version = "80.8.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "setuptools-80.7.1-py3-none-any.whl", hash = "sha256:ca5cc1069b85dc23070a6628e6bcecb3292acac802399c7f8edc0100619f9009"},
-    {file = "setuptools-80.7.1.tar.gz", hash = "sha256:f6ffc5f0142b1bd8d0ca94ee91b30c0ca862ffd50826da1ea85258a06fd94552"},
+    {file = "setuptools-80.8.0-py3-none-any.whl", hash = "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0"},
+    {file = "setuptools-80.8.0.tar.gz", hash = "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257"},
 ]
 
 [package.extras]
@@ -2080,4 +2080,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13.3"
-content-hash = "cf39c864433a6953f365125078988f4378364b45a620ced38a303c43c6be2cd0"
+content-hash = "fab087b85059aa2ac7058293df8678561785cd538282741899cabbfd45651f10"
