@@ -23,7 +23,7 @@ flake8 = "7.2.0"
 mypy = "1.15.0"
 isort = "6.0.1"
 black = "25.1.0"
-flake8-docstrings = "^1.7.0"
+flake8-docstrings = "1.7.0"
 
 no-print-checker = { path = "./plugins/no_print_checker", develop = true }
 faker = "37.3.0"
