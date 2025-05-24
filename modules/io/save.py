@@ -18,23 +18,19 @@ from akari import (
 
 @dataclasses.dataclass
 class _SaveModuleParams:
-    """Defines the configuration for saving data to a file.
+    """ファイルへのデータ保存設定を定義します。
 
-    Specifies the target file path, the name of the data field within an
-    `AkariDataSet` to source the data from, and whether to append a
-    timestamp to the filename for uniqueness.
+    ターゲットファイルパス、データの取得元となる `AkariDataSet` 内のデータフィールド名、
+    および一意性のためにファイル名にタイムスタンプを追加するかどうかを指定します。
 
     Attributes:
-        file_path (str): The complete path, including the desired filename and
-            extension, where the data will be saved.
-        save_from_data (str): The attribute name (e.g., "text", "audio", "meta")
-            on the last `AkariDataSet` from which the `.main` data content should
-            be retrieved for saving. For instance, if "audio", it will attempt
-            to save `data.last().audio.main`.
-        with_timestamp (bool): If `True`, a timestamp string (formatted as
-            `YYYYMMDDHHMMSS`) will be inserted into the filename before the
-            file extension. For example, "output.wav" might become
-            "output_20231027143000.wav". Defaults to `False`.
+        file_path (str): データが保存される、目的のファイル名と拡張子を含む完全なパス。
+        save_from_data (str): `.main` データコンテンツを保存用に取得する最後の
+            `AkariDataSet` の属性名（例: "text"、"audio"、"meta"）。
+            たとえば、"audio" の場合、`data.last().audio.main` を保存しようとします。
+        with_timestamp (bool): `True` の場合、タイムスタンプ文字列（`YYYYMMDDHHMMSS` 形式）が
+            ファイル拡張子の前にファイル名に挿入されます。たとえば、"output.wav" は
+            "output_20231027143000.wav" のようになる場合があります。デフォルトは `False` です。
     """
 
     file_path: str
@@ -43,13 +39,13 @@ class _SaveModuleParams:
 
 
 class _SaveModule(AkariModule):
-    """Persists data from an Akari pipeline to the filesystem.
+    """Akari パイプラインのデータをファイルシステムに永続化します。
 
-    Enables saving of specific data fields (like text, audio bytes, or metadata)
-    from the most recent `AkariDataSet` in the pipeline to a designated file.
-    It includes options for automatic timestamping of filenames to prevent
-    overwrites and special handling for WAV audio files to ensure correct
-    header information based on provided metadata.
+    パイプラインの最新の `AkariDataSet` から特定のデータフィールド
+    （テキスト、オーディオバイト、メタデータなど）を指定されたファイルに保存できます。
+    上書きを防ぐためのファイル名の自動タイムスタンプオプションと、
+    提供されたメタデータに基づいて正しいヘッダー情報を保証するための WAV オーディオファイルの
+    特別な処理が含まれています。
     """
 
     def __init__(
@@ -57,50 +53,47 @@ class _SaveModule(AkariModule):
         router: AkariRouter,
         logger: AkariLogger,
     ) -> None:
-        """Constructs a _SaveModule instance.
+        """_SaveModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization.
-            logger (AkariLogger): The logger instance for recording operational
-                details, such as successful save paths or errors encountered.
+            router (AkariRouter): Akari ルーターインスタンス。ベースモジュールの初期化に使用されます。
+            logger (AkariLogger): 保存成功パスや発生したエラーなどの操作の詳細を記録するための
+                ロガーインスタンス。
         """
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: _SaveModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Extracts data from a designated field in the most recent `AkariDataSet` and writes it to a specified file path.
+        """最新の `AkariDataSet` の指定されたフィールドからデータを抽出し、指定されたファイルパスに書き込みます。
 
-        The module first attempts to retrieve the data specified by
-        `params.save_from_data` from the last dataset in the `AkariData` sequence.
-        If `params.with_timestamp` is true, it modifies the `params.file_path`
-        to include a current timestamp, helping to version saved files.
+        モジュールはまず、`AkariData` シーケンスの最後のデータセットから
+        `params.save_from_data` で指定されたデータを取得しようとします。
+        `params.with_timestamp` が true の場合、`params.file_path` を変更して
+        現在のタイムスタンプを含め、保存されたファイルのバージョン管理に役立てます。
 
-        Special handling is implemented for audio data: if `params.save_from_data`
-        is "audio" and `params.file_path` ends with ".wav", the module attempts
-        to write a proper WAV file using metadata (channels, sample width, rate)
-        from `data.last().meta`. If this metadata is incomplete, it uses sensible
-        defaults (1 channel, 2 bytes sample width, 16000 Hz rate).
-        For all other data types or file extensions, the data is written in binary mode.
+        オーディオデータには特別な処理が実装されています。`params.save_from_data` が "audio" で、
+        `params.file_path` が ".wav" で終わる場合、モジュールは `data.last().meta` からの
+        メタデータ（チャンネル、サンプル幅、レート）を使用して適切な WAV ファイルを書き込もうとします。
+        このメタデータが不完全な場合は、適切なデフォルト値（1 チャンネル、2 バイトサンプル幅、
+        16000 Hz レート）が使用されます。他のすべてのデータ型またはファイル拡張子の場合、
+        データはバイナリモードで書き込まれます。
 
         Args:
-            data (AkariData): The `AkariData` object containing the pipeline's
-                current state. The data to be saved is sourced from its last dataset.
-            params (_SaveModuleParams): Configuration specifying the file path,
-                the data field to save, and whether to use a timestamp.
-            callback (Optional[AkariModuleType]): An optional callback module. This
-                parameter is currently not used by the SaveModule.
+            data (AkariData): パイプラインの現在の状態を含む `AkariData` オブジェクト。
+                保存するデータは、その最後のデータセットから取得されます。
+            params (_SaveModuleParams): ファイルパス、保存するデータフィールド、
+                およびタイムスタンプを使用するかどうかを指定する設定。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                このパラメータは現在 SaveModule では使用されていません。
 
         Returns:
-            AkariDataSet: The last `AkariDataSet` from the input `data` object.
-            This module does not modify the dataset itself but returns it to
-            maintain pipeline flow.
+            AkariDataSet: 入力 `data` オブジェクトの最後の `AkariDataSet`。
+            このモジュールはデータセット自体を変更しませんが、パイプラインフローを維持するために返します。
 
         Raises:
-            ValueError: If `params.save_from_data` does not correspond to a valid
-                or populated field in `data.last()`.
-            IOError: If file writing fails due to permissions, path issues, etc.
-            wave.Error: If writing a WAV file fails due to incorrect audio
-                parameters or data.
+            ValueError: `params.save_from_data` が `data.last()` の有効なフィールドまたは
+                移入されたフィールドに対応していない場合。
+            IOError: アクセス許可、パスの問題などによりファイル書き込みが失敗した場合。
+            wave.Error: 不正なオーディオパラメータまたはデータにより WAV ファイルの書き込みが失敗した場合。
         """
         try:
             save_data = data.last().__dict__[params.save_from_data]
@@ -137,18 +130,18 @@ class _SaveModule(AkariModule):
     def stream_call(
         self, data: AkariData, params: _SaveModuleParams, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
-        """Processes data for saving identically to the non-streaming `call` method.
+        """非ストリーミング `call` メソッドとまったく同じように保存用のデータを処理します。
 
-        This module does not implement distinct logic for streaming versus
-        non-streaming calls. Both invoke the same file-saving sequence.
+        このモジュールは、ストリーミングコールと非ストリーミングコールの個別のロジックを実装していません。
+        どちらも同じファイル保存シーケンスを呼び出します。
 
         Args:
-            data (AkariData): The `AkariData` object containing the data to save.
-            params (_SaveModuleParams): Configuration for the save operation.
-            callback (Optional[AkariModuleType]): An optional callback module,
-                currently unused.
+            data (AkariData): 保存するデータを含む `AkariData` オブジェクト。
+            params (_SaveModuleParams): 保存操作の設定。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                現在は使用されていません。
 
         Returns:
-            AkariDataSet: The last `AkariDataSet` from the input `data`.
+            AkariDataSet: 入力 `data` の最後の `AkariDataSet`。
         """
         return self.call(data, params, callback)

@@ -12,19 +12,18 @@ from akari import (
 
 @dataclasses.dataclass
 class _SerialModuleParamModule:
-    """Specifies a single Akari module's configuration for execution within a sequence managed by the SerialModule.
+    """SerialModule によって管理されるシーケンス内で実行するための単一の Akari モジュールの設定を指定します。
 
-    Each instance of this class details which module to run, what parameters it
-    should receive, and if any specific callback module should be associated with
-    its execution within the sequence.
+    このクラスの各インスタンスは、実行するモジュール、受信するパラメータ、
+    およびシーケンス内の実行に関連付ける特定のコールバックモジュールがあるかどうかを詳細に示します。
 
     Attributes:
-        moduleType (AkariModuleType): The class type of the Akari module to be executed.
-        moduleParams (AkariModuleParams): The specific parameters instance to be passed
-            to the `call` or `stream_call` method of the `moduleType`.
-        moduleCallback (Optional[AkariModuleType]): An optional Akari module type
-            that will be passed as the callback to the executed module.
-            Defaults to None, indicating no specific callback override for this step.
+        moduleType (AkariModuleType): 実行する Akari モジュールのクラスタイプ。
+        moduleParams (AkariModuleParams): `moduleType` の `call` または `stream_call` メソッドに
+            渡される特定のパラメータインスタンス。
+        moduleCallback (Optional[AkariModuleType]): 実行されたモジュールへのコールバックとして
+            渡されるオプションの Akari モジュールタイプ。デフォルトは None で、
+            このステップの特定のコールバックオーバーライドがないことを示します。
     """
 
     moduleType: AkariModuleType
@@ -34,62 +33,55 @@ class _SerialModuleParamModule:
 
 @dataclasses.dataclass
 class _SerialModuleParams:
-    """Contains the ordered list of module configurations that the SerialModule will execute.
+    """SerialModule が実行するモジュール設定の順序付きリストが含まれています。
 
-    The primary attribute `modules` holds a list, where each element is an
-    instance of `_SerialModuleParamModule`, defining one step in the serial execution chain.
+    プライマリアトリビュート `modules` はリストを保持し、各要素は
+    `_SerialModuleParamModule` のインスタンスであり、シリアル実行チェーンの 1 ステップを定義します。
 
     Attributes:
-        modules (list[_SerialModuleParamModule]): An ordered list of module execution
-            definitions. The SerialModule will iterate through this list, executing
-            each defined module in the specified order.
+        modules (list[_SerialModuleParamModule]): モジュール実行定義の順序付きリスト。
+            SerialModule はこのリストを反復処理し、定義された各モジュールを
+            指定された順序で実行します。
     """
 
     modules: list[_SerialModuleParamModule]
 
 
 class _SerialModule(AkariModule):
-    """Orchestrates the execution of a predefined list of Akari modules in a strict sequential order.
+    """事前定義された Akari モジュールのリストの実行を厳密なシーケンシャル順序で調整します。
 
-    This module takes a list of module configurations (type, parameters, and
-    optional callback) and invokes each one using the AkariRouter. The output
-    `AkariData` from one module becomes the input for the next, effectively
-    chaining them together.
+    このモジュールは、モジュール設定（タイプ、パラメータ、およびオプションのコールバック）のリストを取得し、
+    AkariRouter を使用してそれぞれを呼び出します。1 つのモジュールからの出力 `AkariData` は、
+    次のモジュールの入力となり、効果的にそれらを連鎖させます。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs a SerialModule instance.
+        """SerialModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, necessary for calling
-                each module in the defined sequence.
-            logger (AkariLogger): The logger instance for recording operational details
-                and debugging information.
+            router (AkariRouter): Akari ルーターインスタンス。定義されたシーケンス内の各モジュールを
+                呼び出すために必要です。
+            logger (AkariLogger): 操作の詳細とデバッグ情報を記録するためのロガーインスタンス。
         """
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: _SerialModuleParams, callback: AkariModuleType | None = None) -> AkariData:
-        """Processes an AkariData object by passing it sequentially through a configured list of Akari modules.
+        """設定された Akari モジュールのリストを介して AkariData オブジェクトを順番に渡すことによって処理します。
 
-        For each module defined in `params.modules`, this method invokes the
-        module using the AkariRouter. The `AkariData` object is updated with the
-        result of each module call and then passed as input to the subsequent module.
-        The `callback` argument passed to this `call` method is not used by the
-        SerialModule itself during the execution of the sequence.
+        `params.modules` で定義された各モジュールについて、このメソッドは AkariRouter を使用して
+        モジュールを呼び出します。`AkariData` オブジェクトは各モジュール呼び出しの結果で更新され、
+        その後、後続のモジュールへの入力として渡されます。この `call` メソッドに渡された
+        `callback` 引数は、シーケンスの実行中に SerialModule 自体では使用されません。
 
         Args:
-            data (AkariData): The initial AkariData object to be processed by the
-                first module in the sequence.
-            params (_SerialModuleParams): An object containing the list of
-                `_SerialModuleParamModule` instances, defining the modules to be
-                executed and their respective parameters and callbacks.
-            callback (Optional[AkariModuleType]): An optional callback module. This
-                parameter is currently not utilized by the SerialModule in its
-                orchestration logic.
+            data (AkariData): シーケンスの最初のモジュールによって処理される初期 AkariData オブジェクト。
+            params (_SerialModuleParams): 実行するモジュールとそのそれぞれのパラメータおよび
+                コールバックを定義する `_SerialModuleParamModule` インスタンスのリストを含むオブジェクト。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                このパラメータは現在、SerialModule のオーケストレーションロジックでは利用されていません。
 
         Returns:
-            AkariData: The AkariData object after it has been processed by all
-            modules in the configured sequence.
+            AkariData: 設定されたシーケンスのすべてのモジュールによって処理された後の AkariData オブジェクト。
         """
         for module in params.modules:
             data = self._router.callModule(
@@ -105,24 +97,22 @@ class _SerialModule(AkariModule):
     def stream_call(
         self, data: AkariData, params: _SerialModuleParams, callback: AkariModuleType | None = None
     ) -> AkariData:
-        """Processes an AkariData object sequentially through configured modules, mirroring the non-streaming `call` behavior.
+        """設定されたモジュールを介して AkariData オブジェクトを順番に処理し、非ストリーミング `call` の動作をミラーリングします。
 
-        Although named `stream_call`, this implementation currently iterates
-        through the sequence of modules and calls each one in a non-streaming
-        manner (i.e., `streaming=False` is passed to the router).
-        True streaming behavior for the entire sequence is not implemented here;
-        individual modules in the sequence might perform their own streaming
-        if their `stream_call` is invoked by the router (which is not the case here).
+        `stream_call` という名前ですが、この実装は現在、モジュールのシーケンスを反復処理し、
+        それぞれを非ストリーミング方式で呼び出します（つまり、`streaming=False` がルーターに渡されます）。
+        シーケンス全体の真のストリーミング動作はここでは実装されていません。
+        シーケンス内の個々のモジュールは、ルーターによって `stream_call` が呼び出された場合
+        （ここではそうではありません）、独自のストリーミングを実行する場合があります。
 
         Args:
-            data (AkariData): The initial AkariData object.
-            params (_SerialModuleParams): The parameters defining the sequence of
-                modules, identical to the `call` method.
-            callback (Optional[AkariModuleType]): An optional callback module,
-                passed along but not directly used by this method's sequential logic.
+            data (AkariData): 初期 AkariData オブジェクト。
+            params (_SerialModuleParams): `call` メソッドと同じ、モジュールのシーケンスを定義するパラメータ。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                渡されますが、このメソッドのシーケンシャルロジックでは直接使用されません。
 
         Returns:
-            AkariData: The AkariData object after processing by all modules in the sequence.
+            AkariData: シーケンスのすべてのモジュールによる処理後の AkariData オブジェクト。
         """
         for module in params.modules:
             data = self._router.callModule(

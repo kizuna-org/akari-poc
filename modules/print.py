@@ -13,50 +13,44 @@ from akari import (
 
 
 class _PrintModule(AkariModule):
-    """Provides a debugging utility that logs the content of the most recent dataset in an AkariData sequence.
+    """AkariData シーケンスの最新のデータセットの内容をログに記録するデバッグユーティリティを提供します。
 
-    Its primary function is to offer developers insight into the data structure
-    and content at a specific point in the Akari pipeline. It logs various
-    aspects of the last dataset, including a JSON representation if possible,
-    and individual fields.
+    その主な機能は、Akari パイプラインの特定のポイントでのデータ構造と内容に関する
+    開発者の洞察を提供することです。可能な場合は JSON 表現を含む最後のデータセットの
+    さまざまな側面と個々のフィールドをログに記録します。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs a PrintModule instance.
+        """PrintModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for potential
-                inter-module communication (though not directly used in this module's
-                current implementation beyond the base class).
-            logger (AkariLogger): The logger instance to which the dataset
-                information will be written.
+            router (AkariRouter): Akari ルーターインスタンス。潜在的なモジュール間通信に使用されます
+                （ただし、このモジュールの現在の実装では基本クラスを超えて直接使用されません）。
+            logger (AkariLogger): データセット情報が書き込まれるロガーインスタンス。
         """
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: Any, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Inspects and logs the contents of the last AkariDataSet within the provided AkariData object.
+        """提供された AkariData オブジェクト内の最後の AkariDataSet の内容を検査してログに記録します。
 
-        The method first attempts to serialize the entire last dataset to a JSON
-        string for a comprehensive overview. If serialization fails (e.g., due to
-        non-serializable data like bytes), it falls back to logging the raw string
-        representation of the dataset.
+        このメソッドはまず、包括的な概要のために最後のデータセット全体を JSON 文字列に
+        シリアル化しようとします。シリアル化が失敗した場合（たとえば、バイトなどの
+        シリアル化不可能なデータのため）、データセットの生の文字列表現のログ記録にフォールバックします。
 
-        Subsequently, it iterates through all attributes of the last dataset. For
-        attributes that are instances of `AkariDataSetType` and have a non-None
-        `main` value, it logs the field name and this `main` value. For other
-        non-None attributes, it logs their field name and value directly.
+        その後、最後のデータセットのすべての属性を反復処理します。`AkariDataSetType` の
+        インスタンスであり、None でない `main` 値を持つ属性の場合、フィールド名とこの `main` 値を
+        ログに記録します。他の None でない属性の場合、フィールド名と値を直接ログに記録します。
 
         Args:
-            data (AkariData): The AkariData object containing the sequence of
-                datasets. The last dataset in this sequence is the one inspected.
-            params (Any): Parameters for this module. Currently, these parameters
-                are logged but not otherwise used by the module's logic.
-            callback (Optional[AkariModuleType]): An optional callback module.
-                Currently, this parameter is logged but not used.
+            data (AkariData): データセットのシーケンスを含む AkariData オブジェクト。
+                このシーケンスの最後のデータセットが検査対象です。
+            params (Any): このモジュールのパラメータ。現在、これらのパラメータはログに記録されますが、
+                モジュールのロジックではそれ以外には使用されません。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                現在、このパラメータはログに記録されますが、使用されません。
 
         Returns:
-            AkariDataSet: The same last dataset that was inspected. This module
-            does not modify the data.
+            AkariDataSet: 検査されたものと同じ最後のデータセット。このモジュールはデータを変更しません。
         """
         self._logger.debug("PrintModule called")
         self._logger.debug("Data: %s", data)
@@ -81,19 +75,19 @@ class _PrintModule(AkariModule):
         return data.last()
 
     def stream_call(self, data: AkariData, params: Any, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Processes streaming data by applying the same logging logic as the non-streaming `call` method.
+        """非ストリーミング `call` メソッドと同じロギングロジックを適用してストリーミングデータを処理します。
 
-        This module treats streaming and non-streaming calls identically,
-        logging the content of the last dataset received.
+        このモジュールは、ストリーミングコールと非ストリーミングコールを同じように扱い、
+        受信した最後のデータセットの内容をログに記録します。
 
         Args:
-            data (AkariData): The AkariData object, typically containing the latest
-                chunk or segment of a stream as its last dataset.
-            params (Any): Parameters for this module (logged but not used).
-            callback (Optional[AkariModuleType]): An optional callback module
-                (logged but not used).
+            data (AkariData): AkariData オブジェクト。通常、ストリームの最新のチャンクまたは
+                セグメントを最後のデータセットとして含みます。
+            params (Any): このモジュールのパラメータ（ログに記録されますが、使用されません）。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール
+                （ログに記録されますが、使用されません）。
 
         Returns:
-            AkariDataSet: The last dataset from the input AkariData object.
+            AkariDataSet: 入力 AkariData オブジェクトの最後のデータセット。
         """
         return self.call(data, params, callback)

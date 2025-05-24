@@ -19,44 +19,41 @@ from akari import (
 
 @dataclasses.dataclass
 class _MicModuleParams:
-    """Defines configuration settings for microphone audio capture.
+    """マイク音声キャプチャの設定を定義します。
 
-    Controls aspects like audio format (sample rate, channels, PyAudio format),
-    device selection, chunking behavior for processing, and how callback
-    modules are invoked with the captured audio data.
+    音声形式（サンプルレート、チャンネル、PyAudio 形式）、デバイス選択、
+    処理のためのチャンク化動作、キャプチャされた音声データでコールバックモジュールを
+    どのように呼び出すかなどの側面を制御します。
 
     Attributes:
-        format (int): The PyAudio format constant for samples (e.g., `pyaudio.paInt16`).
-            Determines sample size and type. Defaults to `pyaudio.paInt16`.
-        rate (int): The desired sampling rate in Hertz (samples per second).
-            Common values include 16000, 24000, 44100, 48000. Defaults to 24000.
-        channels (int): The number of audio channels to record (e.g., 1 for mono,
-            2 for stereo). Defaults to 1.
-        frames_per_buffer (int): The number of audio frames PyAudio should read
-            in a single operation. This influences latency and processing granularity.
-            Defaults to 1024.
-        input_device_index (Optional[int]): The numerical index of the audio input
-            device to use. If `None`, PyAudio's default input device is selected.
-            Defaults to None.
-        streamDurationMilliseconds (int): Specifies the duration, in milliseconds,
-            of each audio segment that is collected before being dispatched to
-            the callback module. Defaults to 500 ms.
-        destructionMilliseconds (int): Defines a sliding window, in milliseconds.
-            Audio frames older than this duration (relative to the newest frame
-            in the current processing segment) are discarded from the internal
-            buffer. This helps manage memory for continuous recording. Defaults to 500 ms.
-        callback_when_thread_is_alive (bool): Governs whether a new callback
-            can be initiated if the previous callback thread is still running.
-            If False (default), a new callback is only started if the previous one
-            has completed. If True, new callbacks can be launched concurrently.
-            Defaults to False.
-        callbackParams (Any | None): Arbitrary parameters that will be passed to
-            the callback module when it's invoked. This allows contextual
-            information to be sent alongside the audio data. Defaults to None.
-        callback_callback (Optional[AkariModuleType]): The class type of the Akari
-            module to be called when an audio segment (of `streamDurationMilliseconds`)
-            is ready. This module will receive the recorded audio data.
-            Defaults to None, meaning no callback will be triggered.
+        format (int): サンプルの PyAudio 形式定数（例: `pyaudio.paInt16`）。
+            サンプルサイズとタイプを決定します。デフォルトは `pyaudio.paInt16` です。
+        rate (int): ヘルツ単位の目的のサンプリングレート（サンプル/秒）。
+            一般的な値には 16000、24000、44100、48000 が含まれます。デフォルトは 24000 です。
+        channels (int): 録音するオーディオチャンネルの数（例: モノラルは 1、ステレオは 2）。
+            デフォルトは 1 です。
+        frames_per_buffer (int): PyAudio が単一の操作で読み取るオーディオフレームの数。
+            これはレイテンシと処理の粒度に影響します。デフォルトは 1024 です。
+        input_device_index (Optional[int]): 使用するオーディオ入力デバイスの数値インデックス。
+            `None` の場合、PyAudio のデフォルト入力デバイスが選択されます。デフォルトは None です。
+        streamDurationMilliseconds (int): コールバックモジュールにディスパッチされる前に
+            収集される各オーディオセグメントの期間をミリ秒単位で指定します。
+            デフォルトは 500 ミリ秒です。
+        destructionMilliseconds (int): ミリ秒単位のスライディングウィンドウを定義します。
+            この期間より古いオーディオフレーム（現在の処理セグメントの最新フレームからの相対的な期間）は
+            内部バッファから破棄されます。これにより、連続録音のメモリ管理が容易になります。
+            デフォルトは 500 ミリ秒です。
+        callback_when_thread_is_alive (bool): 前のコールバックスレッドがまだ実行中の場合に、
+            新しいコールバックを開始できるかどうかを制御します。False（デフォルト）の場合、
+            前のコールバックが完了した場合にのみ新しいコールバックが開始されます。
+            True の場合、新しいコールバックを同時に起動できます。デフォルトは False です。
+        callbackParams (Any | None): 呼び出されたときにコールバックモジュールに渡される
+            任意のパラメータ。これにより、コンテキスト情報を音声データとともに送信できます。
+            デフォルトは None です。
+        callback_callback (Optional[AkariModuleType]): オーディオセグメント
+            （`streamDurationMilliseconds` の）の準備ができたときに呼び出される Akari モジュールの
+            クラスタイプ。このモジュールは録音された音声データを受信します。
+            デフォルトは None で、コールバックはトリガーされません。
     """
 
     format: int = pyaudio.paInt16
@@ -72,79 +69,76 @@ class _MicModuleParams:
 
 
 class _MicModule(AkariModule):
-    """Captures audio input from a designated microphone device.
+    """指定されたマイクデバイスから音声入力をキャプチャします。
 
-    Manages a continuous recording loop, processing incoming audio into
-    configurable chunks. For each complete chunk, it can dispatch the audio
-    data (along with associated metadata) to a specified callback Akari module
-    for further processing (e.g., speech-to-text, VAD). Callbacks are executed
-    in separate threads to avoid blocking the main recording loop.
+    連続録音ループを管理し、受信オーディオを設定可能なチャンクに処理します。
+    完全なチャンクごとに、オーディオデータ（関連するメタデータとともに）を
+    指定されたコールバック Akari モジュールにディスパッチして、
+    さらなる処理（音声認識、VAD など）を行うことができます。
+    コールバックは、メインの録音ループをブロックしないように別のスレッドで実行されます。
 
     Attributes:
-        _thread (threading.Thread): Stores the currently active callback thread,
-            if any. This helps manage concurrent callback executions based on
-            module parameters.
+        _thread (threading.Thread): 現在アクティブなコールバックスレッドを格納します（存在する場合）。
+            これは、モジュールパラメータに基づいて同時コールバック実行を管理するのに役立ちます。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs a MicModule instance.
+        """MicModule インスタンスを構築します。
 
-        Initializes the base AkariModule and prepares a placeholder for managing
-        the callback thread.
+        ベース AkariModule を初期化し、コールバックスレッドを管理するための
+        プレースホルダーを準備します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used to invoke
-                callback modules.
-            logger (AkariLogger): The logger instance for recording operational
-                details and debugging information.
+            router (AkariRouter): Akari ルーターインスタンス。コールバックモジュールの呼び出しに使用されます。
+            logger (AkariLogger): 操作の詳細とデバッグ情報を記録するためのロガーインスタンス。
         """
         super().__init__(router, logger)
         self._thread: threading.Thread = threading.Thread()
 
     def call(self, data: AkariData, params: _MicModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Initiates and manages the continuous audio recording loop from the microphone.
+        """マイクからの連続音声録音ループを開始および管理します。
 
-        Opens a PyAudio stream configured by `params`. It then enters an infinite
-        loop, reading audio data in chunks. These chunks are accumulated until
-        `params.streamDurationMilliseconds` of audio is collected. At this point,
-        an `AkariDataSet` is created containing the accumulated audio (as `main`
-        and in a stream) and relevant metadata (channels, sample width, rate).
+        `params` で設定された PyAudio ストリームを開きます。その後、無限ループに入り、
+        チャンク単位で音声データを読み取ります。これらのチャンクは、
+        `params.streamDurationMilliseconds` の音声が収集されるまで蓄積されます。
+        この時点で、蓄積された音声（`main` として、およびストリーム内）と
+        関連するメタデータ（チャンネル、サンプル幅、レート）を含む `AkariDataSet` が作成されます。
 
-        If a `callback` module (specified by `params.callback_callback`) is configured,
-        a new thread is spawned to invoke this callback module via the AkariRouter,
-        passing the newly created `AkariData` (containing the audio dataset) and
-        `params.callbackParams`. The behavior of launching new threads when one
-        is already active is controlled by `params.callback_when_thread_is_alive`.
+        （`params.callback_callback` で指定された）`callback` モジュールが設定されている場合、
+        AkariRouter を介してこのコールバックモジュールを呼び出すために新しいスレッドが生成され、
+        新しく作成された `AkariData`（オーディオデータセットを含む）と
+        `params.callbackParams` が渡されます。1つのスレッドが既にアクティブな場合に
+        新しいスレッドを起動する動作は、`params.callback_when_thread_is_alive` によって制御されます。
 
-        The method maintains a sliding window of audio frames based on
-        `params.destructionMilliseconds` to manage memory.
+        このメソッドは、メモリを管理するために `params.destructionMilliseconds` に基づいて
+        オーディオフレームのスライディングウィンドウを維持します。
 
         Note:
-            This method runs an infinite loop and is expected to be terminated
-            by an external event (e.g., `KeyboardInterrupt` in a typical script,
-            or by the application managing the Akari pipeline). The `data` argument
-            is used as a template for creating new `AkariData` instances for
-            callbacks, but the input `data` itself is not directly modified or used
-            as input audio. The primary output is via the callback mechanism.
+            このメソッドは無限ループを実行し、外部イベント
+            （例えば、典型的なスクリプトでの `KeyboardInterrupt`、または Akari パイプラインを
+            管理するアプリケーションによる）によって終了されることが期待されます。
+            `data` 引数は、コールバック用の新しい `AkariData` インスタンスを作成するための
+            テンプレートとして使用されますが、入力 `data` 自体は直接変更されたり、
+            入力オーディオとして使用されたりすることはありません。主要な出力は、
+            コールバックメカニズムを介して行われます。
 
         Args:
-            data (AkariData): An initial (usually empty) AkariData object.
-            params (_MicModuleParams): Configuration parameters for the microphone
-                recording, chunking, and callback behavior.
-            callback (Optional[AkariModuleType]): The Akari module type specified
-                in `params.callback_callback` is the one actually used for the
-                threaded callback. This top-level `callback` argument is effectively
-                ignored in the current implementation logic for the threaded callback.
+            data (AkariData): 初期（通常は空の）AkariData オブジェクト。
+            params (_MicModuleParams): マイクの録音、チャンク化、およびコールバック動作の
+                設定パラメータ。
+            callback (Optional[AkariModuleType]): `params.callback_callback` で指定された
+                Akari モジュールタイプが、スレッド化されたコールバックに実際に使用されるものです。
+                このトップレベルの `callback` 引数は、スレッド化されたコールバックの現在の
+                実装ロジックでは事実上無視されます。
 
         Returns:
-            AkariDataSet: An empty `AkariDataSet`. The actual audio data is
-            dispatched through the threaded callback mechanism.
+            AkariDataSet: 空の `AkariDataSet`。実際のオーディオデータは、
+            スレッド化されたコールバックメカニズムを介してディスパッチされます。
 
         Raises:
-            PyAudioException: If there are issues opening or reading from the
-                audio stream (e.g., device not found, invalid parameters).
-            Exception: Other exceptions might occur depending on PyAudio and
-                system audio configuration.
+            PyAudioException: オーディオストリームのオープンまたは読み取りに問題がある場合
+                （例: デバイスが見つからない、無効なパラメータ）。
+            Exception: PyAudio およびシステムのオーディオ設定によっては、他の例外が発生する可能性があります。
         """
         dataset = AkariDataSet()
 

@@ -7,82 +7,82 @@ T = TypeVar("T")
 
 
 class _AkariDataStreamType(Generic[T]):
-    """Manages a sequence of data points, typically representing deltas or chunks within a stream.
+    """データポイントのシーケンスを管理します。通常、ストリーム内のデルタまたはチャンクを表します。
 
-    Allows for typed data streams, ensuring that all elements within a stream
-    are of a consistent type. Provides basic operations like accessing the last
-    element, getting the length, and retrieving elements by index.
+    型付けされたデータストリームを許可し、ストリーム内のすべての要素が
+    一貫した型であることを保証します。最後の要素へのアクセス、長さの取得、
+    インデックスによる要素の取得などの基本的な操作を提供します。
 
     Attributes:
-        _delta (list[T]): Stores the sequence of data points. The name `_delta`
-            suggests that these points might represent changes or increments,
-            but it can hold any sequence of data.
+        _delta (list[T]): データポイントのシーケンスを格納します。名前 `_delta` は
+            これらのポイントが変更または増分を表す可能性があることを示唆していますが、
+            任意のデータシーケンスを保持できます。
     """
 
     def __init__(self, delta: list[T]) -> None:
-        """Constructs a new data stream instance.
+        """新しいデータストリームインスタンスを構築します。
 
         Args:
-            delta (list[T]): The initial list of data points to populate the stream.
+            delta (list[T]): ストリームに移入するデータポイントの初期リスト。
         """
         self._delta = delta
 
     def last(self) -> T:
-        """Fetches the most recently added data point in the stream.
+        """ストリームに最後に追加されたデータポイントを取得します。
 
         Returns:
-            T: The last data point.
+            T: 最後のデータポイント。
 
         Raises:
-            IndexError: If the stream contains no elements.
+            IndexError: ストリームに要素が含まれていない場合。
         """
         if not self._delta:
             raise IndexError("No history available")
         return self._delta[-1]
 
     def __len__(self) -> int:
-        """Computes the total number of data points currently in the stream.
+        """ストリーム内の現在のデータポイントの総数を計算します。
 
         Returns:
-            int: The count of data points.
+            int: データポイントの数。
         """
         return len(self._delta)
 
     def __getitem__(self, index: int) -> T:
-        """Accesses a data point at a specific position (index) in the stream.
+        """ストリーム内の特定の位置（インデックス）にあるデータポイントにアクセスします。
 
         Args:
-            index (int): The zero-based index of the desired data point.
+            index (int): 目的のデータポイントの0から始まるインデックス。
 
         Returns:
-            T: The data point located at the specified index.
+            T: 指定されたインデックスにあるデータポイント。
 
         Raises:
-            IndexError: If the provided index is outside the valid range of the stream.
+            IndexError: 指定されたインデックスがストリームの有効な範囲外の場合。
         """
         if index < 0 or index >= len(self._delta):
             raise IndexError("Index out of range")
         return self._delta[index]
 
     def __repr__(self) -> str:
-        """Generates a developer-friendly string representation of the data stream.
+        """データストリームの開発者向けの文字列表現を生成します。
 
         Returns:
-            str: A string showing the class name and the internal delta list.
+            str: クラス名と内部デルタリストを示す文字列。
         """
         return f"AkariDataStreamType(delta={self._delta})"
 
     def __eq__(self, value: object) -> bool:
-        """Determines if this data stream is equivalent to another object.
+        """このデータストリームが別のオブジェクトと等価であるかどうかを判断します。
 
-        Equality is based on whether the other object is also an `_AkariDataStreamType`
-        and if their internal `_delta` lists are identical.
+        等価性は、他のオブジェクトも `_AkariDataStreamType` であり、
+        それらの内部 `_delta` リストが同一であるかどうかに基づいています。
 
         Args:
-            value (object): The object to compare against this stream.
+            value (object): このストリームと比較するオブジェクト。
 
         Returns:
-            bool: True if the objects are considered equal, False otherwise.
+            bool: オブジェクトが等価と見なされる場合は True、そうでない場合は False。
         """
         if not isinstance(value, _AkariDataStreamType):
             return NotImplemented
@@ -91,21 +91,18 @@ class _AkariDataStreamType(Generic[T]):
 
 @dataclasses.dataclass
 class _AkariDataModuleType:
-    """Encapsulates metadata detailing the execution context of an Akari module that generated a specific dataset.
+    """特定のデータセットを生成した Akari モジュールの実行コンテキストを詳述するメタデータをカプセル化します。
 
-    Provides crucial information for tracing data provenance and understanding
-    the pipeline's behavior.
+    データの来歴を追跡し、パイプラインの動作を理解するための重要な情報を提供します。
 
     Attributes:
-        moduleType: The specific type (class) of the Akari module that was executed.
-        params: The parameters instance passed to the module during its execution.
-        streaming (bool): Indicates if the module was invoked in a streaming context.
-        callback (Optional[_AkariModuleType]): The type of the callback module, if one was
-            configured for the executed module.
-        startTime (float): The timestamp (from `time.process_time()`) marking the
-            beginning of the module's execution.
-        endTime (float): The timestamp (from `time.process_time()`) marking the
-            completion of the module's execution.
+        moduleType: 実行された Akari モジュールの特定の型（クラス）。
+        params: 実行中にモジュールに渡されたパラメータインスタンス。
+        streaming (bool): モジュールがストリーミングコンテキストで呼び出されたかどうかを示します。
+        callback (Optional[_AkariModuleType]): 実行されたモジュール用に構成されていた場合、
+            コールバックモジュールの型。
+        startTime (float): モジュールの実行開始を示すタイムスタンプ（`time.process_time()` から）。
+        endTime (float): モジュールの実行完了を示すタイムスタンプ（`time.process_time()` から）。
     """
 
     moduleType: _AkariModuleType
@@ -117,56 +114,56 @@ class _AkariDataModuleType:
 
 
 class _AkariDataSetType(Generic[T]):
-    """Provides a structured container for a specific type of data within an AkariDataSet.
+    """AkariDataSet 内の特定の型のデータ用の構造化されたコンテナを提供します。
 
-    It holds a primary data payload (`main`), an optional associated stream
-    (`stream`), and a dictionary for any other related data points (`others`).
-    This generic class allows for type safety for these components.
+    プライマリデータペイロード（`main`）、オプションの関連ストリーム（`stream`）、
+    およびその他の関連データポイント（`others`）用の辞書を保持します。
+    このジェネリッククラスは、これらのコンポーネントの型安全性を可能にします。
 
     Attributes:
-        main (T): The primary data artifact (e.g., a string of text, a block of audio bytes).
-        stream (Optional[_AkariDataStreamType[T]]): An optional stream of data related
-            to `main`. For instance, if `main` is a complete audio transcription,
-            `stream` might contain incremental speech segments.
-        others (Dict[str, T]): A dictionary for storing additional, named data points
-            of the same type `T` that are contextually related to `main`.
+        main (T): プライマリデータアーティファクト（例：テキスト文字列、オーディオバイトのブロック）。
+        stream (Optional[_AkariDataStreamType[T]]): `main` に関連するオプションのデータストリーム。
+            たとえば、`main` が完全な音声文字起こしである場合、`stream` には
+            増分音声セグメントが含まれる場合があります。
+        others (Dict[str, T]): `main` に文脈的に関連する同じ型 `T` の
+            追加の名前付きデータポイントを格納するための辞書。
     """
 
     def __init__(
         self, main: T, stream: _AkariDataStreamType[T] | None = None, others: Dict[str, T] | None = None
     ) -> None:
-        """Constructs a new typed data set.
+        """新しい型指定されたデータセットを構築します。
 
         Args:
-            main (T): The primary data point for this set.
-            stream (Optional[_AkariDataStreamType[T]]): An optional stream of related
-                data points. Defaults to None if not provided.
-            others (Optional[Dict[str, T]]): A dictionary of other named data points
-                of the same type `T`. Defaults to an empty dictionary if not provided.
+            main (T): このセットのプライマリデータポイント。
+            stream (Optional[_AkariDataStreamType[T]]): 関連するデータポイントのオプションのストリーム。
+                指定されていない場合は None にデフォルト設定されます。
+            others (Optional[Dict[str, T]]): 同じ型 `T` の他の名前付きデータポイントの辞書。
+                指定されていない場合は空の辞書にデフォルト設定されます。
         """
         self.main = main
         self.stream = stream
         self.others = others if others is not None else {}
 
     def __repr__(self) -> str:
-        """Generates a developer-friendly string representation of the typed data set.
+        """型指定されたデータセットの開発者向けの文字列表現を生成します。
 
         Returns:
-            str: A string showing the class name and its `main`, `stream`, and `others` attributes.
+            str: クラス名とその `main`、`stream`、および `others` 属性を示す文字列。
         """
         return f"AkariDataSetType(main={self.main}, stream={self.stream}, others={self.others})"
 
     def __eq__(self, value: object) -> bool:
-        """Determines if this typed data set is equivalent to another object.
+        """この型指定されたデータセットが別のオブジェクトと等価であるかどうかを判断します。
 
-        Equality requires the other object to be an `_AkariDataSetType` and for
-        their `main`, `stream`, and `others` attributes to be respectively equal.
+        等価性には、他のオブジェクトが `_AkariDataSetType` であり、
+        それらの `main`、`stream`、および `others` 属性がそれぞれ等しいことが必要です。
 
         Args:
-            value (object): The object to compare against this typed data set.
+            value (object): この型指定されたデータセットと比較するオブジェクト。
 
         Returns:
-            bool: True if the objects are considered equal, False otherwise.
+            bool: オブジェクトが等価と見なされる場合は True、そうでない場合は False。
         """
         if not isinstance(value, _AkariDataSetType):
             return NotImplemented
@@ -174,27 +171,27 @@ class _AkariDataSetType(Generic[T]):
 
 
 class _AkariDataSet:
-    """Aggregates various types of data (text, audio, boolean, metadata) produced by a single module execution.
+    """単一のモジュール実行によって生成されたさまざまな型のデータ（テキスト、オーディオ、ブール値、メタデータ）を集約します。
 
-    It also stores metadata about the module execution itself. This class acts as a
-    standardized container for data passed between modules in an Akari pipeline.
+    また、モジュール実行自体のメタデータも格納します。このクラスは、
+    Akari パイプラインのモジュール間で渡されるデータの標準化されたコンテナとして機能します。
 
     Attributes:
-        module (_AkariDataModuleType): Metadata about the module that generated this dataset.
-            This is typically set by the AkariRouter after a module executes.
-        text (Optional[_AkariDataSetType[str]]): Holds string-based data.
-        audio (Optional[_AkariDataSetType[bytes]]): Holds byte-based audio data.
-        bool (Optional[_AkariDataSetType[bool]]): Holds boolean data.
-        meta (Optional[_AkariDataSetType[dict[str, Any]]]): Holds dictionary-based
-            metadata, often used for details like audio sampling rates or content types.
-        allData (Any | None): A flexible field for storing any other type of data
-            that doesn't fit the predefined categories, such as raw API responses.
+        module (_AkariDataModuleType): このデータセットを生成したモジュールに関するメタデータ。
+            これは通常、モジュール実行後に AkariRouter によって設定されます。
+        text (Optional[_AkariDataSetType[str]]): 文字列ベースのデータを保持します。
+        audio (Optional[_AkariDataSetType[bytes]]): バイトベースのオーディオデータを保持します。
+        bool (Optional[_AkariDataSetType[bool]]): ブール値を保持します。
+        meta (Optional[_AkariDataSetType[dict[str, Any]]]): 辞書ベースのメタデータを保持します。
+            オーディオサンプリングレートやコンテンツタイプなどの詳細によく使用されます。
+        allData (Any | None): 事前定義されたカテゴリに適合しない他の型のデータ
+            （生の API 応答など）を格納するための柔軟なフィールド。
     """
 
     module: _AkariDataModuleType
 
     def __init__(self) -> None:
-        """Constructs an empty AkariDataSet, ready to be populated by a module."""
+        """空の AkariDataSet を構築し、モジュールによって移入される準備をします。"""
         self.text: _AkariDataSetType[str] | None = None
         self.audio: _AkariDataSetType[bytes] | None = None
         self.bool: _AkariDataSetType[bool] | None = None
@@ -202,87 +199,87 @@ class _AkariDataSet:
         self.allData: Any | None = None
 
     def setModule(self, module: _AkariDataModuleType) -> None:
-        """Attaches module execution metadata to this dataset.
+        """モジュール実行メタデータをこのデータセットに添付します。
 
-        Allows the AkariRouter to associate a dataset with the module that
-        created it and the parameters under which it ran. This association is crucial
-        for data lineage and debugging.
+        AkariRouter がデータセットを、それを作成したモジュールと
+        それが実行されたパラメータに関連付けることを可能にします。この関連付けは、
+        データの系統とデバッグに不可欠です。
 
         Args:
-            module (_AkariDataModuleType): The metadata object describing the
-                module's execution context.
+            module (_AkariDataModuleType): モジュールの実行コンテキストを記述する
+                メタデータオブジェクト。
         """
         self.module = module
 
 
 class _AkariData:
-    """Orchestrates a sequence of datasets, representing the state and flow of data through an Akari processing pipeline.
+    """データセットのシーケンスを調整し、Akari処理パイプラインを介したデータの状態とフローを表します。
 
-    Modules in a pipeline typically receive an `_AkariData` instance, can inspect
-    previous datasets (especially the last one), and append new `_AkariDataSet`
-    instances to it as they produce results.
+    パイプライン内のモジュールは通常、`_AkariData` インスタンスを受け取り、
+    以前のデータセット（特に最後のデータセット）を検査し、結果を生成する際に
+    新しい `_AkariDataSet` インスタンスをそれに追加できます。
 
     Attributes:
-        datasets (list[_AkariDataSet]): An ordered list of datasets. New datasets
-            are appended to the end of this list.
+        datasets (list[_AkariDataSet]): データセットの順序付きリスト。新しいデータセットは
+            このリストの末尾に追加されます。
     """
 
     def __init__(self) -> None:
-        """Constructs an AkariData instance with an initially empty list of datasets."""
+        """最初に空のデータセットリストを持つ AkariData インスタンスを構築します。"""
         self.datasets: list[_AkariDataSet] = []
 
     def add(self, dataset: _AkariDataSet) -> None:
-        """Appends a new dataset to the end of the current sequence.
+        """現在のシーケンスの末尾に新しいデータセットを追加します。
 
         Args:
-            dataset (_AkariDataSet): The dataset to be added.
+            dataset (_AkariDataSet): 追加するデータセット。
         """
         self.datasets.append(dataset)
 
     def get(self, index: int) -> _AkariDataSet:
-        """Fetches a dataset from the sequence by its zero-based index.
+        """シーケンスからデータセットを0から始まるインデックスで取得します。
 
         Args:
-            index (int): The index of the dataset to retrieve.
+            index (int): 取得するデータセットのインデックス。
 
         Returns:
-            _AkariDataSet: The dataset located at the specified index.
+            _AkariDataSet: 指定されたインデックスにあるデータセット。
 
         Raises:
-            IndexError: If the index is outside the valid range of the dataset list.
+            IndexError: インデックスがデータセットリストの有効な範囲外の場合。
         """
         if index < 0 or index >= len(self.datasets):
             raise IndexError("Index out of range")
         return self.datasets[index]
 
     def last(self) -> _AkariDataSet:
-        """Accesses the most recently added dataset in the sequence.
+        """シーケンスに最後に追加されたデータセットにアクセスします。
 
         Returns:
-            _AkariDataSet: The last dataset in the list.
+            _AkariDataSet: リストの最後のデータセット。
 
         Raises:
-            IndexError: If the list of datasets is empty.
+            IndexError: データセットのリストが空の場合。
         """
         if not self.datasets:
             raise IndexError("No datasets available")
         return self.datasets[-1]
 
     def __getitem__(self, index: int) -> _AkariDataSet:
-        """Enables dataset retrieval using subscript notation (e.g., `akari_data[i]`).
+        """添字表記（例：`akari_data[i]`）を使用したデータセットの取得を有効にします。
 
         Args:
-            index (int): The index of the dataset to retrieve.
+            index (int): 取得するデータセットのインデックス。
 
         Returns:
-            _AkariDataSet: The dataset at the specified index.
+            _AkariDataSet: 指定されたインデックスのデータセット。
         """
         return self.get(index)
 
     def __len__(self) -> int:
-        """Calculates the total number of datasets currently in the sequence.
+        """シーケンス内の現在のデータセットの総数を計算します。
 
         Returns:
-            int: The count of datasets.
+            int: データセットの数。
         """
         return len(self.datasets)
