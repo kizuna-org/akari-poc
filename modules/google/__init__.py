@@ -1,4 +1,4 @@
-from .stt import _STTModule as STTModule
-from .stt import _STTModuleParams as STTModuleParams
+from .stt import GoogleSpeechToTextStreamModule as GoogleSpeechToTextStreamModule
+from .stt import GoogleSpeechToTextStreamParams as GoogleSpeechToTextStreamParams
 
-__all__ = ["STTModule", "STTModuleParams"]
+__all__ = ["GoogleSpeechToTextStreamModule", "GoogleSpeechToTextStreamParams"]
