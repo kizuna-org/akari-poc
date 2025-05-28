@@ -280,8 +280,12 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         )
         return status_dataset
 
-    def __del__(self) -> None:
-        # モジュール破棄時にストリームがアクティブなら停止を試みる
-        if hasattr(self, "_is_streaming_active") and self._is_streaming_active:  # 属性存在チェックを追加
-            self._logger.info("GoogleSpeechToTextStreamModule is being deleted. Stopping active stream.")
+    def close(self) -> None:
+        """Deterministically stop the streaming session and clean up resources."""
+        if hasattr(self, "_is_streaming_active") and self._is_streaming_active:
+            self._logger.info("Closing GoogleSpeechToTextStreamModule. Stopping active stream.")
             self._stop_streaming_session()
+
+    def __del__(self) -> None:
+        """Attempt cleanup when the object is deleted."""
+        self.close()
