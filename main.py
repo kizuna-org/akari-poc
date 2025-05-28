@@ -20,7 +20,7 @@ dotenv.load_dotenv()
 
 akariLogger = akari.getLogger(
     "Akari",
-    logging.DEBUG,
+    logging.INFO,
 )
 
 akariLogger.info("Hello, Akari!")
@@ -257,7 +257,8 @@ akariRouter.callModule(
         streamDurationMilliseconds=100,
         destructionMilliseconds=5000,
         callbackParams=google.GoogleSpeechToTextStreamParams(),
+        callback_callback=modules.PrintModule,
     ),
     streaming=False,
-    callback=modules.PrintModule,
+    callback=google.GoogleSpeechToTextStreamModule,
 )

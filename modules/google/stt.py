@@ -70,10 +70,12 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         self._downstream_callback_module_type: AkariModuleType | None = None
         self._downstream_callback_params_for_router: AkariModuleParams | None = None  # 型はAnyのまま
 
-        try:
-            self._logger.info("Google SpeechClient initialized successfully.")
-        except Exception as e:
-            self._logger.error(f"Failed to initialize Google SpeechClient: {e}")
+        # client はコンストラクタで受け取るので、ここでの初期化は不要
+        # try:
+        #     self._logger.info("Google SpeechClient initialized successfully.")
+        # except Exception as e:
+        #     self._logger.error(f"Failed to initialize Google SpeechClient: {e}")
+        self._logger.info("GoogleSpeechToTextStreamModule initialized with provided SpeechClient.")
 
     def _audio_chunk_provider(self) -> Generator[speech.StreamingRecognizeRequest, None, None]:
         """
@@ -99,17 +101,18 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         """
         Google STT APIとのストリーミング通信を処理し、結果をコールバックするスレッド関数。
         """
-        if not self._streaming_config:
-            self._logger.error("STT client or streaming_config not initialized in thread.")
+        if not self._streaming_config:  # self._client は __init__ で必須なのでチェック済みとみなす
+            self._logger.error("Streaming_config not initialized in thread.")
             self._is_streaming_active = False  # 安全のためストリーミングを停止
             return
 
         self._logger.info("Google STT processing thread starting.")
         try:
             requests = self._audio_chunk_provider()
+            # 修正: streaming_recognize のキーワード引数を 'config' に変更
             responses: Iterable[StreamingRecognizeResponse] = self._client.streaming_recognize(
-                streaming_config=self._streaming_config, requests=requests
-            )  # type: ignore
+                config=self._streaming_config, requests=requests
+            )
 
             for response in responses:
                 if not self._is_streaming_active and self._audio_queue.empty():  # 早期終了のチェック
@@ -153,13 +156,19 @@ class GoogleSpeechToTextStreamModule(AkariModule):
                         self._logger.error(f"Error calling downstream callback module: {e_router}")
 
         except Exception as e:
-            self._logger.error(f"Exception in Google STT processing thread: {e}")
+            self._logger.error(
+                f"Exception in Google STT processing thread: {e}", exc_info=True
+            )  # exc_info=Trueでスタックトレースも表示
         finally:
             self._logger.info("Google STT processing thread finished.")
             with self._lock:
                 self._is_streaming_active = False
-                if self._processing_thread and self._processing_thread.is_alive():
-                    self._audio_queue.put(None)
+                # スレッドが終了したことを示すためにNoneをキューに入れる（もしジェネレータがまだ待機している場合）
+                # ただし、通常はジェネレータ内の_is_streaming_activeで終了するはず
+                if (
+                    self._processing_thread and self._processing_thread.is_alive()
+                ):  # このチェックは理論上不要だが念のため
+                    self._audio_queue.put(None)  # 安全策
 
     def _start_streaming_session(
         self, params: GoogleSpeechToTextStreamParams, callback: AkariModuleType | None
@@ -170,7 +179,7 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         self._downstream_callback_module_type = callback
         self._downstream_callback_params_for_router = params.downstream_callback_params
 
-        recognition_config = speech.RecognitionConfig(
+        recognition_config_proto = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=params.sample_rate_hertz,
             language_code=params.language_code,
@@ -178,7 +187,7 @@ class GoogleSpeechToTextStreamModule(AkariModule):
             model=params.model if params.model else None,
         )
         self._streaming_config = speech.StreamingRecognitionConfig(
-            config=recognition_config, interim_results=params.interim_results
+            config=recognition_config_proto, interim_results=params.interim_results
         )
 
         while not self._audio_queue.empty():
@@ -194,12 +203,12 @@ class GoogleSpeechToTextStreamModule(AkariModule):
     def _stop_streaming_session(self) -> None:
         """STTストリーミングセッションを停止する。"""
         self._logger.info("Stopping Google STT stream session.")
-        self._is_streaming_active = False
-        self._audio_queue.put(None)
+        self._is_streaming_active = False  # まずフラグをFalseに
+        self._audio_queue.put(None)  # ジェネレータに終了を通知
 
         if self._processing_thread and self._processing_thread.is_alive():
             self._logger.debug("Waiting for STT processing thread to join...")
-            self._processing_thread.join(timeout=2.0)
+            self._processing_thread.join(timeout=2.0)  # タイムアウト付きで待機
             if self._processing_thread.is_alive():
                 self._logger.warning("STT processing thread did not join in time.")
         self._processing_thread = None
@@ -207,7 +216,7 @@ class GoogleSpeechToTextStreamModule(AkariModule):
 
     def call(
         self, data: AkariData, params: GoogleSpeechToTextStreamParams, callback: AkariModuleType | None = None
-    ) -> AkariDataSet:
+    ) -> AkariDataSet:  # paramsの型をGoogleSpeechToTextStreamParamsに変更
         self._logger.warning(
             "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT."
         )
@@ -229,9 +238,10 @@ class GoogleSpeechToTextStreamModule(AkariModule):
                     self._stop_streaming_session()
                 else:
                     self._logger.info("Received end_stream_flag but STT session was not active.")
-                return AkariDataSet()
+                return AkariDataSet()  # 終了時は空のデータセットを返す
 
-            if data.datasets:
+            # メタデータからサンプルレートを取得して上書き
+            if data.datasets:  # datasetsリストが空でないことを確認
                 last_dataset = data.last()
                 if last_dataset.meta and last_dataset.meta.main and "rate" in last_dataset.meta.main:
                     actual_sample_rate = last_dataset.meta.main["rate"]
@@ -243,12 +253,13 @@ class GoogleSpeechToTextStreamModule(AkariModule):
                         current_params.sample_rate_hertz = actual_sample_rate
 
             if not self._is_streaming_active:
+                # stream_call に渡された callback (下流モジュール) を使用
                 self._start_streaming_session(current_params, callback)
 
             audio_chunk: bytes | None = None
-            if data.datasets:
+            if data.datasets:  # datasetsリストが空でないことを確認
                 last_dataset = data.last()
-                if last_dataset.audio:
+                if last_dataset.audio:  # audio属性がNoneでないことを確認
                     if last_dataset.audio.stream and len(last_dataset.audio.stream) > 0:
                         audio_chunk = last_dataset.audio.stream.last()
                     elif last_dataset.audio.main:
@@ -270,6 +281,7 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         return status_dataset
 
     def __del__(self) -> None:
-        if self._is_streaming_active:
+        # モジュール破棄時にストリームがアクティブなら停止を試みる
+        if hasattr(self, "_is_streaming_active") and self._is_streaming_active:  # 属性存在チェックを追加
             self._logger.info("GoogleSpeechToTextStreamModule is being deleted. Stopping active stream.")
             self._stop_streaming_session()
