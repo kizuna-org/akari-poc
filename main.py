@@ -69,7 +69,10 @@ vertexai.init(
 
 speech_client = speech.SpeechClient(credentials=credentials)
 
-akariRouter = akari.AkariRouter(logger=akariLogger)
+akariRouter = akari.AkariRouter(
+    logger=akariLogger,
+    options=akari.AkariRouterLoggerOptions(info=True, duration=True),
+)
 akariRouter.addModules(
     {
         modules.RootModule: modules.RootModule(akariRouter, akariLogger),

@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import os
+import threading  # 追加
 import time
 from typing import Dict
 
@@ -51,6 +52,8 @@ class _AkariRouter:
         self._modules: Dict[module._AkariModuleType, module._AkariModule] = {}
         self._logger = logger
         self._options = options
+        # スレッドIDごとの最後のストリーム呼び出し完了時刻 (perf_counter) を格納
+        self._thread_last_perf_counter: Dict[int, float] = {}
 
     def addModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
         """Registers one or more modules with the router, making them available for execution.
@@ -113,46 +116,109 @@ class _AkariRouter:
         if self._modules is None:
             raise ValueError("Modules not set in router.")
 
-        inputData = copy.deepcopy(data)
-
-        selected_module = self._modules[moduleType]
+        selected_module = self._modules.get(moduleType)
         if selected_module is None:
             raise ValueError(f"Module {moduleType} not found in router.")
 
+        current_thread_id = threading.get_ident()
+        pid = os.getpid()
+
         if self._options.info:
             self._logger.info(
-                "\n\n[Router] Module %s (PID: %s): %s",
+                "\n\n[Router] Module %s (PID: %s, ThreadID: %s): %s",
                 "streaming" if streaming else "calling",
-                os.getpid(),
+                pid,
+                current_thread_id,
                 selected_module.__class__.__name__,
             )
 
-        startTime = time.process_time()
+        # --- AkariDataModuleType に記録する startTime と endTime のための準備 ---
+        # perf_counter を使用して実時間を計測
+        current_perf_counter = time.perf_counter()
+
+        # AkariDataModuleType に記録する startTime
+        # これが「計測期間の開始点」となる
+        startTime_for_dataset: float
+
+        # このスレッドでの前回のストリーム呼び出しの終了時刻 (ストリーミングの場合のみ参照)
+        last_stream_call_end_time_in_thread = self._thread_last_perf_counter.get(current_thread_id)
+
+        if streaming:
+            if last_stream_call_end_time_in_thread is None:  # このスレッドでの初回ストリーム呼び出し
+                # 経過時間0の要件を満たすため、startTime はこの後の endTime と同じ値にする。
+                # この時点では endTime は未定なので、モジュール実行後に endTime で startTime を上書きする。
+                # 仮の startTime として、現在の時刻を設定しておく。
+                startTime_for_dataset = current_perf_counter
+            else:
+                # 2回目以降のストリーム呼び出し: 前回の終了時刻を開始時刻とする
+                startTime_for_dataset = last_stream_call_end_time_in_thread
+        else:  # 非ストリーミング
+            if data.datasets and hasattr(data.last(), "module"):
+                # 前のモジュールの終了時刻を開始時刻とする
+                startTime_for_dataset = data.last().module.endTime
+            else:
+                # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
+                startTime_for_dataset = current_perf_counter
+
+        # --- モジュールの実処理呼び出し ---
+        # モジュールに渡す inputData の準備 (deepcopy)
+        inputData = copy.deepcopy(data)
+
         if streaming:
             result = selected_module.stream_call(inputData, params, callback)
         else:
             result = selected_module.call(inputData, params, callback)
-        endTime = time.process_time()
 
+        # AkariDataModuleType に記録する endTime
+        # モジュール実行完了後の時刻
+        endTime_for_dataset: float = time.perf_counter()
+
+        # ストリーミング初回呼び出しの場合、startTime を endTime と同じにして duration を0にする
+        if streaming and last_stream_call_end_time_in_thread is None:
+            startTime_for_dataset = endTime_for_dataset
+
+        # ストリーミングの場合、このスレッドでの今回の呼び出しの終了時刻を保存
+        if streaming:
+            self._thread_last_perf_counter[current_thread_id] = endTime_for_dataset
+
+        # --- 結果の処理と AkariDataModuleType の設定 ---
         if isinstance(result, akari_data._AkariDataSet):
             result.setModule(
-                akari_data._AkariDataModuleType(moduleType, params, streaming, callback, startTime, endTime)
+                akari_data._AkariDataModuleType(
+                    moduleType,
+                    params,
+                    streaming,
+                    callback,
+                    startTime_for_dataset,  # 修正後のstartTime
+                    endTime_for_dataset,  # 修正後のendTime
+                )
             )
             data.add(result)
         elif isinstance(result, akari_data._AkariData):
-            result.last().setModule(
-                akari_data._AkariDataModuleType(moduleType, params, streaming, callback, startTime, endTime)
-            )
+            if result.datasets:  # result が空の AkariData を返す可能性も考慮
+                result.last().setModule(
+                    akari_data._AkariDataModuleType(
+                        moduleType,
+                        params,
+                        streaming,
+                        callback,
+                        startTime_for_dataset,  # 修正後のstartTime
+                        endTime_for_dataset,  # 修正後のendTime
+                    )
+                )
             data = result
         else:
             raise ValueError(f"Invalid result type: {type(result)}")
 
         if self._options.duration:
+            # ここでログ出力する duration は、AkariDataModuleType に記録された endTime - startTime
+            duration = endTime_for_dataset - startTime_for_dataset
             self._logger.info(
-                "[Router] Module %s: %s took %.2f seconds",
+                "[Router] Module %s: %s (ThreadID: %s) took %.4f seconds (elapsed since last relevant call)",
                 "streaming" if streaming else "calling",
                 selected_module.__class__.__name__,
-                endTime - startTime,
+                current_thread_id,
+                duration,
             )
 
         return data
