@@ -42,8 +42,6 @@ class GoogleSpeechToTextStreamParams:  # AkariModuleParams を継承しない
     """(stream_callのparamsとして動的に渡される想定) このフラグがTrueの場合、STTストリームを終了する. デフォルトはFalse."""
     callback_when_final: bool = True
     """最終結果をコールバックするかどうか. デフォルトはTrue.(Falseで常にコールバックする)"""
-    callback_params: AkariModuleParams | None = None
-    """コールバックモジュール用のパラメータ. デフォルトはNone."""
 
 
 class GoogleSpeechToTextStreamModule(AkariModule):

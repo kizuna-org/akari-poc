@@ -71,7 +71,7 @@ speech_client = speech.SpeechClient(credentials=credentials)
 
 akariRouter = akari.AkariRouter(
     logger=akariLogger,
-    options=akari.AkariRouterLoggerOptions(info=True, duration=True),
+    options=akari.AkariRouterLoggerOptions(info=False, duration=True),
 )
 akariRouter.addModules(
     {
@@ -259,8 +259,50 @@ akariRouter.callModule(
     params=audio.MicModuleParams(
         streamDurationMilliseconds=100,
         destructionMilliseconds=5000,
-        callbackParams=google.GoogleSpeechToTextStreamParams(),
-        callback_callback=modules.PrintModule,
+        callbackParams=google.GoogleSpeechToTextStreamParams(
+            downstream_callback_params=modules.SerialModuleParams(
+                modules=[
+                    modules.SerialModuleParamModule(
+                        moduleType=modules.PrintModule,
+                        moduleParams=None,
+                    ),
+                    modules.SerialModuleParamModule(
+                        moduleType=azure_openai.LLMModule,
+                        moduleParams=azure_openai.LLMModuleParams(
+                            model="gpt-4o-mini",
+                            messages_function=lambda data: [
+                                {
+                                    "role": "user",
+                                    "content": (
+                                        data.last().text.main  # type: ignore
+                                        if data.last() and data.last().text
+                                        else "Hello, Akari!"
+                                    ),
+                                },
+                                {"role": "system", "content": "You are a helpful assistant."},
+                            ],
+                            temperature=0.7,
+                        ),
+                    ),
+                    modules.SerialModuleParamModule(
+                        moduleType=azure_openai.TTSModule,
+                        moduleParams=azure_openai.TTSModuleParams(
+                            model="gpt-4o-mini-tts",
+                            voice="alloy",
+                            instructions="日本語で元気溌剌に話してください",
+                            speed=1.0,
+                        ),
+                    ),
+                    modules.SerialModuleParamModule(
+                        moduleType=audio.SpeakerModule,
+                        moduleParams=audio.SpeakerModuleParams(
+                            # output_device_index=1,
+                        ),
+                    ),
+                ]
+            ),
+        ),
+        callback_callback=modules.SerialModule,
     ),
     streaming=False,
     callback=google.GoogleSpeechToTextStreamModule,
