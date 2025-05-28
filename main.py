@@ -5,6 +5,7 @@ import dotenv
 import pyaudio
 import vertexai
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from google.cloud import speech
 from google.oauth2 import service_account
 from openai import AzureOpenAI
 from vertexai.generative_models import Content, Part
@@ -12,7 +13,7 @@ from vertexai.generative_models import Content, Part
 import akari
 import modules
 import sample
-from modules import audio, azure_openai, gemini, io, webrtcvad
+from modules import audio, azure_openai, gemini, google, io, webrtcvad
 
 dotenv.load_dotenv()
 
@@ -66,6 +67,7 @@ vertexai.init(
     credentials=credentials,
 )
 
+speech_client = speech.SpeechClient(credentials=credentials)
 
 akariRouter = akari.AkariRouter(logger=akariLogger)
 akariRouter.addModules(
@@ -75,8 +77,10 @@ akariRouter.addModules(
         modules.SerialModule: modules.SerialModule(akariRouter, akariLogger),
         sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
         azure_openai.LLMModule: azure_openai.LLMModule(akariRouter, akariLogger, client),
-        azure_openai.STTModule: azure_openai.STTModule(akariRouter, akariLogger, client),
         azure_openai.TTSModule: azure_openai.TTSModule(akariRouter, akariLogger, client),
+        google.GoogleSpeechToTextStreamModule: google.GoogleSpeechToTextStreamModule(
+            akariRouter, akariLogger, speech_client
+        ),
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
@@ -187,71 +191,74 @@ akariRouter.addModules(
 # )
 
 ### 対話
+# akariRouter.callModule(
+#     moduleType=audio.MicModule,
+#     data=akari.AkariData(),
+#     params=audio.MicModuleParams(
+#         streamDurationMilliseconds=100,
+#         destructionMilliseconds=5000,
+#         # input_device_index=3,
+#         callbackParams=modules.SerialModuleParams(
+#             modules=[
+#                 modules.SerialModuleParamModule(
+#                     moduleType=google.STTModule,
+#                     moduleParams=google.STTModuleParams(
+#                         model="default",
+#                         language="ja-JP",
+#                         prompt="",
+#                         temperature=0.7,
+#                     ),
+#                 ),
+#                 modules.SerialModuleParamModule(
+#                     moduleType=azure_openai.LLMModule,
+#                     moduleParams=azure_openai.LLMModuleParams(
+#                         model="gpt-4o-mini",
+#                         messages_function=lambda data: [
+#                             {
+#                                 "role": "user",
+#                                 "content": (
+#                                     data.last().text.main  # type: ignore
+#                                     if data.last() and data.last().text
+#                                     else "Hello, Akari!"
+#                                 ),
+#                             },
+#                             {"role": "system", "content": "You are a helpful assistant."},
+#                         ],
+#                         temperature=0.7,
+#                     ),
+#                 ),
+#                 modules.SerialModuleParamModule(
+#                     moduleType=azure_openai.TTSModule,
+#                     moduleParams=azure_openai.TTSModuleParams(
+#                         model="gpt-4o-mini-tts",
+#                         voice="alloy",
+#                         instructions="日本語で元気溌剌に話してください",
+#                         speed=1.0,
+#                     ),
+#                 ),
+#                 modules.SerialModuleParamModule(
+#                     moduleType=audio.SpeakerModule,
+#                     moduleParams=audio.SpeakerModuleParams(
+#                         # output_device_index=1,
+#                     ),
+#                 ),
+#             ]
+#         ),
+#         callback_callback=modules.SerialModule,
+#     ),
+#     streaming=False,
+#     callback=modules.SerialModule,
+# )
+
 akariRouter.callModule(
     moduleType=audio.MicModule,
     data=akari.AkariData(),
     params=audio.MicModuleParams(
         streamDurationMilliseconds=100,
         destructionMilliseconds=5000,
-        callbackParams=webrtcvad.WebRTCVadParams(
-            speech_sleep_duration_ms=100,
-            callback_when_speech_ended=True,
-            mode=webrtcvad.WebRTCVadMode.STRICT,
-            callback_params=modules.SerialModuleParams(
-                modules=[
-                    modules.SerialModuleParamModule(
-                        moduleType=azure_openai.STTModule,
-                        moduleParams=azure_openai.STTModuleParams(
-                            model="whisper",
-                            language="ja",
-                            prompt="",
-                            temperature=0.7,
-                        ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=modules.PrintModule,
-                        moduleParams=None,
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=azure_openai.LLMModule,
-                        moduleParams=azure_openai.LLMModuleParams(
-                            model="gpt-4o-mini",
-                            messages_function=lambda data: [
-                                {
-                                    "role": "user",
-                                    "content": (
-                                        data.last().text.main  # type: ignore
-                                        if data.last() and data.last().text
-                                        else "Hello, Akari!"
-                                    ),
-                                },
-                                {"role": "system", "content": "You are a helpful assistant."},
-                            ],
-                            temperature=0.7,
-                        ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=modules.PrintModule,
-                        moduleParams=None,
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=azure_openai.TTSModule,
-                        moduleParams=azure_openai.TTSModuleParams(
-                            model="gpt-4o-mini-tts",
-                            voice="alloy",
-                            instructions="日本語で元気溌剌に話してください",
-                            speed=1.0,
-                        ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=audio.SpeakerModule,
-                        moduleParams=audio.SpeakerModuleParams(),
-                    ),
-                ]
-            ),
-        ),
-        callback_callback=modules.SerialModule,
+        callbackParams=google.GoogleSpeechToTextStreamParams(),
+        callback_callback=modules.PrintModule,
     ),
     streaming=False,
-    callback=webrtcvad.WebRTCVadModule,
+    callback=google.GoogleSpeechToTextStreamModule,
 )

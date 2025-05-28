@@ -1,5 +1,6 @@
 import copy
 import dataclasses
+import os
 import time
 from typing import Dict
 
@@ -120,8 +121,9 @@ class _AkariRouter:
 
         if self._options.info:
             self._logger.info(
-                "\n\n[Router] Module %s: %s",
+                "\n\n[Router] Module %s (PID: %s): %s",
                 "streaming" if streaming else "calling",
+                os.getpid(),
                 selected_module.__class__.__name__,
             )
 
