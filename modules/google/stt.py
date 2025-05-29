@@ -74,8 +74,6 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         self._result_delta: list[str] = []  # 逐次レスポンス保存用
         self._result_final: bool = False  # finalフラグ
 
-        self._logger.info("GoogleSpeechToTextStreamModule initialized with provided SpeechClient.")
-
     def _audio_chunk_provider(self) -> Generator[speech.StreamingRecognizeRequest, None, None]:
         """内部キューから音声チャンクを取得し、Google STT APIリクエストを生成するジェネレータ."""
         self._logger.debug("Audio chunk provider thread started.")

@@ -17,11 +17,11 @@ from akari import (  # Corrected base import
 @dataclasses.dataclass
 class _GoogleTextToSpeechParams:
     language_code: str = "ja-JP"
-    voice_name: str = "ja-JP-Wavenet-D"
+    voice_name: str = "ja-JP-Standard-A"
     speaking_rate: float = 1.0
     pitch: float = 0.0
     audio_encoding: str = "LINEAR16"
-    sample_rate_hertz: int | None = None
+    sample_rate_hertz: int | None = 24000
     effects_profile_id: list[str] | None = None
 
 

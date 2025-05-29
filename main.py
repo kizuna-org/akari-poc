@@ -333,3 +333,24 @@ akariRouter.callModule(
     ),
     streaming=False,
 )
+
+akariRouter.callModule(
+    moduleType=modules.SerialModule,
+    data=data,
+    params=modules.SerialModuleParams(
+        modules=[
+            modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
+            modules.SerialModuleParamModule(
+                moduleType=azure_openai.TTSModule,
+                moduleParams=azure_openai.TTSModuleParams(
+                    model="gpt-4o-mini-tts",
+                    voice="alloy",
+                    instructions="日本語で元気溌剌に話してください",
+                    speed=1.0,
+                ),
+            ),
+            modules.SerialModuleParamModule(moduleType=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
+        ]
+    ),
+    streaming=False,
+)
