@@ -20,6 +20,7 @@ from akari import (
     AkariModuleParams,
     AkariModuleType,
     AkariRouter,
+    AkariDataSetType,
 )
 
 
@@ -43,6 +44,7 @@ class _VADSTTLatencyMeter(AkariModule):
     def __init__(self, router: AkariRouter, logger: AkariLogger):
         super().__init__(router, logger)
         self._vad_start_time: Optional[float] = None
+        self._vad_end_time: Optional[float] = None
         self._is_vad_end: bool = True
 
     def call(
@@ -61,17 +63,19 @@ class _VADSTTLatencyMeter(AkariModule):
             if flag and self._vad_start_time is None and self._is_vad_end:
                 self._vad_start_time = time.perf_counter()
                 self._is_vad_end = False
-            if not flag and self._vad_start_time is None:
+            if not flag:
+                if not self._is_vad_end:
+                    self._vad_end_time = time.perf_counter()
                 self._is_vad_end = True
+                self._vad_start_time = None
 
+        thread1 = None
         if self._vad_start_time is None:
             thread1 = threading.Thread(target=vad_func, args=(data,))
             thread1.start()
 
         stt_data = self._router.callModule(params.stt_module, data, params.stt_module_params, True, None)
 
-        print(self._vad_start_time)
-        print(stt_data.last().text.main)
         dataset = stt_data.last()
         now = time.perf_counter()
         dataset.setModule(
@@ -80,12 +84,28 @@ class _VADSTTLatencyMeter(AkariModule):
                 params,
                 True,
                 callback,
-                self._vad_start_time if self._vad_start_time is not None else now,
+                (
+                    self._vad_end_time
+                    if self._vad_end_time is not None
+                    else self._vad_start_time if self._vad_start_time is not None else now
+                ),
                 now,
             )
         )
 
-        if dataset.text and dataset.text.main != "":
+        if dataset.text and dataset.text.main == "":
             self._vad_start_time = None
+            self._vad_end_time = None
+
+        if thread1:
+            thread1.join()
+
+        def callback_func(data: AkariData) -> None:
+            if callback:
+                self._router.callModule(callback, data, params.callback_params, True, None)
+
+        data.add(dataset)
+        thread2 = threading.Thread(target=callback_func, args=(data,))
+        thread2.start()
 
         return dataset

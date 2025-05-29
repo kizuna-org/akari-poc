@@ -271,39 +271,39 @@ akariRouter.callModule(
                         moduleType=modules.PrintModule,
                         moduleParams=None,
                     ),
-                    modules.SerialModuleParamModule(
-                        moduleType=azure_openai.LLMModule,
-                        moduleParams=azure_openai.LLMModuleParams(
-                            model="gpt-4o-mini",
-                            messages_function=lambda data: [
-                                {
-                                    "role": "user",
-                                    "content": (
-                                        data.last().text.main  # type: ignore
-                                        if data.last() and data.last().text
-                                        else "Hello, Akari!"
-                                    ),
-                                },
-                                {"role": "system", "content": "You are a helpful assistant."},
-                            ],
-                            temperature=0.7,
-                        ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=azure_openai.TTSModule,
-                        moduleParams=azure_openai.TTSModuleParams(
-                            model="gpt-4o-mini-tts",
-                            voice="alloy",
-                            instructions="日本語で元気溌剌に話してください",
-                            speed=1.0,
-                        ),
-                    ),
-                    modules.SerialModuleParamModule(
-                        moduleType=audio.SpeakerModule,
-                        moduleParams=audio.SpeakerModuleParams(
-                            # output_device_index=1,
-                        ),
-                    ),
+                    # modules.SerialModuleParamModule(
+                    #     moduleType=azure_openai.LLMModule,
+                    #     moduleParams=azure_openai.LLMModuleParams(
+                    #         model="gpt-4o-mini",
+                    #         messages_function=lambda data: [
+                    #             {
+                    #                 "role": "user",
+                    #                 "content": (
+                    #                     data.last().text.main  # type: ignore
+                    #                     if data.last() and data.last().text
+                    #                     else "Hello, Akari!"
+                    #                 ),
+                    #             },
+                    #             {"role": "system", "content": "You are a helpful assistant."},
+                    #         ],
+                    #         temperature=0.7,
+                    #     ),
+                    # ),
+                    # modules.SerialModuleParamModule(
+                    #     moduleType=azure_openai.TTSModule,
+                    #     moduleParams=azure_openai.TTSModuleParams(
+                    #         model="gpt-4o-mini-tts",
+                    #         voice="alloy",
+                    #         instructions="日本語で元気溌剌に話してください",
+                    #         speed=1.0,
+                    #     ),
+                    # ),
+                    # modules.SerialModuleParamModule(
+                    #     moduleType=audio.SpeakerModule,
+                    #     moduleParams=audio.SpeakerModuleParams(
+                    #         # output_device_index=1,
+                    #     ),
+                    # ),
                 ]
             ),
         ),

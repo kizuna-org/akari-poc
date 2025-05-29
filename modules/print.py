@@ -69,7 +69,7 @@ class _PrintModule(AkariModule):
             self._logger.info("Last Data: %s", last)
 
         for field in last.__dict__:
-            if hasattr(last, field):
+            if hasattr(last, field) and field != "module":
                 value = getattr(last, field)
                 if isinstance(value, AkariDataSetType):
                     if value.main is not None:
