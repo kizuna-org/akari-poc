@@ -5,7 +5,7 @@ import dotenv
 import pyaudio
 import vertexai
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from google.cloud import speech
+from google.cloud import speech, texttospeech
 from google.oauth2 import service_account
 from openai import AzureOpenAI
 from vertexai.generative_models import Content, Part
@@ -68,6 +68,7 @@ vertexai.init(
 )
 
 speech_client = speech.SpeechClient(credentials=credentials)
+tts_client = texttospeech.TextToSpeechClient(credentials=credentials)
 
 akariRouter = akari.AkariRouter(
     logger=akariLogger,
@@ -84,7 +85,7 @@ akariRouter.addModules(
         google.GoogleSpeechToTextStreamModule: google.GoogleSpeechToTextStreamModule(
             akariRouter, akariLogger, speech_client
         ),
-        google.GoogleTextToSpeechModule: google.GoogleTextToSpeechModule(akariRouter, akariLogger),
+        google.GoogleTextToSpeechModule: google.GoogleTextToSpeechModule(akariRouter, akariLogger, tts_client),
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
@@ -323,6 +324,7 @@ akariRouter.callModule(
     data=data,
     params=modules.SerialModuleParams(
         modules=[
+            modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
             modules.SerialModuleParamModule(
                 moduleType=google.GoogleTextToSpeechModule, moduleParams=google.GoogleTextToSpeechParams()
             ),

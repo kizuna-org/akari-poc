@@ -26,9 +26,9 @@ class _GoogleTextToSpeechParams:
 
 
 class _GoogleTextToSpeechModule(AkariModule):
-    def __init__(self, router: AkariRouter, logger: AkariLogger):
+    def __init__(self, router: AkariRouter, logger: AkariLogger, client: texttospeech.TextToSpeechClient):
         super().__init__(router, logger)
-        self._client = texttospeech.TextToSpeechClient()
+        self._client = client
 
     def call(
         self,
