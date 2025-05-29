@@ -71,6 +71,8 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         self._downstream_callback_params_for_router: AkariModuleParams | None = None
 
         self._callback_when_final: bool = True
+        self._result_delta: list[str] = []  # 逐次レスポンス保存用
+        self._result_final: bool = False  # finalフラグ
 
         self._logger.info("GoogleSpeechToTextStreamModule initialized with provided SpeechClient.")
 
@@ -121,6 +123,14 @@ class GoogleSpeechToTextStreamModule(AkariModule):
                 is_final = result.is_final
 
                 self._logger.debug(f"STT Result: '{transcript}' (Final: {is_final})")
+
+                # 逐次レスポンス保存
+                if transcript:
+                    if not is_final:
+                        self._result_delta.append(transcript)
+                    else:
+                        self._result_delta.append(transcript)
+                        self._result_final = True
 
                 if self._downstream_callback_module_type and (is_final or not self._callback_when_final):
                     transcript_dataset = AkariDataSet()
@@ -290,11 +300,18 @@ class GoogleSpeechToTextStreamModule(AkariModule):
             else:
                 self._logger.debug("No audio chunk found in AkariData.")
 
-        status_dataset = AkariDataSet()
-        status_dataset.meta = AkariDataSetType(
-            main={"status": "Audio chunk received." if audio_chunk else "No audio chunk."}
+        dataset = AkariDataSet()
+        stream = AkariDataStreamType(delta=self._result_delta.copy())
+        dataset.text = AkariDataSetType(
+            main=self._result_delta[-1] if len(self._result_delta) > 0 else "",
+            stream=stream,
         )
-        return status_dataset
+        dataset.bool = AkariDataSetType(main=self._result_final)
+
+        if self._result_final:
+            self._result_delta.clear()
+            self._result_final = False
+        return dataset
 
     def close(self) -> None:
         """STTストリーミングセッションを確定的に停止し、リソースをクリーンアップします."""

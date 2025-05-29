@@ -183,16 +183,17 @@ class _AkariRouter:
 
         # --- 結果の処理と AkariDataModuleType の設定 ---
         if isinstance(result, akari_data._AkariDataSet):
-            result.setModule(
-                akari_data._AkariDataModuleType(
-                    moduleType,
-                    params,
-                    streaming,
-                    callback,
-                    startTime_for_dataset,  # 修正後のstartTime
-                    endTime_for_dataset,  # 修正後のendTime
+            if result.module is None:
+                result.setModule(
+                    akari_data._AkariDataModuleType(
+                        moduleType,
+                        params,
+                        streaming,
+                        callback,
+                        startTime_for_dataset,  # 修正後のstartTime
+                        endTime_for_dataset,  # 修正後のendTime
+                    )
                 )
-            )
             data.add(result)
         elif isinstance(result, akari_data._AkariData):
             if result.datasets:  # result が空の AkariData を返す可能性も考慮
