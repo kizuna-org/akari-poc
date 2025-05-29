@@ -51,8 +51,7 @@ cp .env.example .env
 #### format
 
 ```sh
-poetry run black .
-poetry run isort .
+poetry run ruff format
 ```
 
 #### format:check
@@ -60,14 +59,19 @@ poetry run isort .
 Check only
 
 ```sh
-poetry run black --check .
-poetry run isort --check-only .
+poetry run ruff format --check
 ```
 
 #### lint
 
 ```sh
-poetry run flake8 .
+poetry run ruff check --fix
+```
+
+#### lint:check
+
+```sh
+poetry run ruff check
 ```
 
 #### type

@@ -21,26 +21,31 @@ google-cloud-texttospeech = "^2.27.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.3.5"
-flake8 = "7.2.0"
 mypy = "1.15.0"
 isort = "6.0.1"
-black = "25.1.0"
-flake8-docstrings = "1.7.0"
 
 no-print-checker = { path = "./plugins/no_print_checker", develop = true }
 faker = "37.3.0"
+ruff = "^0.11.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-
-[tool.isort]
-profile = "black"
 
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
 exclude = [".venv"]
 
-[tool.black]
+[tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D100", "D104", "COM812"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D101", "D102", "D103", "D104", "D107"]

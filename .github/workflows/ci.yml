@@ -87,7 +87,7 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run lint check
         run: |
-          poetry run flake8 .
+          poetry run ruff check
 
   python-type-check:
     runs-on: ubuntu-latest
@@ -107,5 +107,4 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run format check
         run: |
-          poetry run black --check .
-          poetry run isort --check-only .
+          poetry run ruff format --check
