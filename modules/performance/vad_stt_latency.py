@@ -15,12 +15,12 @@ from akari import (
     AkariData,
     AkariDataModuleType,
     AkariDataSet,
+    AkariDataSetType,
     AkariLogger,
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
     AkariRouter,
-    AkariDataSetType,
 )
 
 
