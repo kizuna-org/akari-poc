@@ -84,6 +84,7 @@ akariRouter.addModules(
         google.GoogleSpeechToTextStreamModule: google.GoogleSpeechToTextStreamModule(
             akariRouter, akariLogger, speech_client
         ),
+        google.GoogleTextToSpeechModule: google.GoogleTextToSpeechModule(akariRouter, akariLogger),
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
         audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
