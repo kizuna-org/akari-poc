@@ -1,16 +1,15 @@
+"""Azure OpenAI LLM module."""
+
+from __future__ import annotations
+
 import copy
 import dataclasses
+import threading
 from collections.abc import Iterable
 from typing import Callable
 
-from openai import AzureOpenAI
-from openai.types.chat import (
-    ChatCompletion,
-    ChatCompletionChunk,
-    ChatCompletionMessageParam,
-)
-
-from akari import (
+from akari_core.logger import AkariLogger
+from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
@@ -19,6 +18,12 @@ from akari import (
     AkariModule,
     AkariModuleType,
     AkariRouter,
+)
+from openai import AzureOpenAI
+from openai.types.chat import (
+    ChatCompletion,
+    ChatCompletionChunk,
+    ChatCompletionMessageParam,
 )
 
 
@@ -103,7 +108,12 @@ class _LLMModule(AkariModule):
         super().__init__(router, logger)
         self.client = client
 
-    def call(self, data: AkariData, params: _LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
+    def call(
+        self,
+        data: AkariData,
+        params: _LLMModuleParams,
+        callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
         """Sends a request to the Azure OpenAI Chat Completion API and processes the response.
 
         The method determines the conversation history either from `params.messages`
@@ -164,54 +174,110 @@ class _LLMModule(AkariModule):
         if params.messages is None:
             raise ValueError("Messages cannot be None. Please provide a valid list of messages.")
 
-        response = self.client.chat.completions.create(
-            model=params.model,
-            messages=params.messages,
-            temperature=params.temperature,
-            max_tokens=params.max_tokens,
-            top_p=params.top_p,
-            frequency_penalty=params.frequency_penalty,
-            presence_penalty=params.presence_penalty,
-            stream=params.stream,
-        )
+        try:
+            response = self.client.chat.completions.create(
+                model=params.model,
+                messages=params.messages,
+                temperature=params.temperature,
+                max_tokens=params.max_tokens,
+                top_p=params.top_p,
+                frequency_penalty=params.frequency_penalty,
+                presence_penalty=params.presence_penalty,
+                stream=params.stream,
+            )
 
-        dataset = AkariDataSet()
-        text_main = ""
-        if params.stream:
-            texts: list[str] = []
-            for chunk in response:
-                if isinstance(chunk, ChatCompletionChunk) and hasattr(chunk, "choices"):
-                    for choice in chunk.choices:
-                        if hasattr(choice, "delta") and hasattr(choice.delta, "content"):
-                            text_main += choice.delta.content if choice.delta.content else ""
-                            if choice.delta.content is not None:
-                                texts.append(choice.delta.content)
-                            stream: AkariDataStreamType[str] = AkariDataStreamType(
-                                delta=texts,
-                            )
-                            dataset.text = AkariDataSetType(main=text_main, stream=stream)
-                            if callback is not None:
-                                callData = copy.deepcopy(data)
-                                callData.add(dataset)
-                                self._router.callModule(
-                                    moduleType=callback,
-                                    data=callData,
-                                    params=params,
-                                    streaming=True,
+            dataset = AkariDataSet()
+            text_main = ""
+            if params.stream:
+                texts: list[str] = []
+                for chunk in response:
+                    if isinstance(chunk, ChatCompletionChunk) and hasattr(chunk, "choices"):
+                        for choice in chunk.choices:
+                            if hasattr(choice, "delta") and hasattr(choice.delta, "content"):
+                                text_main += choice.delta.content if choice.delta.content else ""
+                                if choice.delta.content is not None:
+                                    texts.append(choice.delta.content)
+                                stream: AkariDataStreamType[str] = AkariDataStreamType(
+                                    delta=texts,
                                 )
+                                dataset.text = AkariDataSetType(main=text_main, stream=stream)
+                                if callback is not None:
+                                    callData = copy.deepcopy(data)
+                                    callData.add(dataset)
+                                    self._router.callModule(
+                                        moduleType=callback,
+                                        data=callData,
+                                        params=params,
+                                        streaming=True,
+                                    )
+                                else:
+                                    raise ValueError("Callback is None, but streaming is enabled.")
                             else:
-                                raise ValueError("Callback is None, but streaming is enabled.")
-                        else:
-                            raise TypeError("Chunk does not have 'delta' or 'content' attribute.")
-                else:
-                    raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
-        elif isinstance(response, ChatCompletion):
-            self._logger.debug(response.choices[0].message.content)
-            if response.choices[0].message.content:
-                text_main = response.choices[0].message.content
-        else:
-            raise TypeError("Response is not of type ChatCompletion.")
+                                raise TypeError("Chunk does not have 'delta' or 'content' attribute.")
+                    else:
+                        raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
+            elif isinstance(response, ChatCompletion):
+                self._logger.debug(response.choices[0].message.content)
+                if response.choices[0].message.content:
+                    text_main = response.choices[0].message.content
+            else:
+                raise TypeError("Response is not of type ChatCompletion.")
 
-        dataset.text = AkariDataSetType(main=text_main)
-        dataset.allData = response
-        return dataset
+            dataset.text = AkariDataSetType(main=text_main)
+            dataset.allData = response
+            self._logger.debug("LLMModule call finished successfully")
+            return dataset
+        except Exception as e:
+            self._logger.exception("Error during LLM generation: %s", e)
+            error_msg = f"Error during LLM generation: {e!s}"
+            error_dataset = AkariDataSet(text=AkariDataSetType(main=error_msg))
+            return error_dataset
+
+    def stream_call(
+        self,
+        model: str,
+        messages: list[ChatCompletionMessageParam],
+        params: _LLMModuleParams,
+        result_dataset: AkariDataSet,
+    ) -> None:
+        def stream_generation_thread(
+            model: str,
+            messages: list[ChatCompletionMessageParam],
+            params: _LLMModuleParams,
+            result_dataset: AkariDataSet,
+        ) -> None:
+            try:
+                response = self.client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=params.temperature,
+                    max_tokens=params.max_tokens,
+                    top_p=params.top_p,
+                    frequency_penalty=params.frequency_penalty,
+                    presence_penalty=params.presence_penalty,
+                    stream=True,
+                )
+
+                full_response = []
+                for chunk in response:
+                    self._logger.debug("Received chunk: %s", chunk)
+                    if hasattr(chunk, "text"):
+                        text_chunk = chunk.text
+                        if text_chunk:
+                            result_dataset.text.stream.add(text_chunk)
+                            full_response.append(text_chunk)
+                result_dataset.allData = (response._result) if hasattr(response, "_result") else None
+                result_dataset.bool = AkariDataSetType(main=True)
+                self._logger.debug("Streaming generation finished")
+
+            except Exception as e:
+                self._logger.exception("Error during LLM streaming generation: %s", e)
+                error_msg = f"Error during LLM streaming generation: {e!s}"
+                result_dataset.text.stream.add(error_msg)
+                result_dataset.bool = AkariDataSetType(main=False)
+
+        thread = threading.Thread(
+            target=stream_generation_thread,
+            args=(model, messages, params, result_dataset),
+        )
+        thread.start()

@@ -8,9 +8,11 @@ from pathlib import Path
 from akari_core.module import (
     AkariData,
     AkariDataSet,
+    AkariLogger,
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
+    AkariRouter,
 )
 
 
@@ -31,7 +33,7 @@ class _SaveModuleParams(AkariModuleParams):
 class _SaveModule(AkariModule):
     """AkariDataSet内の指定されたデータをファイルに保存するモジュール."""
 
-    def __init__(self, router, logger) -> None:
+    def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         super().__init__(router, logger)
         self._logger = logger
 
@@ -124,8 +126,12 @@ class _SaveModule(AkariModule):
         except OSError as e:
             # TRY400: Use logging.exception
             # G004: Logging statement uses f-string
+            # TRY401: Redundant exception object included in `logging.exception` call
             self._logger.exception("Error writing to file %s: %s", path, e)
-            raise OSError(f"Error saving data to {path}: {e}") from e
+            # TRY003: Avoid specifying long messages outside the exception class
+            # EM102: Exception must not use an f-string literal, assign to variable first
+            error_msg = f"Error saving data to {path}: {e!s}"
+            raise OSError(error_msg) from e
 
         return AkariDataSet()
 

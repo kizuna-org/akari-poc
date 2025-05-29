@@ -71,16 +71,12 @@ class _GeminiLLMModule(AkariModule):
         self._logger.debug("Params: %s", params)
 
         if params.messages_function:
-            message_data = self._router.callModule(
-                params.messages_function, data, None, streaming=False, callback=None
-            )
+            message_data = self._router.callModule(params.messages_function, data, None, streaming=False, callback=None)
             messages = message_data.last().allData
         else:
             messages = params.messages
         if messages is None:
-            error_msg = (
-                "Messages cannot be None. Please provide a valid list of messages."
-            )
+            error_msg = "Messages cannot be None. Please provide a valid list of messages."
             raise ValueError(error_msg)
         if params.model not in _models:
             error_msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
@@ -92,9 +88,7 @@ class _GeminiLLMModule(AkariModule):
             _model_instances[model_name] = GenerativeModel(
                 model_name,
                 system_instruction=(
-                    Content(role="system", parts=[params.system_instruction])
-                    if params.system_instruction
-                    else None
+                    Content(role="system", parts=[params.system_instruction]) if params.system_instruction else None
                 ),
                 safety_settings=params.safety_settings,
                 generation_config=params.generation_config,
@@ -126,9 +120,7 @@ class _GeminiLLMModule(AkariModule):
             return result_dataset
         except Exception as e:
             self._logger.exception("Error during LLM generation: %s", e)
-            error_dataset = AkariDataSet(
-                text=AkariDataSetType(main=f"Error during LLM generation: {e!s}")
-            )
+            error_dataset = AkariDataSet(text=AkariDataSetType(main=f"Error during LLM generation: {e!s}"))
             return error_dataset
 
     def stream_call(
@@ -141,16 +133,12 @@ class _GeminiLLMModule(AkariModule):
         self._logger.debug("LLMModule stream_call called")
 
         if params.messages_function:
-            message_data = self._router.callModule(
-                params.messages_function, data, None, streaming=False, callback=None
-            )
+            message_data = self._router.callModule(params.messages_function, data, None, streaming=False, callback=None)
             messages = message_data.last().allData
         else:
             messages = params.messages
         if messages is None:
-            error_msg = (
-                "Messages cannot be None. Please provide a valid list of messages."
-            )
+            error_msg = "Messages cannot be None. Please provide a valid list of messages."
             raise ValueError(error_msg)
         if params.model not in _models:
             error_msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
@@ -162,9 +150,7 @@ class _GeminiLLMModule(AkariModule):
             _model_instances[model_name] = GenerativeModel(
                 model_name,
                 system_instruction=(
-                    Content(role="system", parts=[params.system_instruction])
-                    if params.system_instruction
-                    else None
+                    Content(role="system", parts=[params.system_instruction]) if params.system_instruction else None
                 ),
                 safety_settings=params.safety_settings,
                 generation_config=params.generation_config,
@@ -196,17 +182,13 @@ class _GeminiLLMModule(AkariModule):
                         if text_chunk:
                             result_dataset.text.stream.add(text_chunk)
                             full_response.append(text_chunk)
-                result_dataset.allData = (
-                    (stream._result) if hasattr(stream, "_result") else None
-                )
+                result_dataset.allData = (stream._result) if hasattr(stream, "_result") else None
                 result_dataset.bool = AkariDataSetType(main=True)
                 self._logger.debug("Streaming generation finished")
 
             except Exception as e:
                 self._logger.exception("Error during LLM streaming generation: %s", e)
-                result_dataset.text.stream.add(
-                    f"Error during LLM streaming generation: {e!s}"
-                )
+                result_dataset.text.stream.add(f"Error during LLM streaming generation: {e!s}")
                 result_dataset.bool = AkariDataSetType(main=False)
 
         thread = threading.Thread(

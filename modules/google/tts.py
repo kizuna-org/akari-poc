@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import dataclasses
 import typing
@@ -35,7 +37,7 @@ class _GoogleTextToSpeechModule(AkariModule):
         router: AkariRouter,
         logger: AkariLogger,
         client: texttospeech.TextToSpeechClient,
-    ):
+    ) -> None:
         super().__init__(router, logger)
         self._client = client
 
@@ -152,32 +154,52 @@ class _GoogleTextToSpeechModule(AkariModule):
 
                 return result_dataset
             except Exception as e:
-                self._logger.error(f"Error during Google TTS streaming synthesis: {e}")
+                # BLE001: Do not catch blind exception: `Exception` -> Catch specific exceptions
+                # TRY400: Use logging.exception instead of logging.error
+                # G004: Logging statement uses f-string -> Use % formatting
+                # EM101: Exception must not use a string literal, assign to variable first
+                # TRY003: Avoid specifying long messages outside the exception class
+                # EM102: Exception must not use an f-string literal, assign to variable first
+                # TRY401: Redundant exception object included in `logging.exception` call
+                # F841: Local variable `error_msg` is assigned to but never used
+                self._logger.exception("Error during Google TTS streaming synthesis: %s", e)
                 result_dataset = AkariDataSet()
-                result_dataset.text = AkariDataSetType(
-                    main=f"Error: Google TTS streaming synthesis failed: {e!s}",
-                )
+                # EM102: Still using f-string for main data
+                error_main_msg = f"Error: Google TTS streaming synthesis failed: {e!s}"
+                result_dataset.text = AkariDataSetType(main=error_main_msg)
                 return result_dataset
 
         except Exception as e:
-            # Error handling as per instructions
-            self._logger.error(f"Error during Google TTS synthesis: {e}")
+            # BLE001: Do not catch blind exception: `Exception` -> Catch specific exceptions
+            # TRY400: Use logging.exception instead of logging.error
+            # G004: Logging statement uses f-string -> Use % formatting
+            # TRY003: Avoid specifying long messages outside the exception class
+            # EM102: Exception must not use an f-string literal, assign to variable first
+            # TRY401: Redundant exception object included in `logging.exception` call
+            # F841: Local variable `error_msg` is assigned to but never used
+            self._logger.exception("Error during Google TTS synthesis: %s", e)
             result_dataset = AkariDataSet()
-            result_dataset.text = AkariDataSetType(main=f"Error: Google TTS synthesis failed: {e!s}")
+            error_main_msg = f"Error: Google TTS synthesis failed: {e!s}"
+            result_dataset.text = AkariDataSetType(main=error_main_msg)
             return result_dataset
 
     def stream_call(
         self,
-        data: AkariData,  # Signature as per instructions
+        # ARG002: Unused method argument: `data`
+        data: AkariData,
+        # ARG002: Unused method argument: `params`
         params: _GoogleTextToSpeechParams,
+        # ARG002: Unused method argument: `callback`
         callback: AkariModuleType | None = None,
-    ) -> AkariDataSet:  # Return type as per instructions
+    ) -> AkariDataSet:
         # Implementation as per instructions
-        self._logger.warning("stream_call is not implemented for GoogleTextToSpeechModule.")
-        raise NotImplementedError("GoogleTextToSpeechModule does not support streaming.")
+        # EM101: Exception must not use a string literal, assign to variable first
+        not_implemented_msg = "GoogleTextToSpeechModule does not support streaming."
+        self._logger.warning(not_implemented_msg)
+        raise NotImplementedError(not_implemented_msg)
 
     def close(self) -> None:
         # Implementation as per instructions
         self._logger.info(
-            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech.",
+            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech."
         )

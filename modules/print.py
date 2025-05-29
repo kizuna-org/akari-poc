@@ -7,6 +7,8 @@ import json
 from akari_core.logger import AkariLogger
 from akari_core.module import (
     AkariData,
+    AkariDataSet,
+    AkariDataSetType,
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
@@ -46,8 +48,8 @@ class _PrintModule(AkariModule):
 
         try:
             self._logger.info("Last Data (json): %s", json.dumps(last, indent=4))
-        except Exception:
-            self._logger.info("Could not serialize last data to json: %s", last)
+        except Exception as e:
+            self._logger.info("Could not serialize last data to json: %s, error: %s", last, e)
 
         for field in last.__dict__:
             if hasattr(last, field) and field != "module":
@@ -75,7 +77,7 @@ class _PrintModule(AkariModule):
 
         try:
             self._logger.info("Stream Last Data (json): %s", json.dumps(last, indent=4))
-        except Exception:
-            self._logger.info("Could not serialize stream last data to json: %s", last)
+        except Exception as e:
+            self._logger.info("Could not serialize stream last data to json: %s, error: %s", last, e)
 
         return data.last() if data.datasets else AkariDataSet()

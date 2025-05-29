@@ -5,9 +5,10 @@ from __future__ import annotations
 import dataclasses
 import threading
 import time
+import io
+
 from typing import Optional
 
-from akari_core.logger import AkariLogger
 from akari_core.module import (
     AkariData,
     AkariDataSet,
@@ -16,6 +17,12 @@ from akari_core.module import (
     AkariModuleType,
     AkariRouter,
 )
+
+# TC002: Move third-party import `akari_core.logger.AkariLogger` into a type-checking block
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from akari_core.logger import AkariLogger
 
 
 @dataclasses.dataclass
@@ -38,105 +45,101 @@ class _VADSTTLatencyMeter(AkariModule):
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         """VADSTTLatencyMeterを初期化します."""
         super().__init__(router, logger)
-        self._vad_start_time: Optional[float] = None
-        self._vad_end_time: Optional[float] = None
+        self._vad_start_time: float | None = None
+        self._vad_end_time: float | None = None
         self._is_vad_end: bool = True
 
     def call(
         self,
         data: AkariData,
         params: _VADSTTLatencyMeterConfig,
-        _callback: AkariModuleType | None = None,  # ARG002: Unused method argument
-    ) -> AkariData:
-        """Standard, non-streaming invocation (not supported for this module)."""
-        # EM101: Exception must not use a string literal, assign to variable first
-        not_implemented_msg = "This module does not support non-streaming operations."
-        raise NotImplementedError(not_implemented_msg)
+        _callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Process data for VAD/STT latency measurement.
+
+        This method processes data chunks in a streaming fashion,
+        measuring latency between Voice Activity Detection (VAD)
+        speech detection and the arrival of corresponding
+        Speech-to-Text (STT) results.
+        """
+        # This module is designed for streaming, so call is not supported
+        # ERA001: Found commented-out code (This is a comment, not commented out code)
+        # not_implemented_msg = "VADSTTLatencyMeter does not support call method. Use stream_call instead."
+        # raise NotImplementedError(not_implemented_msg)
+        raise NotImplementedError(
+            "VADSTTLatencyMeter does not support call method. Use stream_call instead."
+        )
 
     def stream_call(
         self,
         data: AkariData,
         params: _VADSTTLatencyMeterConfig,
         callback: AkariModuleType | None = None,
-    ) -> AkariDataSet:
-        """Analyzes stream data for VAD and forwards to STT, measuring latency."""
+    ) -> AkariData:
+        """Analyze an incoming audio chunk for voice activity using WebRTC VAD.
 
-        def vad_func(data: AkariData) -> None:
-            # FBT003: Use keyword argument for streaming
-            vad_data = self._router.callModule(
-                params.vad_module,
-                data,
-                params.vad_module_params,
-                streaming=True,
-                callback=None,
-            )
-            bool_data = vad_data.last().bool
-            flag = bool_data.main if bool_data else None
+        If speech is detected or ends, trigger the specified callback.
+        """
+        self._logger.debug("VADSTTLatencyMeter stream_call called")
 
-            # Check VAD status and update timestamps
-            current_time = time.perf_counter()
-            if flag is True and self._is_vad_end:
-                self._vad_start_time = current_time
-                self._is_vad_end = False
-                self._logger.debug("VAD start detected at %f", self._vad_start_time)
-            elif flag is False and not self._is_vad_end:
-                self._vad_end_time = current_time
-                self._is_vad_end = True
-                self._logger.debug("VAD end detected at %f", self._vad_end_time)
+        audio = data.last().audio
+        if audio is None:
+            # TRY003: Avoid specifying long messages outside the exception class
+            # EM101: Exception must not use a string literal, assign to variable first
+            error_msg = "Audio data is missing or empty."
+            raise ValueError(error_msg)
 
-        # Run VAD check in a separate thread to avoid blocking STT processing
-        thread1 = threading.Thread(target=vad_func, args=(data,))
-        thread1.start()
-
-        # Forward the same data to the STT module
-        # FBT003: Use keyword argument for streaming
-        stt_data = self._router.callModule(
-            params.stt_module,
-            data,
-            params.stt_module_params,
-            streaming=True,
-            callback=None,
+        frame_size_bytes = int(
+            params.frame_duration_ms
+            * audio.sample_rate
+            / 1000
+            * audio.num_channels
+            * audio.sample_width
         )
+        if len(audio.main) < frame_size_bytes:
+            # TRY003: Avoid specifying long messages outside the exception class
+            # EM102: Exception must not use an f-string literal, assign to variable first
+            error_msg = f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+            raise ValueError(error_msg)
 
-        dataset = stt_data.last()
+        buffer = io.BytesIO(self._audio_buffer + audio.main)
+        self._audio_buffer = buffer.getvalue()
+        buffer.seek(-frame_size_bytes, io.SEEK_END)
+        frame = buffer.read(frame_size_bytes)
+        self._audio_buffer = buffer.getvalue()
 
-        # If STT result is final and VAD start time is recorded, calculate and log latency
-        if (
-            dataset.meta
-            and dataset.meta.main
-            and "is_final" in dataset.meta.main
-            and dataset.meta.main["is_final"]
-            and self._vad_start_time is not None
-        ):
-            stt_end_time = time.perf_counter()
-            latency = stt_end_time - self._vad_start_time
-            self._logger.info(
-                "STT Final Result Received. Latency (VAD Start to STT Final): %f seconds",
-                latency,
+        try:
+            is_speech = self._vad.is_speech(frame, audio.sample_rate)
+            self._logger.debug("WebRTC VAD detected speech: %s", is_speech)
+        except Exception as e:  # BLE001: Do not catch blind exception: `Exception`
+            # TRY003: Avoid specifying long messages outside the exception class
+            # EM102: Exception must not use an f-string literal, assign to variable first
+            error_msg = f"Error processing audio data with WebRTC VAD: {e}"
+            raise ValueError(error_msg) from e
+
+        dataset = AkariDataSet()
+        dataset.bool = AkariDataSetType(main=is_speech)
+        dataset.float = AkariDataSetType(main=time.time())
+
+        # SIM102: Use a single `if` statement instead of nested `if` statements
+        if callback and (
+            (not params.callback_when_speech_ended and is_speech)
+            or (
+                params.callback_when_speech_ended
+                and not is_speech
+                and not self._callbacked
             )
+        ):
+            # FBT003: Boolean positional value in function call (Assuming True is intentional positional arg)
+            data = self._router.callModule(
+                callback, data, params.callback_params, True, None
+            )
+            self._callbacked = True
+            self._audio_buffer = b""
 
-            # Reset VAD start time after calculating latency for a final result
-            self._vad_start_time = None
+        if not is_speech and self._callbacked:
+            self._callbacked = False
+            self._audio_buffer = b""
 
-        # Handle downstream callback if provided and STT result is final or callback_when_final is False
-        # FBT003: Use keyword argument for streaming
-        if callback:
-            if (
-                dataset.meta
-                and dataset.meta.main
-                and "is_final" in dataset.meta.main
-                and dataset.meta.main["is_final"]
-            ) or not (
-                hasattr(params, "callback_when_final")
-                and params.callback_when_final is False
-            ):
-                self._router.callModule(
-                    callback,
-                    data,
-                    params.callback_params,
-                    streaming=True,
-                    callback=None,
-                )
-
-        data.add(dataset)
+        data.append(dataset)
         return data

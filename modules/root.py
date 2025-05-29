@@ -46,9 +46,7 @@ class _RootModule(AkariModule):
 
         # For now, just return the input data as is, assuming downstream modules will process it.
         # This is a placeholder; actual logic depends on pipeline structure.
-        self._logger.info(
-            "RootModule is a placeholder and does not perform processing."
-        )
+        self._logger.info("RootModule is a placeholder and does not perform processing.")
         self._logger.info("Input Data: %s", data)
         self._logger.info("Params: %s", params)
         self._logger.info("Callback: %s", callback)
