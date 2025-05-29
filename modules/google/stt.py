@@ -23,7 +23,7 @@ from akari import (
 
 # AkariModuleParamsを直接継承しないように変更
 @dataclasses.dataclass
-class GoogleSpeechToTextStreamParams:  # AkariModuleParams を継承しない
+class _GoogleSpeechToTextStreamParams:  # AkariModuleParams を継承しない
     """Google Cloud Speech-to-Textストリーミングモジュール用のパラメータ."""
 
     language_code: str = "ja-JP"
@@ -44,7 +44,7 @@ class GoogleSpeechToTextStreamParams:  # AkariModuleParams を継承しない
     """最終結果をコールバックするかどうか. デフォルトはTrue.(Falseで常にコールバックする)"""
 
 
-class GoogleSpeechToTextStreamModule(AkariModule):
+class _GoogleSpeechToTextStreamModule(AkariModule):
     """Google Cloud Speech-to-Text APIを使用して音声ストリームを文字起こしするAkariモジュール.
 
     MicModuleなどから音声チャンクを継続的に受け取り、リアルタイムで文字起こし結果を
@@ -73,8 +73,6 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         self._callback_when_final: bool = True
         self._result_delta: list[str] = []  # 逐次レスポンス保存用
         self._result_final: bool = False  # finalフラグ
-
-        self._logger.info("GoogleSpeechToTextStreamModule initialized with provided SpeechClient.")
 
     def _audio_chunk_provider(self) -> Generator[speech.StreamingRecognizeRequest, None, None]:
         """内部キューから音声チャンクを取得し、Google STT APIリクエストを生成するジェネレータ."""
@@ -166,7 +164,7 @@ class GoogleSpeechToTextStreamModule(AkariModule):
                     self._audio_queue.put(None)
 
     def _start_streaming_session(
-        self, params: GoogleSpeechToTextStreamParams, callback: AkariModuleType | None
+        self, params: _GoogleSpeechToTextStreamParams, callback: AkariModuleType | None
     ) -> None:
         """新しいSTTストリーミングセッションを開始し、処理スレッドを起動します."""
         self._logger.info("Starting new Google STT stream session.")
@@ -211,7 +209,7 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         self._logger.info("STT stream session stopped.")
 
     def call(
-        self, data: AkariData, params: GoogleSpeechToTextStreamParams, callback: AkariModuleType | None = None
+        self, data: AkariData, params: _GoogleSpeechToTextStreamParams, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
         """ストリーミング専用モジュールのため、このメソッドはNotImplementedErrorを発生させます.
 
@@ -251,14 +249,14 @@ class GoogleSpeechToTextStreamModule(AkariModule):
         Raises:
             TypeError: `params` が `GoogleSpeechToTextStreamParams` 型でない場合。
         """
-        if not isinstance(params, GoogleSpeechToTextStreamParams):
+        if not isinstance(params, _GoogleSpeechToTextStreamParams):
             self._logger.error(f"Invalid params type: {type(params)}. Expected GoogleSpeechToTextStreamParams.")
             # Akariの規約上、型エラーは呼び出し側の責任だが、安全のためエラーを返す
             error_dataset = AkariDataSet()
             error_dataset.text = AkariDataSetType(main="Error: Invalid parameters type for STT module.")
             # raise TypeError(f"Invalid params type: {type(params)}. Expected GoogleSpeechToTextStreamParams.")
             return error_dataset  # または例外を送出
-        current_params: GoogleSpeechToTextStreamParams = params
+        current_params: _GoogleSpeechToTextStreamParams = params
 
         with self._lock:
             if current_params.end_stream_flag:
