@@ -1,7 +1,6 @@
-from .stt import GoogleSpeechToTextStreamModule
-from .stt import GoogleSpeechToTextStreamParams
-from .tts import GoogleTextToSpeechModule
-from .tts import GoogleTextToSpeechParams
+from .stt import GoogleSpeechToTextStreamModule, GoogleSpeechToTextStreamParams
+from .tts import _GoogleTextToSpeechModule as GoogleTextToSpeechModule
+from .tts import _GoogleTextToSpeechParams as GoogleTextToSpeechParams
 
 __all__ = [
     "GoogleSpeechToTextStreamModule",

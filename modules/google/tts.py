@@ -1,10 +1,11 @@
 import dataclasses
-from google.cloud import texttospeech # Corrected import alias
 
-from akari import ( # Corrected base import
+from google.cloud import texttospeech  # Corrected import alias
+
+from akari import AkariDataSetType  # Ensured import
+from akari import (  # Corrected base import
     AkariData,
     AkariDataSet,
-    AkariDataSetType, # Ensured import
     AkariLogger,
     AkariModule,
     AkariModuleParams,
@@ -14,7 +15,7 @@ from akari import ( # Corrected base import
 
 
 @dataclasses.dataclass
-class GoogleTextToSpeechParams(AkariModuleParams):
+class _GoogleTextToSpeechParams:
     language_code: str = "ja-JP"
     voice_name: str = "ja-JP-Wavenet-D"
     speaking_rate: float = 1.0
@@ -24,21 +25,22 @@ class GoogleTextToSpeechParams(AkariModuleParams):
     effects_profile_id: list[str] | None = None
 
 
-class GoogleTextToSpeechModule(AkariModule):
+class _GoogleTextToSpeechModule(AkariModule):
     def __init__(self, router: AkariRouter, logger: AkariLogger):
         super().__init__(router, logger)
         self._client = texttospeech.TextToSpeechClient()
 
     def call(
         self,
-        data: AkariDataSet, # Corrected type hint
-        params: GoogleTextToSpeechParams,
+        data: AkariData,  # Corrected type hint
+        params: _GoogleTextToSpeechParams,
         callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         input_text = ""
         # Corrected input text retrieval as per instructions
-        if data.datasets and data.last().text and data.last().text.main:
-            input_text = data.last().text.main
+        text_dataset = data.last().text
+        if text_dataset and text_dataset.main:
+            input_text = text_dataset.main
         else:
             self._logger.error("No text provided in data.last().text.main for TTS synthesis.")
             result_dataset = AkariDataSet()
@@ -48,12 +50,9 @@ class GoogleTextToSpeechModule(AkariModule):
         try:
             synthesis_input = texttospeech.SynthesisInput(text=input_text)
 
-            voice_params = texttospeech.VoiceSelectionParams(
-                language_code=params.language_code, name=params.voice_name
-            )
-
+            voice_params = texttospeech.VoiceSelectionParams(language_code=params.language_code, name=params.voice_name)
             audio_config_args = {
-                "audio_encoding": texttospeech.AudioEncoding[params.audio_encoding],
+                "audio_encoding": getattr(texttospeech.AudioEncoding, params.audio_encoding),
                 "speaking_rate": params.speaking_rate,
                 "pitch": params.pitch,
             }
@@ -61,7 +60,7 @@ class GoogleTextToSpeechModule(AkariModule):
                 audio_config_args["sample_rate_hertz"] = params.sample_rate_hertz
             if params.effects_profile_id is not None:
                 audio_config_args["effects_profile_id"] = params.effects_profile_id
-            
+
             audio_config = texttospeech.AudioConfig(**audio_config_args)
 
             response = self._client.synthesize_speech(
@@ -78,7 +77,11 @@ class GoogleTextToSpeechModule(AkariModule):
                 "pitch": params.pitch,
                 "audio_encoding": params.audio_encoding,
             }
-            if hasattr(response, 'audio_config') and response.audio_config and hasattr(response.audio_config, 'sample_rate_hertz'):
+            if (
+                hasattr(response, "audio_config")
+                and response.audio_config
+                and hasattr(response.audio_config, "sample_rate_hertz")
+            ):
                 meta_info["sample_rate_hertz"] = response.audio_config.sample_rate_hertz
             elif params.sample_rate_hertz:
                 meta_info["sample_rate_hertz"] = params.sample_rate_hertz
@@ -94,14 +97,16 @@ class GoogleTextToSpeechModule(AkariModule):
 
     def stream_call(
         self,
-        data: AkariData, # Signature as per instructions
-        params: GoogleTextToSpeechParams,
+        data: AkariData,  # Signature as per instructions
+        params: _GoogleTextToSpeechParams,
         callback: AkariModuleType | None = None,
-    ) -> AkariDataSet: # Return type as per instructions
+    ) -> AkariDataSet:  # Return type as per instructions
         # Implementation as per instructions
         self._logger.warning("stream_call is not implemented for GoogleTextToSpeechModule.")
         raise NotImplementedError("GoogleTextToSpeechModule does not support streaming.")
 
     def close(self) -> None:
         # Implementation as per instructions
-        self._logger.info("GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech.")
+        self._logger.info(
+            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech."
+        )
