@@ -326,31 +326,35 @@ akariRouter.callModule(
         modules=[
             modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
             modules.SerialModuleParamModule(
-                moduleType=google.GoogleTextToSpeechModule, moduleParams=google.GoogleTextToSpeechParams()
+                moduleType=google.GoogleTextToSpeechModule,
+                moduleParams=google.GoogleTextToSpeechParams(
+                    voice_name="ja-JP-Chirp3-HD-Kore",
+                    callback_params=audio.SpeakerModuleParams(),
+                ),
+                moduleCallback=audio.SpeakerModule,
             ),
-            modules.SerialModuleParamModule(moduleType=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
         ]
     ),
     streaming=False,
 )
 
-akariRouter.callModule(
-    moduleType=modules.SerialModule,
-    data=data,
-    params=modules.SerialModuleParams(
-        modules=[
-            modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
-            modules.SerialModuleParamModule(
-                moduleType=azure_openai.TTSModule,
-                moduleParams=azure_openai.TTSModuleParams(
-                    model="gpt-4o-mini-tts",
-                    voice="alloy",
-                    instructions="日本語で元気溌剌に話してください",
-                    speed=1.0,
-                ),
-            ),
-            modules.SerialModuleParamModule(moduleType=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
-        ]
-    ),
-    streaming=False,
-)
+# akariRouter.callModule(
+#     moduleType=modules.SerialModule,
+#     data=data,
+#     params=modules.SerialModuleParams(
+#         modules=[
+#             modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
+#             modules.SerialModuleParamModule(
+#                 moduleType=azure_openai.TTSModule,
+#                 moduleParams=azure_openai.TTSModuleParams(
+#                     model="gpt-4o-mini-tts",
+#                     voice="alloy",
+#                     instructions="日本語で元気溌剌に話してください",
+#                     speed=1.0,
+#                 ),
+#             ),
+#             modules.SerialModuleParamModule(moduleType=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
+#         ]
+#     ),
+#     streaming=False,
+# )
