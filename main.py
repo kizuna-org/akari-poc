@@ -40,7 +40,7 @@ def list_audio_devices() -> None:
     p = pyaudio.PyAudio()
     for i in range(p.get_device_count()):
         info = p.get_device_info_by_index(i)
-        akariLogger.debug(
+        akariLogger.info(
             f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})"
         )
     p.terminate()
@@ -329,7 +329,9 @@ akariRouter.callModule(
                 moduleType=google.GoogleTextToSpeechModule,
                 moduleParams=google.GoogleTextToSpeechParams(
                     voice_name="ja-JP-Chirp3-HD-Kore",
-                    callback_params=audio.SpeakerModuleParams(),
+                    callback_params=audio.SpeakerModuleParams(
+                        # output_device_index=6,
+                    ),
                 ),
                 moduleCallback=audio.SpeakerModule,
             ),
