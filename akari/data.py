@@ -191,7 +191,7 @@ class _AkariDataSet:
             that doesn't fit the predefined categories, such as raw API responses.
     """
 
-    module: _AkariDataModuleType
+    module: _AkariDataModuleType | None = None
 
     def __init__(self) -> None:
         """Constructs an empty AkariDataSet, ready to be populated by a module."""

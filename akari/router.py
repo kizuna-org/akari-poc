@@ -155,7 +155,11 @@ class _AkariRouter:
         else:  # 非ストリーミング
             if data.datasets and hasattr(data.last(), "module"):
                 # 前のモジュールの終了時刻を開始時刻とする
-                startTime_for_dataset = data.last().module.endTime
+                last_module = data.last().module
+                if last_module is not None:
+                    startTime_for_dataset = last_module.endTime
+                else:
+                    startTime_for_dataset = current_perf_counter
             else:
                 # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
                 startTime_for_dataset = current_perf_counter
@@ -213,7 +217,8 @@ class _AkariRouter:
 
         if self._options.duration:
             # ここでログ出力する duration は、AkariDataModuleType に記録された endTime - startTime
-            duration = endTime_for_dataset - startTime_for_dataset
+            module = data.last().module
+            duration = module.endTime - module.startTime if module else endTime_for_dataset - startTime_for_dataset
             self._logger.info(
                 "[Router] Module %s: %s (ThreadID: %s) took %.4f seconds (elapsed since last relevant call)",
                 "streaming" if streaming else "calling",

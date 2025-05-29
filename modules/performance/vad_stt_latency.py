@@ -1,34 +1,35 @@
 import asyncio
+import dataclasses
 import threading
 import time
 from typing import (
-    AsyncGenerator,
-    Optional,
-    List,
     Any,
+    AsyncGenerator,
     Dict,
+    List,
+    Optional,
     cast,
 )
 
 from akari import (
+    AkariData,
+    AkariDataModuleType,
+    AkariDataSet,
+    AkariLogger,
     AkariModule,
+    AkariModuleParams,
     AkariModuleType,
     AkariRouter,
-    AkariLogger,
-    AkariData,
-    AkariDataSet,
-    AkariModuleParams,
-    AkariDataModuleType,
 )
 
-_vad_start_time: Optional[float] = None
 
-
+@dataclasses.dataclass
 class _VADSTTLatencyMeterConfig:
     stt_module: AkariModuleType
     stt_module_params: AkariModuleParams
     vad_module: AkariModuleType
     vad_module_params: AkariModuleParams
+    callback_params: AkariModuleParams
 
 
 class _VADSTTLatencyMeter(AkariModule):
@@ -41,6 +42,8 @@ class _VADSTTLatencyMeter(AkariModule):
 
     def __init__(self, router: AkariRouter, logger: AkariLogger):
         super().__init__(router, logger)
+        self._vad_start_time: Optional[float] = None
+        self._is_vad_end: bool = True
 
     def call(
         self, data: AkariData, params: _VADSTTLatencyMeterConfig, callback: AkariModuleType | None = None
@@ -50,33 +53,39 @@ class _VADSTTLatencyMeter(AkariModule):
     def stream_call(
         self, data: AkariData, params: _VADSTTLatencyMeterConfig, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
-        global _vad_start_time
 
         def vad_func(data: AkariData) -> None:
             vad_data = self._router.callModule(params.vad_module, data, params.vad_module_params, True, None)
-            if vad_data.datasets and vad_data.last().bool:
-                global _vad_start_time
-                _vad_start_time = time.time()
+            bool_data = vad_data.last().bool
+            flag = bool_data.main if bool_data else None
+            if flag and self._vad_start_time is None and self._is_vad_end:
+                self._vad_start_time = time.perf_counter()
+                self._is_vad_end = False
+            if not flag and self._vad_start_time is None:
+                self._is_vad_end = True
 
-        if _vad_start_time is None:
+        if self._vad_start_time is None:
             thread1 = threading.Thread(target=vad_func, args=(data,))
             thread1.start()
 
         stt_data = self._router.callModule(params.stt_module, data, params.stt_module_params, True, None)
 
+        print(self._vad_start_time)
+        print(stt_data.last().text.main)
         dataset = stt_data.last()
+        now = time.perf_counter()
         dataset.setModule(
             AkariDataModuleType(
                 _VADSTTLatencyMeter,
                 params,
                 True,
                 callback,
-                _vad_start_time if _vad_start_time is not None else -1,
-                time.time(),
+                self._vad_start_time if self._vad_start_time is not None else now,
+                now,
             )
         )
 
-        if dataset.text:
-            _vad_start_time = None
+        if dataset.text and dataset.text.main != "":
+            self._vad_start_time = None
 
         return dataset

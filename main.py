@@ -13,7 +13,7 @@ from vertexai.generative_models import Content, Part
 import akari
 import modules
 import sample
-from modules import audio, azure_openai, gemini, google, io, webrtcvad
+from modules import audio, azure_openai, gemini, google, io, performance, webrtcvad
 
 dotenv.load_dotenv()
 
@@ -89,6 +89,7 @@ akariRouter.addModules(
         audio.MicModule: audio.MicModule(akariRouter, akariLogger),
         webrtcvad.WebRTCVadModule: webrtcvad.WebRTCVadModule(akariRouter, akariLogger),
         io.SaveModule: io.SaveModule(akariRouter, akariLogger),
+        performance.VADSTTLatencyMeter: performance.VADSTTLatencyMeter(akariRouter, akariLogger),
     }
 )
 
@@ -259,8 +260,12 @@ akariRouter.callModule(
     params=audio.MicModuleParams(
         streamDurationMilliseconds=100,
         destructionMilliseconds=5000,
-        callbackParams=google.GoogleSpeechToTextStreamParams(
-            downstream_callback_params=modules.SerialModuleParams(
+        callbackParams=performance.VADSTTLatencyMeterConfig(
+            stt_module=google.GoogleSpeechToTextStreamModule,
+            stt_module_params=google.GoogleSpeechToTextStreamParams(),
+            vad_module=webrtcvad.WebRTCVadModule,
+            vad_module_params=webrtcvad.WebRTCVadParams(),
+            callback_params=modules.SerialModuleParams(
                 modules=[
                     modules.SerialModuleParamModule(
                         moduleType=modules.PrintModule,
@@ -305,5 +310,5 @@ akariRouter.callModule(
         callback_callback=modules.SerialModule,
     ),
     streaming=False,
-    callback=google.GoogleSpeechToTextStreamModule,
+    callback=performance.VADSTTLatencyMeter,
 )
