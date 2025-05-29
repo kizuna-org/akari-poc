@@ -1,4 +1,6 @@
 # modules/google/stt.py
+from __future__ import annotations
+
 import dataclasses
 import queue
 import threading
@@ -50,7 +52,9 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
     指定されたコールバックモジュールに送信します。
     """
 
-    def __init__(self, router: AkariRouter, logger: AkariLogger, client: speech.SpeechClient) -> None:
+    def __init__(
+        self, router: AkariRouter, logger: AkariLogger, client: speech.SpeechClient
+    ) -> None:
         """GoogleSpeechToTextStreamModuleを初期化します.
 
         Args:
@@ -73,14 +77,18 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         self._result_delta: list[str] = []  # 逐次レスポンス保存用
         self._result_final: bool = False  # finalフラグ
 
-    def _audio_chunk_provider(self) -> Generator[speech.StreamingRecognizeRequest, None, None]:
+    def _audio_chunk_provider(
+        self,
+    ) -> Generator[speech.StreamingRecognizeRequest, None, None]:
         """内部キューから音声チャンクを取得し、Google STT APIリクエストを生成するジェネレータ."""
         self._logger.debug("Audio chunk provider thread started.")
         while self._is_streaming_active or not self._audio_queue.empty():
             try:
                 chunk = self._audio_queue.get(block=True, timeout=0.1)
                 if chunk is None:
-                    self._logger.debug("Audio chunk provider received None, signaling end.")
+                    self._logger.debug(
+                        "Audio chunk provider received None, signaling end."
+                    )
                     return
                 yield speech.StreamingRecognizeRequest(audio_content=chunk)
             except queue.Empty:
@@ -100,14 +108,18 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         self._logger.info("Google STT processing thread starting.")
         try:
             requests = self._audio_chunk_provider()
-            responses: Iterable[StreamingRecognizeResponse] = self._client.streaming_recognize(
+            responses: Iterable[
+                StreamingRecognizeResponse
+            ] = self._client.streaming_recognize(
                 config=self._streaming_config,
                 requests=requests,
             )  # type: ignore
 
             for response in responses:
                 if not self._is_streaming_active and self._audio_queue.empty():
-                    self._logger.info("Streaming deactivated and queue empty, exiting STT processor loop.")
+                    self._logger.info(
+                        "Streaming deactivated and queue empty, exiting STT processor loop."
+                    )
                     break
 
                 if not response.results:
@@ -130,14 +142,22 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                         self._result_delta.append(transcript)
                         self._result_final = True
 
-                if self._downstream_callback_module_type and (is_final or not self._callback_when_final):
+                if self._downstream_callback_module_type and (
+                    is_final or not self._callback_when_final
+                ):
                     transcript_dataset = AkariDataSet()
                     transcript_dataset.text = AkariDataSetType(main=transcript)
                     transcript_dataset.meta = AkariDataSetType(
                         main={
                             "is_final": is_final,
-                            "language_code": result.language_code if result.language_code else "",
-                            "stability": result.stability if hasattr(result, "stability") else 0.0,
+                            "language_code": (
+                                result.language_code if result.language_code else ""
+                            ),
+                            "stability": (
+                                result.stability
+                                if hasattr(result, "stability")
+                                else 0.0
+                            ),
                         },
                     )
 
@@ -152,10 +172,14 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                             streaming=True,
                         )
                     except Exception as e_router:
-                        self._logger.error(f"Error calling downstream callback module: {e_router}")
+                        self._logger.error(
+                            f"Error calling downstream callback module: {e_router}"
+                        )
 
         except Exception as e:
-            self._logger.error(f"Exception in Google STT processing thread: {e}", exc_info=True)
+            self._logger.exception(
+                "Exception in Google STT processing thread: %s", e, exc_info=True
+            )
         finally:
             self._logger.info("Google STT processing thread finished.")
             with self._lock:
@@ -193,7 +217,9 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             except queue.Empty:
                 break
 
-        self._processing_thread = threading.Thread(target=self._google_stt_processor_thread_target)
+        self._processing_thread = threading.Thread(
+            target=self._google_stt_processor_thread_target
+        )
         self._processing_thread.daemon = True
         self._processing_thread.start()
 
@@ -213,8 +239,11 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
 
     def call(
         self,
+        # ARG002: Unused method argument: `data` - This method is not implemented for non-streaming.
         data: AkariData,
+        # ARG002: Unused method argument: `params` - This method is not implemented for non-streaming.
         params: _GoogleSpeechToTextStreamParams,
+        # ARG002: Unused method argument: `callback` - This method is not implemented for non-streaming.
         callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """ストリーミング専用モジュールのため、このメソッドはNotImplementedErrorを発生させます.
@@ -229,15 +258,13 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         Raises:
             NotImplementedError: このメソッドは実装されていません.
         """
-        self._logger.warning(
-            "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT.",
-        )
-        raise NotImplementedError("Use stream_call for Google Speech-to-Text streaming.")
+        not_implemented_msg = "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT."
+        raise NotImplementedError(not_implemented_msg)
 
     def stream_call(
         self,
         data: AkariData,
-        params: AkariModuleParams,
+        params: _GoogleSpeechToTextStreamParams,
         callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """音声チャンクを受け取り、Google STTストリームに追加します.
@@ -259,12 +286,15 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             TypeError: `params` が `GoogleSpeechToTextStreamParams` 型でない場合。
         """
         if not isinstance(params, _GoogleSpeechToTextStreamParams):
-            self._logger.error(f"Invalid params type: {type(params)}. Expected GoogleSpeechToTextStreamParams.")
-            # Akariの規約上、型エラーは呼び出し側の責任だが、安全のためエラーを返す
+            self._logger.error(
+                "Invalid params type: %s. Expected GoogleSpeechToTextStreamParams.",
+                type(params),
+            )
             error_dataset = AkariDataSet()
-            error_dataset.text = AkariDataSetType(main="Error: Invalid parameters type for STT module.")
-            # raise TypeError(f"Invalid params type: {type(params)}. Expected GoogleSpeechToTextStreamParams.")
-            return error_dataset  # または例外を送出
+            error_dataset.text = AkariDataSetType(
+                main="Error: Invalid parameters type for STT module."
+            )
+            return error_dataset
         current_params: _GoogleSpeechToTextStreamParams = params
 
         with self._lock:
@@ -272,17 +302,25 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                 if self._is_streaming_active:
                     self._stop_streaming_session()
                 else:
-                    self._logger.info("Received end_stream_flag but STT session was not active.")
+                    self._logger.info(
+                        "Received end_stream_flag but STT session was not active."
+                    )
                 return AkariDataSet()
 
             if data.datasets:
                 last_dataset = data.last()
-                if last_dataset.meta and last_dataset.meta.main and "rate" in last_dataset.meta.main:
+                if (
+                    last_dataset.meta
+                    and last_dataset.meta.main
+                    and "rate" in last_dataset.meta.main
+                ):
                     actual_sample_rate = last_dataset.meta.main["rate"]
                     if current_params.sample_rate_hertz != actual_sample_rate:
                         self._logger.warning(
-                            f"Overriding params.sample_rate_hertz ({current_params.sample_rate_hertz}) "
-                            f"with actual sample rate from metadata ({actual_sample_rate}).",
+                            "Overriding params.sample_rate_hertz (%s) "
+                            "with actual sample rate from metadata (%s).",
+                            current_params.sample_rate_hertz,
+                            actual_sample_rate,
                         )
                         current_params.sample_rate_hertz = actual_sample_rate
 
@@ -301,9 +339,13 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             if audio_chunk:
                 if self._is_streaming_active:
                     self._audio_queue.put(audio_chunk)
-                    self._logger.debug(f"Added audio chunk of size {len(audio_chunk)} to queue.")
+                    self._logger.debug(
+                        "Added audio chunk of size %s to queue.", len(audio_chunk)
+                    )
                 else:
-                    self._logger.warning("Received audio chunk, but STT session is not active. Chunk ignored.")
+                    self._logger.warning(
+                        "Received audio chunk, but STT session is not active. Chunk ignored."
+                    )
             else:
                 self._logger.debug("No audio chunk found in AkariData.")
 
@@ -323,7 +365,9 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
     def close(self) -> None:
         """STTストリーミングセッションを確定的に停止し、リソースをクリーンアップします."""
         if hasattr(self, "_is_streaming_active") and self._is_streaming_active:
-            self._logger.info("Closing GoogleSpeechToTextStreamModule. Stopping active stream.")
+            self._logger.info(
+                "Closing GoogleSpeechToTextStreamModule. Stopping active stream."
+            )
             self._stop_streaming_session()
 
     def __del__(self) -> None:
