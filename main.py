@@ -8,7 +8,6 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from google.cloud import speech, texttospeech
 from google.oauth2 import service_account
 from openai import AzureOpenAI
-from vertexai.generative_models import Content, Part
 
 import akari
 import modules
@@ -41,7 +40,7 @@ def list_audio_devices() -> None:
     for i in range(p.get_device_count()):
         info = p.get_device_info_by_index(i)
         akariLogger.info(
-            f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})"
+            f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})",
         )
     p.terminate()
 
@@ -50,7 +49,8 @@ list_audio_devices()
 
 
 token_provider = get_bearer_token_provider(
-    DefaultAzureCredential(exclude_managed_identity_credential=True), "https://cognitiveservices.azure.com/.default"
+    DefaultAzureCredential(exclude_managed_identity_credential=True),
+    "https://cognitiveservices.azure.com/.default",
 )
 
 client = AzureOpenAI(
@@ -83,7 +83,9 @@ akariRouter.addModules(
         azure_openai.LLMModule: azure_openai.LLMModule(akariRouter, akariLogger, client),
         azure_openai.TTSModule: azure_openai.TTSModule(akariRouter, akariLogger, client),
         google.GoogleSpeechToTextStreamModule: google.GoogleSpeechToTextStreamModule(
-            akariRouter, akariLogger, speech_client
+            akariRouter,
+            akariLogger,
+            speech_client,
         ),
         google.GoogleTextToSpeechModule: google.GoogleTextToSpeechModule(akariRouter, akariLogger, tts_client),
         gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
@@ -92,7 +94,7 @@ akariRouter.addModules(
         webrtcvad.WebRTCVadModule: webrtcvad.WebRTCVadModule(akariRouter, akariLogger),
         io.SaveModule: io.SaveModule(akariRouter, akariLogger),
         performance.VADSTTLatencyMeter: performance.VADSTTLatencyMeter(akariRouter, akariLogger),
-    }
+    },
 )
 
 # akariRouter.callModule(
@@ -335,7 +337,7 @@ akariRouter.callModule(
                 ),
                 moduleCallback=audio.SpeakerModule,
             ),
-        ]
+        ],
     ),
     streaming=False,
 )

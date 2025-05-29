@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 from faker import Faker
 
@@ -52,7 +50,7 @@ def test_serial_module_call(fakegen: Faker, router: AkariRouter) -> None:
             SerialModuleParamModule(moduleType=PrintModule, moduleParams={}, moduleCallback=None),
             SerialModuleParamModule(moduleType=PrintModule, moduleParams={}, moduleCallback=None),
             SerialModuleParamModule(moduleType=PrintModule, moduleParams={}, moduleCallback=None),
-        ]
+        ],
     )
 
     result = router.callModule(SerialModule, data, serial_module_params, False, None)

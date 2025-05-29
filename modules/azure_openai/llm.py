@@ -1,6 +1,7 @@
 import copy
 import dataclasses
-from typing import Callable, Iterable
+from collections.abc import Iterable
+from typing import Callable
 
 from openai import AzureOpenAI
 from openai.types.chat import (
@@ -204,13 +205,12 @@ class _LLMModule(AkariModule):
                             raise TypeError("Chunk does not have 'delta' or 'content' attribute.")
                 else:
                     raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
+        elif isinstance(response, ChatCompletion):
+            self._logger.debug(response.choices[0].message.content)
+            if response.choices[0].message.content:
+                text_main = response.choices[0].message.content
         else:
-            if isinstance(response, ChatCompletion):
-                self._logger.debug(response.choices[0].message.content)
-                if response.choices[0].message.content:
-                    text_main = response.choices[0].message.content
-            else:
-                raise TypeError("Response is not of type ChatCompletion.")
+            raise TypeError("Response is not of type ChatCompletion.")
 
         dataset.text = AkariDataSetType(main=text_main)
         dataset.allData = response

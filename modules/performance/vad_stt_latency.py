@@ -1,21 +1,14 @@
-import asyncio
 import dataclasses
 import threading
 import time
 from typing import (
-    Any,
-    AsyncGenerator,
-    Dict,
-    List,
     Optional,
-    cast,
 )
 
 from akari import (
     AkariData,
     AkariDataModuleType,
     AkariDataSet,
-    AkariDataSetType,
     AkariLogger,
     AkariModule,
     AkariModuleParams,
@@ -48,14 +41,19 @@ class _VADSTTLatencyMeter(AkariModule):
         self._is_vad_end: bool = True
 
     def call(
-        self, data: AkariData, params: _VADSTTLatencyMeterConfig, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _VADSTTLatencyMeterConfig,
+        callback: AkariModuleType | None = None,
     ) -> AkariData:
         raise NotImplementedError("This module does not support non-streaming operations.")
 
     def stream_call(
-        self, data: AkariData, params: _VADSTTLatencyMeterConfig, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _VADSTTLatencyMeterConfig,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
-
         def vad_func(data: AkariData) -> None:
             vad_data = self._router.callModule(params.vad_module, data, params.vad_module_params, True, None)
             bool_data = vad_data.last().bool
@@ -87,10 +85,12 @@ class _VADSTTLatencyMeter(AkariModule):
                 (
                     self._vad_end_time
                     if self._vad_end_time is not None
-                    else self._vad_start_time if self._vad_start_time is not None else now
+                    else self._vad_start_time
+                    if self._vad_start_time is not None
+                    else now
                 ),
                 now,
-            )
+            ),
         )
 
         if dataset.text and dataset.text.main == "":

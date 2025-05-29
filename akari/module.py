@@ -4,10 +4,10 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 import akari.data as akari_data
-import akari.logger as logger
+from akari import logger
 
 if TYPE_CHECKING:
-    import akari.router as router
+    from akari import router
 
 _AkariModuleParams = Any
 _AkariModuleType = type["_AkariModule"]
@@ -43,7 +43,10 @@ class _AkariModule(ABC):
 
     @abstractmethod
     def call(
-        self, data: akari_data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
+        self,
+        data: akari_data._AkariData,
+        params: _AkariModuleParams,
+        callback: _AkariModuleType | None = None,
     ) -> akari_data._AkariDataSet | akari_data._AkariData:
         """Executes the module's primary logic on the input data in a blocking, non-streaming fashion.
 
@@ -67,10 +70,12 @@ class _AkariModule(ABC):
             module produces one distinct set of results, or an `_AkariData` instance
             if the module modifies the overall data pipeline or produces multiple datasets.
         """
-        pass
 
     def stream_call(
-        self, data: akari_data._AkariData, params: _AkariModuleParams, callback: _AkariModuleType | None = None
+        self,
+        data: akari_data._AkariData,
+        params: _AkariModuleParams,
+        callback: _AkariModuleType | None = None,
     ) -> akari_data._AkariDataSet | akari_data._AkariData:
         """Executes the module's logic in a streaming fashion, suitable for continuous data flows or when intermediate results are needed.
 

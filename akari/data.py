@@ -133,7 +133,10 @@ class _AkariDataSetType(Generic[T]):
     """
 
     def __init__(
-        self, main: T, stream: _AkariDataStreamType[T] | None = None, others: Dict[str, T] | None = None
+        self,
+        main: T,
+        stream: _AkariDataStreamType[T] | None = None,
+        others: Dict[str, T] | None = None,
     ) -> None:
         """Constructs a new typed data set.
 

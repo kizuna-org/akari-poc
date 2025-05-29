@@ -2,20 +2,19 @@
 import dataclasses
 import queue
 import threading
-import time
-from typing import Any, Generator, Iterable, cast  # Iterable をインポート
+from collections.abc import Generator, Iterable  # Iterable をインポート
 
 from google.cloud import speech
 from google.cloud.speech_v1.types import StreamingRecognizeResponse
 
-from akari import AkariDataStreamType  # AkariDataStreamTypeをインポート
-from akari import AkariModuleParams  # AkariModuleParams自体は型ヒントとして利用
 from akari import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
+    AkariDataStreamType,  # AkariDataStreamTypeをインポート
     AkariLogger,
     AkariModule,
+    AkariModuleParams,  # AkariModuleParams自体は型ヒントとして利用
     AkariModuleType,
     AkariRouter,
 )
@@ -102,7 +101,8 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         try:
             requests = self._audio_chunk_provider()
             responses: Iterable[StreamingRecognizeResponse] = self._client.streaming_recognize(
-                config=self._streaming_config, requests=requests
+                config=self._streaming_config,
+                requests=requests,
             )  # type: ignore
 
             for response in responses:
@@ -138,7 +138,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                             "is_final": is_final,
                             "language_code": result.language_code if result.language_code else "",
                             "stability": result.stability if hasattr(result, "stability") else 0.0,
-                        }
+                        },
                     )
 
                     callback_data = AkariData()
@@ -164,7 +164,9 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                     self._audio_queue.put(None)
 
     def _start_streaming_session(
-        self, params: _GoogleSpeechToTextStreamParams, callback: AkariModuleType | None
+        self,
+        params: _GoogleSpeechToTextStreamParams,
+        callback: AkariModuleType | None,
     ) -> None:
         """新しいSTTストリーミングセッションを開始し、処理スレッドを起動します."""
         self._logger.info("Starting new Google STT stream session.")
@@ -181,7 +183,8 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             model=params.model if params.model else None,
         )
         self._streaming_config = speech.StreamingRecognitionConfig(
-            config=recognition_config_proto, interim_results=params.interim_results
+            config=recognition_config_proto,
+            interim_results=params.interim_results,
         )
 
         while not self._audio_queue.empty():
@@ -209,7 +212,10 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         self._logger.info("STT stream session stopped.")
 
     def call(
-        self, data: AkariData, params: _GoogleSpeechToTextStreamParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _GoogleSpeechToTextStreamParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """ストリーミング専用モジュールのため、このメソッドはNotImplementedErrorを発生させます.
 
@@ -224,12 +230,15 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             NotImplementedError: このメソッドは実装されていません.
         """
         self._logger.warning(
-            "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT."
+            "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT.",
         )
         raise NotImplementedError("Use stream_call for Google Speech-to-Text streaming.")
 
     def stream_call(
-        self, data: AkariData, params: AkariModuleParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: AkariModuleParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """音声チャンクを受け取り、Google STTストリームに追加します.
 
@@ -273,7 +282,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                     if current_params.sample_rate_hertz != actual_sample_rate:
                         self._logger.warning(
                             f"Overriding params.sample_rate_hertz ({current_params.sample_rate_hertz}) "
-                            f"with actual sample rate from metadata ({actual_sample_rate})."
+                            f"with actual sample rate from metadata ({actual_sample_rate}).",
                         )
                         current_params.sample_rate_hertz = actual_sample_rate
 

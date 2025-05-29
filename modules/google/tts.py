@@ -1,14 +1,13 @@
 import copy
 import dataclasses
-import threading
 import typing
 
 from google.cloud import texttospeech  # Corrected import alias
 
-from akari import AkariDataSetType  # Ensured import
 from akari import (  # Corrected base import
     AkariData,
     AkariDataSet,
+    AkariDataSetType,  # Ensured import
     AkariDataStreamType,
     AkariLogger,
     AkariModule,
@@ -70,7 +69,9 @@ class _GoogleTextToSpeechModule(AkariModule):
                 audio_config = texttospeech.AudioConfig(**audio_config_args)
 
                 response = self._client.synthesize_speech(
-                    input=synthesis_input, voice=voice_params, audio_config=audio_config
+                    input=synthesis_input,
+                    voice=voice_params,
+                    audio_config=audio_config,
                 )
 
                 # Successful return structure as per instructions
@@ -94,71 +95,70 @@ class _GoogleTextToSpeechModule(AkariModule):
                 meta_info["channels"] = 1
                 result_dataset.meta = AkariDataSetType(main=meta_info)
                 return result_dataset
-            else:
-                # Streaming implementation using Google Cloud TTS streaming API
-                streaming_config = texttospeech.StreamingSynthesizeConfig(
-                    voice=voice_params,
-                )
-                config_request = texttospeech.StreamingSynthesizeRequest(streaming_config=streaming_config)
-                text_iterator = [input_text]
+            # Streaming implementation using Google Cloud TTS streaming API
+            streaming_config = texttospeech.StreamingSynthesizeConfig(
+                voice=voice_params,
+            )
+            config_request = texttospeech.StreamingSynthesizeRequest(streaming_config=streaming_config)
+            text_iterator = [input_text]
 
-                def request_generator() -> typing.Generator[texttospeech.StreamingSynthesizeRequest, None, None]:
-                    yield config_request
-                    for text in text_iterator:
-                        yield texttospeech.StreamingSynthesizeRequest(
-                            input=texttospeech.StreamingSynthesisInput(text=text)
+            def request_generator() -> typing.Generator[texttospeech.StreamingSynthesizeRequest, None, None]:
+                yield config_request
+                for text in text_iterator:
+                    yield texttospeech.StreamingSynthesizeRequest(
+                        input=texttospeech.StreamingSynthesisInput(text=text),
+                    )
+
+            delta_bytes = []
+            try:
+                streaming_responses = self._client.streaming_synthesize(request_generator())
+                for response in streaming_responses:
+                    if hasattr(response, "audio_content") and response.audio_content:
+                        b = response.audio_content
+                        delta_bytes.append(b)
+                        result_dataset = AkariDataSet()
+                        stream = AkariDataStreamType(delta=delta_bytes.copy())
+                        result_dataset.audio = AkariDataSetType(
+                            main=b"".join(delta_bytes),
+                            stream=stream,
+                        )
+                        meta_info = {
+                            "language_code": params.language_code,
+                            "voice_name": params.voice_name,
+                            "speaking_rate": params.speaking_rate,
+                            "pitch": params.pitch,
+                            "audio_encoding": params.audio_encoding,
+                        }
+                        if params.sample_rate_hertz:
+                            meta_info["rate"] = params.sample_rate_hertz
+                        meta_info["channels"] = 1
+                        result_dataset.meta = AkariDataSetType(main=meta_info)
+
+                        callback_data = copy.deepcopy(data)
+                        callback_data.add(result_dataset)
+
+                        self._router.callModule(
+                            moduleType=callback,
+                            data=callback_data,
+                            params=params.callback_params,
+                            callback=callback,
+                            streaming=True,
                         )
 
-                delta_bytes = []
-                try:
-                    streaming_responses = self._client.streaming_synthesize(request_generator())
-                    for response in streaming_responses:
-                        if hasattr(response, "audio_content") and response.audio_content:
-                            b = response.audio_content
-                            delta_bytes.append(b)
-                            result_dataset = AkariDataSet()
-                            stream = AkariDataStreamType(delta=delta_bytes.copy())
-                            result_dataset.audio = AkariDataSetType(
-                                main=b"".join(delta_bytes),
-                                stream=stream,
-                            )
-                            meta_info = {
-                                "language_code": params.language_code,
-                                "voice_name": params.voice_name,
-                                "speaking_rate": params.speaking_rate,
-                                "pitch": params.pitch,
-                                "audio_encoding": params.audio_encoding,
-                            }
-                            if params.sample_rate_hertz:
-                                meta_info["rate"] = params.sample_rate_hertz
-                            meta_info["channels"] = 1
-                            result_dataset.meta = AkariDataSetType(main=meta_info)
-
-                            callback_data = copy.deepcopy(data)
-                            callback_data.add(result_dataset)
-
-                            self._router.callModule(
-                                moduleType=callback,
-                                data=callback_data,
-                                params=params.callback_params,
-                                callback=callback,
-                                streaming=True,
-                            )
-
-                    return result_dataset
-                except Exception as e:
-                    self._logger.error(f"Error during Google TTS streaming synthesis: {e}")
-                    result_dataset = AkariDataSet()
-                    result_dataset.text = AkariDataSetType(
-                        main=f"Error: Google TTS streaming synthesis failed: {str(e)}"
-                    )
-                    return result_dataset
+                return result_dataset
+            except Exception as e:
+                self._logger.error(f"Error during Google TTS streaming synthesis: {e}")
+                result_dataset = AkariDataSet()
+                result_dataset.text = AkariDataSetType(
+                    main=f"Error: Google TTS streaming synthesis failed: {e!s}",
+                )
+                return result_dataset
 
         except Exception as e:
             # Error handling as per instructions
             self._logger.error(f"Error during Google TTS synthesis: {e}")
             result_dataset = AkariDataSet()
-            result_dataset.text = AkariDataSetType(main=f"Error: Google TTS synthesis failed: {str(e)}")
+            result_dataset.text = AkariDataSetType(main=f"Error: Google TTS synthesis failed: {e!s}")
             return result_dataset
 
     def stream_call(
@@ -174,5 +174,5 @@ class _GoogleTextToSpeechModule(AkariModule):
     def close(self) -> None:
         # Implementation as per instructions
         self._logger.info(
-            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech."
+            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech.",
         )

@@ -13,15 +13,15 @@ from .router import _AkariRouterLoggerOptions as AkariRouterLoggerOptions
 
 __all__ = [
     "AkariData",
+    "AkariDataModuleType",
     "AkariDataSet",
     "AkariDataSetType",
     "AkariDataStreamType",
-    "AkariDataModuleType",
+    "AkariLogger",
     "AkariModule",
     "AkariModuleParams",
     "AkariModuleType",
     "AkariRouter",
     "AkariRouterLoggerOptions",
-    "AkariLogger",
     "getLogger",
 ]

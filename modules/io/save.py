@@ -1,5 +1,4 @@
 import dataclasses
-import time
 import wave
 from datetime import datetime
 from typing import Any
@@ -10,7 +9,6 @@ from akari import (
     AkariDataSetType,
     AkariLogger,
     AkariModule,
-    AkariModuleParams,
     AkariModuleType,
     AkariRouter,
 )
@@ -135,7 +133,10 @@ class _SaveModule(AkariModule):
         return data.last()
 
     def stream_call(
-        self, data: AkariData, params: _SaveModuleParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _SaveModuleParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Processes data for saving identically to the non-streaming `call` method.
 

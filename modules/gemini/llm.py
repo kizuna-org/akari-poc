@@ -1,5 +1,6 @@
 import dataclasses
-from typing import Callable, Iterable
+from collections.abc import Iterable
+from typing import Callable
 
 from vertexai.generative_models import Content, GenerativeModel
 

@@ -103,7 +103,10 @@ class _SerialModule(AkariModule):
         return data
 
     def stream_call(
-        self, data: AkariData, params: _SerialModuleParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _SerialModuleParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariData:
         """Processes an AkariData object sequentially through configured modules, mirroring the non-streaming `call` behavior.
 

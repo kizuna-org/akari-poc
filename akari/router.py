@@ -6,8 +6,7 @@ import time
 from typing import Dict, cast
 
 import akari.data as akari_data
-import akari.logger as logger
-import akari.module as module
+from akari import logger, module
 
 
 @dataclasses.dataclass
@@ -152,14 +151,13 @@ class _AkariRouter:
             else:
                 # 2回目以降のストリーム呼び出し: 前回の終了時刻を開始時刻とする
                 startTime_for_dataset = last_stream_call_end_time_in_thread
-        else:  # 非ストリーミング
-            if data.datasets and data.last().module is not None:
-                # 前のモジュールの終了時刻を開始時刻とする
-                last_module = cast(akari_data._AkariDataModuleType, data.last().module)
-                startTime_for_dataset = last_module.endTime
-            else:
-                # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
-                startTime_for_dataset = current_perf_counter
+        elif data.datasets and data.last().module is not None:
+            # 前のモジュールの終了時刻を開始時刻とする
+            last_module = cast("akari_data._AkariDataModuleType", data.last().module)
+            startTime_for_dataset = last_module.endTime
+        else:
+            # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
+            startTime_for_dataset = current_perf_counter
 
         # --- モジュールの実処理呼び出し ---
         # モジュールに渡す inputData の準備 (deepcopy)
@@ -193,7 +191,7 @@ class _AkariRouter:
                         callback,
                         startTime_for_dataset,  # 修正後のstartTime
                         endTime_for_dataset,  # 修正後のendTime
-                    )
+                    ),
                 )
             data.add(result)
         elif isinstance(result, akari_data._AkariData):
@@ -206,7 +204,7 @@ class _AkariRouter:
                         callback,
                         startTime_for_dataset,  # 修正後のstartTime
                         endTime_for_dataset,  # 修正後のendTime
-                    )
+                    ),
                 )
             data = result
         else:

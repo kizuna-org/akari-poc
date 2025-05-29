@@ -74,9 +74,8 @@ class _PrintModule(AkariModule):
                 if isinstance(value, AkariDataSetType):
                     if value.main is not None:
                         self._logger.info("%s: %s", field, value.main)
-                else:
-                    if value is not None:
-                        self._logger.info("%s: %s", field, value)
+                elif value is not None:
+                    self._logger.info("%s: %s", field, value)
 
         return data.last()
 

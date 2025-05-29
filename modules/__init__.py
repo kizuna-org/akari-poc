@@ -4,4 +4,4 @@ from .serial import _SerialModule as SerialModule
 from .serial import _SerialModuleParamModule as SerialModuleParamModule
 from .serial import _SerialModuleParams as SerialModuleParams
 
-__all__ = ["RootModule", "PrintModule", "SerialModule", "SerialModuleParams", "SerialModuleParamModule", "AkariRouter"]
+__all__ = ["AkariRouter", "PrintModule", "RootModule", "SerialModule", "SerialModuleParamModule", "SerialModuleParams"]

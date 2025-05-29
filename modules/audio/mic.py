@@ -183,7 +183,7 @@ class _MicModule(AkariModule):
                             "channels": params.channels,
                             "sample_width": audio.get_sample_size(params.format),
                             "rate": params.rate,
-                        }
+                        },
                     )
                     data.add(dataset)
                     if callback is not None:

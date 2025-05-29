@@ -2,9 +2,8 @@ import dataclasses
 import io
 import time
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
-import pyaudio
 import webrtcvad
 
 from akari import (
@@ -143,7 +142,10 @@ class _WebRTCVadModule(AkariModule):
         raise NotImplementedError("WebRTCVadModule does not support call method. Use stream_call instead.")
 
     def stream_call(
-        self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _WebRTCVadParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariData:
         """Analyzes an incoming audio chunk for voice activity using the WebRTC VAD algorithm.
 
@@ -197,7 +199,7 @@ class _WebRTCVadModule(AkariModule):
 
         if len(audio.main) < frame_size_bytes:
             raise ValueError(
-                f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+                f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes.",
             )
 
         buffer.seek(-frame_size_bytes, io.SEEK_END)
@@ -220,9 +222,8 @@ class _WebRTCVadModule(AkariModule):
             self._callbacked = False
             if audio.stream is not None:
                 self._audio_buffer += audio.stream.last()
-        else:
-            if time.time() - self._last_speech_time < params.speech_sleep_duration_ms / 1000:
-                is_speech = True
+        elif time.time() - self._last_speech_time < params.speech_sleep_duration_ms / 1000:
+            is_speech = True
 
         self._logger.debug("WebRTC VAD functional detected speech: %s", is_speech)
 

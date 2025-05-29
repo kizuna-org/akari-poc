@@ -1,6 +1,5 @@
 import dataclasses
 import io
-from typing import Any
 
 import pyaudio
 
@@ -149,7 +148,10 @@ class _SpeakerModule(AkariModule):
         return buffer, channels, rate
 
     def call(
-        self, data: AkariData, params: _SpeakerModuleParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _SpeakerModuleParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Orchestrates the playback of audio data contained within the latest dataset of an AkariData sequence.
 
@@ -176,7 +178,10 @@ class _SpeakerModule(AkariModule):
         return dataset
 
     def stream_call(
-        self, data: AkariData, params: _SpeakerModuleParams, callback: AkariModuleType | None = None
+        self,
+        data: AkariData,
+        params: _SpeakerModuleParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Processes audio data for playback identically to the non-streaming `call` method.
 
