@@ -1,25 +1,21 @@
-import json
-from typing import Any
+"""A module for printing and logging AkariData contents."""
 
-from akari import (
+from __future__ import annotations
+
+import json
+
+from akari_core.logger import AkariLogger
+from akari_core.module import (
     AkariData,
-    AkariDataSet,
-    AkariDataSetType,
-    AkariLogger,
     AkariModule,
+    AkariModuleParams,
     AkariModuleType,
     AkariRouter,
 )
 
 
 class _PrintModule(AkariModule):
-    """Provides a debugging utility that logs the content of the most recent dataset in an AkariData sequence.
-
-    Its primary function is to offer developers insight into the data structure
-    and content at a specific point in the Akari pipeline. It logs various
-    aspects of the last dataset, including a JSON representation if possible,
-    and individual fields.
-    """
+    """A module for printing and logging AkariData contents."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         """Constructs a PrintModule instance.
@@ -33,40 +29,25 @@ class _PrintModule(AkariModule):
         """
         super().__init__(router, logger)
 
-    def call(self, data: AkariData, params: Any, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Inspects and logs the contents of the last AkariDataSet within the provided AkariData object.
-
-        The method first attempts to serialize the entire last dataset to a JSON
-        string for a comprehensive overview. If serialization fails (e.g., due to
-        non-serializable data like bytes), it falls back to logging the raw string
-        representation of the dataset.
-
-        Subsequently, it iterates through all attributes of the last dataset. For
-        attributes that are instances of `AkariDataSetType` and have a non-None
-        `main` value, it logs the field name and this `main` value. For other
-        non-None attributes, it logs their field name and value directly.
-
-        Args:
-            data (AkariData): The AkariData object containing the sequence of
-                datasets. The last dataset in this sequence is the one inspected.
-            params (Any): Parameters for this module. Currently, these parameters
-                are logged but not otherwise used by the module's logic.
-            callback (Optional[AkariModuleType]): An optional callback module.
-                Currently, this parameter is logged but not used.
-
-        Returns:
-            AkariDataSet: The same last dataset that was inspected. This module
-            does not modify the data.
-        """
+    def call(
+        self,
+        data: AkariData,
+        params: AkariModuleParams | None = None,
+        _callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Inspect and log the contents of the last AkariDataSet."""
         self._logger.debug("PrintModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
 
         last = data.last()
+        if last:
+            self._logger.info("Last DataSet: %s", last)
+
         try:
-            self._logger.info("Last Data: %s", json.dumps(last, indent=4))
-        except:
-            self._logger.info("Last Data: %s", last)
+            self._logger.info("Last Data (json): %s", json.dumps(last, indent=4))
+        except Exception:
+            self._logger.info("Could not serialize last data to json: %s", last)
 
         for field in last.__dict__:
             if hasattr(last, field) and field != "module":
@@ -77,22 +58,24 @@ class _PrintModule(AkariModule):
                 elif value is not None:
                     self._logger.info("%s: %s", field, value)
 
-        return data.last()
+        return data.last() if data.datasets else AkariDataSet()
 
-    def stream_call(self, data: AkariData, params: Any, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Processes streaming data by applying the same logging logic as the non-streaming `call` method.
+    def stream_call(
+        self,
+        data: AkariData,
+        params: AkariModuleParams | None = None,
+        _callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Process streaming data by applying logging logic from call method."""
+        self._logger.debug("PrintModule stream_call called")
 
-        This module treats streaming and non-streaming calls identically,
-        logging the content of the last dataset received.
+        last = data.last()
+        if last:
+            self._logger.info("Stream Last DataSet: %s", last)
 
-        Args:
-            data (AkariData): The AkariData object, typically containing the latest
-                chunk or segment of a stream as its last dataset.
-            params (Any): Parameters for this module (logged but not used).
-            callback (Optional[AkariModuleType]): An optional callback module
-                (logged but not used).
+        try:
+            self._logger.info("Stream Last Data (json): %s", json.dumps(last, indent=4))
+        except Exception:
+            self._logger.info("Could not serialize stream last data to json: %s", last)
 
-        Returns:
-            AkariDataSet: The last dataset from the input AkariData object.
-        """
-        return self.call(data, params, callback)
+        return data.last() if data.datasets else AkariDataSet()

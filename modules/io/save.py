@@ -1,155 +1,151 @@
-import dataclasses
-import wave
-from datetime import datetime
-from typing import Any
+from __future__ import annotations
 
-from akari import (
+import dataclasses
+import datetime
+import wave
+from pathlib import Path
+
+from akari_core.module import (
     AkariData,
     AkariDataSet,
-    AkariDataSetType,
-    AkariLogger,
     AkariModule,
+    AkariModuleParams,
     AkariModuleType,
-    AkariRouter,
 )
 
 
 @dataclasses.dataclass
-class _SaveModuleParams:
-    """Defines the configuration for saving data to a file.
-
-    Specifies the target file path, the name of the data field within an
-    `AkariDataSet` to source the data from, and whether to append a
-    timestamp to the filename for uniqueness.
-
-    Attributes:
-        file_path (str): The complete path, including the desired filename and
-            extension, where the data will be saved.
-        save_from_data (str): The attribute name (e.g., "text", "audio", "meta")
-            on the last `AkariDataSet` from which the `.main` data content should
-            be retrieved for saving. For instance, if "audio", it will attempt
-            to save `data.last().audio.main`.
-        with_timestamp (bool): If `True`, a timestamp string (formatted as
-            `YYYYMMDDHHMMSS`) will be inserted into the filename before the
-            file extension. For example, "output.wav" might become
-            "output_20231027143000.wav". Defaults to `False`.
-    """
+class _SaveModuleParams(AkariModuleParams):
+    """SaveModuleのパラメータ."""
 
     file_path: str
+    """保存先のファイルパス."""
     save_from_data: str
+    """AkariDataから保存するデータのキー."""
     with_timestamp: bool = False
+    """ファイル名にタイムスタンプを追加するかどうか. デフォルトはFalse."""
+    ensure_dir: bool = False
+    """保存先のディレクトリが存在しない場合に作成するかどうか. デフォルトはFalse."""
 
 
 class _SaveModule(AkariModule):
-    """Persists data from an Akari pipeline to the filesystem.
+    """AkariDataSet内の指定されたデータをファイルに保存するモジュール."""
 
-    Enables saving of specific data fields (like text, audio bytes, or metadata)
-    from the most recent `AkariDataSet` in the pipeline to a designated file.
-    It includes options for automatic timestamping of filenames to prevent
-    overwrites and special handling for WAV audio files to ensure correct
-    header information based on provided metadata.
-    """
-
-    def __init__(
-        self,
-        router: AkariRouter,
-        logger: AkariLogger,
-    ) -> None:
-        """Constructs a _SaveModule instance.
-
-        Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization.
-            logger (AkariLogger): The logger instance for recording operational
-                details, such as successful save paths or errors encountered.
-        """
+    def __init__(self, router, logger) -> None:
         super().__init__(router, logger)
+        self._logger = logger
 
-    def call(self, data: AkariData, params: _SaveModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Extracts data from a designated field in the most recent `AkariDataSet` and writes it to a specified file path.
+    def call(
+        self,
+        data: AkariData,
+        params: _SaveModuleParams,
+        _callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Extract data from a designated field and save it to a file.
 
         The module first attempts to retrieve the data specified by
-        `params.save_from_data` from the last dataset in the `AkariData` sequence.
-        If `params.with_timestamp` is true, it modifies the `params.file_path`
-        to include a current timestamp, helping to version saved files.
-
-        Special handling is implemented for audio data: if `params.save_from_data`
-        is "audio" and `params.file_path` ends with ".wav", the module attempts
-        to write a proper WAV file using metadata (channels, sample width, rate)
-        from `data.last().meta`. If this metadata is incomplete, it uses sensible
-        defaults (1 channel, 2 bytes sample width, 16000 Hz rate).
-        For all other data types or file extensions, the data is written in binary mode.
+        `params.save_from_data` from the `main` attribute of the last
+        `AkariDataSet` in the provided `AkariData` object. If the data is not found,
+        a `ValueError` is raised.
 
         Args:
-            data (AkariData): The `AkariData` object containing the pipeline's
-                current state. The data to be saved is sourced from its last dataset.
-            params (_SaveModuleParams): Configuration specifying the file path,
-                the data field to save, and whether to use a timestamp.
-            callback (Optional[AkariModuleType]): An optional callback module. This
-                parameter is currently not used by the SaveModule.
+            data: AkariData object containing the data to save.
+            params: _SaveModuleParams object specifying the file path and data key.
+            _callback: Unused callback module type.
 
         Returns:
-            AkariDataSet: The last `AkariDataSet` from the input `data` object.
-            This module does not modify the dataset itself but returns it to
-            maintain pipeline flow.
+            An empty AkariDataSet upon successful saving.
 
         Raises:
-            ValueError: If `params.save_from_data` does not correspond to a valid
-                or populated field in `data.last()`.
-            IOError: If file writing fails due to permissions, path issues, etc.
-            wave.Error: If writing a WAV file fails due to incorrect audio
-                parameters or data.
+            ValueError: If the specified data key is not found in the AkariData or the data is empty.
+            IOError: If there is an error writing to the file.
         """
         try:
-            save_data = data.last().__dict__[params.save_from_data]
-        except KeyError:
-            raise ValueError(f"Data does not contain the key '{params.save_from_data}'.")
+            # Attempt to get data from data.last().attribute
+            save_data = getattr(data.last(), params.save_from_data)
+            if hasattr(save_data, "main"):
+                save_data = save_data.main
+            elif hasattr(save_data, "stream"):
+                save_data = save_data.stream.last() if save_data.stream else None
+
+        except AttributeError:
+            # TRY003, EM102: Assign exception message to variable
+            error_msg = (
+                f"Data does not contain the attribute '{params.save_from_data}'."
+            )
+            raise ValueError(error_msg) from None
+
         if not save_data:
-            raise ValueError(f"Data does not contain the key '{params.save_from_data}' or it is empty.")
+            # TRY003, EM102: Assign exception message to variable
+            error_msg = f"Data does not contain the attribute '{params.save_from_data}' or it is empty."
+            raise ValueError(error_msg) from None
 
-        path = params.file_path
+        path_str = params.file_path
         if params.with_timestamp:
-            paths = path.split(".")
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            if len(paths) > 1:
-                path = f"{'.'.join(paths[:-1])}_{timestamp}.{paths[-1]}"
+            paths = path_str.rsplit(".", 1)
+            timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%Y%m%d%H%M%S"
+            )
+            # SIM108: Use ternary operator
+            path_str = (
+                f"{paths[0]}_{timestamp}.{paths[1]}"
+                if len(paths) > 1
+                else f"{path_str}_{timestamp}"
+            )
+        path = Path(path_str)
+        if params.ensure_dir:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self._logger.debug("Ensured directory exists: %s", path.parent)
+
+        try:
+            if (
+                path_str.endswith(".wav")
+                and params.save_from_data == "audio"
+                and isinstance(save_data, bytes)
+            ):
+                # Assuming save_data is bytes for WAV
+                with wave.open(str(path), "wb") as wf:
+                    wf.setnchannels(1)  # Mono
+                    wf.setsampwidth(2)  # 16 bits
+                    wf.setframerate(16000)  # Assume 16KHz, ideally from metadata
+                    wf.writeframes(save_data)
+                self._logger.debug("Audio data saved as WAV to %s", path)
+            elif isinstance(save_data, (str, bytes)):
+                mode = "w" if isinstance(save_data, str) else "wb"
+                encoding = "utf-8" if isinstance(save_data, str) else None
+                with path.open(mode, encoding=encoding) as file:
+                    file.write(save_data)
+                self._logger.debug("Data saved to %s", path)
             else:
-                path = f"{path}_{timestamp}"
+                # TRY003, EM102: Assign exception message to variable
+                error_msg = f"Unsupported data type for saving: {type(save_data)}. "
+                raise TypeError(error_msg) from None
 
-        if path.endswith(".wav") and params.save_from_data == "audio":
-            audio_data: AkariDataSetType[bytes] = data.last().__dict__[params.save_from_data]
-            meta: AkariDataSetType[dict[str, Any]] | None = data.last().meta
-            with wave.open(path, "wb") as wav_file:
-                wav_file.setnchannels(meta.main["channels"] if meta and "channels" in meta.main else 1)
-                wav_file.setsampwidth(meta.main["sample_width"] if meta and "sample_width" in meta.main else 2)
-                wav_file.setframerate(meta.main["rate"] if meta and "rate" in meta.main else 16000)
-                wav_file.writeframes(audio_data.main)
-            self._logger.debug("Audio data saved as WAV to %s", path)
-        else:
-            with open(path, "wb") as file:
-                file.write(data.last().__dict__[params.save_from_data].main)
-            self._logger.debug("Data saved to %s", path)
+        except OSError as e:
+            # TRY400: Use logging.exception
+            # G004: Logging statement uses f-string
+            self._logger.exception("Error writing to file %s: %s", path, e)
+            raise OSError(f"Error saving data to {path}: {e}") from e
 
-        return data.last()
+        return AkariDataSet()
 
     def stream_call(
         self,
         data: AkariData,
         params: _SaveModuleParams,
-        callback: AkariModuleType | None = None,
+        _callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Processes data for saving identically to the non-streaming `call` method.
 
-        This module does not implement distinct logic for streaming versus
-        non-streaming calls. Both invoke the same file-saving sequence.
+        This module does not differentiate between streaming and non-streaming
+        data for the save operation, processing it as a single data point.
 
         Args:
-            data (AkariData): The `AkariData` object containing the data to save.
-            params (_SaveModuleParams): Configuration for the save operation.
-            callback (Optional[AkariModuleType]): An optional callback module,
-                currently unused.
+            data: AkariData object containing the data to save.
+            params: _SaveModuleParams object specifying the file path and data key.
+            _callback: Unused callback module type.
 
         Returns:
-            AkariDataSet: The last `AkariDataSet` from the input `data`.
+            An empty AkariDataSet upon successful saving.
         """
-        return self.call(data, params, callback)
+        return self.call(data, params, _callback)

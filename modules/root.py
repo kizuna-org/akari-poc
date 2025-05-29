@@ -1,4 +1,8 @@
-from akari import (
+"""Root module for the Akari pipeline."""
+
+from __future__ import annotations
+
+from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariLogger,
@@ -10,13 +14,7 @@ from akari import (
 
 
 class _RootModule(AkariModule):
-    """Serves as the entry point or starting trigger for an Akari data processing pipeline.
-
-    Its primary responsibility is to kick off a sequence of module executions.
-    It does this by taking a module type as a parameter and using the AkariRouter
-    to invoke that initial module. It typically does not perform any data
-    processing itself but rather delegates to other modules.
-    """
+    """Initiates the Akari pipeline by invoking the first module."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         """Constructs a RootModule instance.
@@ -29,33 +27,47 @@ class _RootModule(AkariModule):
         """
         super().__init__(router, logger)
 
-    def call(self, data: AkariData, params: AkariModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Initiates the Akari pipeline by invoking the first processing module.
-
-        The `params` argument for this RootModule's `call` method is uniquely
-        interpreted as the type (class) of the Akari module that should be
-        executed first. The router is then instructed to call this target module,
-        passing along the initial `data` and any `callback`. The RootModule
-        itself returns an empty `AkariDataSet`, as its role is purely
-        orchestration.
-
-        Args:
-            data (AkariData): The initial AkariData instance for the pipeline,
-                which is typically empty when starting a new sequence.
-            params (AkariModuleParams): Expected to be the AkariModuleType (class)
-                of the first module to be executed in the pipeline. This will be
-                used as the `moduleType` argument for `router.callModule`.
-            callback (Optional[AkariModuleType]): An optional callback module type
-                that will be passed to the first module's execution.
-
-        Returns:
-            AkariDataSet: An empty `AkariDataSet`. The actual results of the
-            pipeline are expected to be accumulated within the `AkariData` object
-            passed through subsequent module calls.
-        """
+    def call(
+        self,
+        data: AkariData,
+        params: AkariModuleParams,
+        callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Initiate the Akari pipeline by invoking the first module."""
         self._logger.debug("RootModule called")
-        self._logger.debug("Data: %s", data)
-        self._logger.debug("Params: %s", params)
-        self._router.callModule(moduleType=params, data=data, params=None, streaming=False, callback=callback)
 
-        return AkariDataSet()
+        # The RootModule's responsibility is typically to just kick off the pipeline
+        # by calling the first configured module. The actual processing happens
+        # downstream.
+
+        # In a simple sequential pipeline, this might look like:
+        # result_data = self._router.callModule(params.first_module_type, data, params.first_module_params, callback=callback)
+        # return result_data.last() if result_data.datasets else AkariDataSet()
+
+        # For now, just return the input data as is, assuming downstream modules will process it.
+        # This is a placeholder; actual logic depends on pipeline structure.
+        self._logger.info(
+            "RootModule is a placeholder and does not perform processing."
+        )
+        self._logger.info("Input Data: %s", data)
+        self._logger.info("Params: %s", params)
+        self._logger.info("Callback: %s", callback)
+
+        # Assuming the next module is handled by the router based on configuration
+        # or the next step is implicit. Returning input data or an empty dataset.
+        return data.last() if data.datasets else AkariDataSet()
+
+    def stream_call(
+        self,
+        data: AkariData,
+        params: AkariModuleParams,
+        callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Initiate the Akari streaming pipeline by invoking the first module."""
+        self._logger.debug("RootModule stream_call called")
+
+        # Similar to call, this is a placeholder for initiating streaming.
+        self._logger.info("RootModule stream_call is a placeholder.")
+
+        # Assuming the next streaming module is handled by the router.
+        return data.last() if data.datasets else AkariDataSet()

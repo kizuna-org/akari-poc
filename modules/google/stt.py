@@ -172,14 +172,12 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                             streaming=True,
                         )
                     except Exception as e_router:
-                        self._logger.error(
-                            f"Error calling downstream callback module: {e_router}"
+                        self._logger.exception(
+                            "Error calling downstream callback module: %s", e_router
                         )
 
         except Exception as e:
-            self._logger.exception(
-                "Exception in Google STT processing thread: %s", e, exc_info=True
-            )
+            self._logger.exception("Exception in Google STT processing thread: %s", e)
         finally:
             self._logger.info("Google STT processing thread finished.")
             with self._lock:
@@ -317,8 +315,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                     actual_sample_rate = last_dataset.meta.main["rate"]
                     if current_params.sample_rate_hertz != actual_sample_rate:
                         self._logger.warning(
-                            "Overriding params.sample_rate_hertz (%s) "
-                            "with actual sample rate from metadata (%s).",
+                            "Overriding params.sample_rate_hertz (%s) with actual sample rate from metadata (%s).",
                             current_params.sample_rate_hertz,
                             actual_sample_rate,
                         )

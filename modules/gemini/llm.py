@@ -1,119 +1,218 @@
+"""Gemini LLM module."""
+
+from __future__ import annotations
+
 import dataclasses
-from collections.abc import Iterable
-from typing import Callable
 
-from vertexai.generative_models import Content, GenerativeModel
-
-from akari import (
+from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
     AkariLogger,
     AkariModule,
+    AkariModuleParams,
     AkariModuleType,
     AkariRouter,
 )
+from vertexai.generative_models import (
+    Content,
+    GenerationConfig,
+    GenerativeModel,
+    SafetySetting,
+    Tool,
+)
 
-_models: dict[str, GenerativeModel] = {}
+_models = {
+    "gemini-pro": "gemini-pro",
+    "gemini-1.5-flash-latest": "gemini-1.5-flash-latest",
+    # Add other models here as needed
+}
 
 
 @dataclasses.dataclass
-class _LLMModuleParams:
-    """Defines the necessary parameters for invoking a Google Gemini language model.
+class _GeminiLLMParams(AkariModuleParams):
+    """Parameters for the Gemini LLM module."""
 
-    Includes the specific model identifier (e.g., "gemini-pro") and the
-    conversation content, which can be provided directly or generated via a function.
-
-    Attributes:
-        model (str): The identifier of the Gemini model to be used (e.g.,
-            "gemini-pro", "gemini-1.5-flash-latest"). This determines which version of the
-            Gemini family will process the request.
-        messages (Optional[Iterable[Content]]): A sequence of `Content` objects
-            that constitute the conversation history or prompt. This is used if
-            `messages_function` is not provided or returns `None`.
-        messages_function (Optional[Callable[[AkariData], Iterable[Content]]]):
-            A callable that accepts an `AkariData` instance and dynamically
-            generates the sequence of `Content` objects for the prompt. This allows
-            the conversation to be built based on data from previous steps in an
-            Akari pipeline. If provided, it takes precedence. Defaults to `None`.
-    """
-
-    model: str
-    messages: Iterable[Content] | None = None
-    messages_function: Callable[[AkariData], Iterable[Content]] | None = None
+    model: str = "gemini-1.5-flash-latest"
+    """The model name to use (e.g., 'gemini-1.5-flash-latest')."""
+    system_instruction: str | None = None
+    """System instruction for the model."""
+    safety_settings: list[SafetySetting] | None = None
+    """Safety settings for the model."""
+    generation_config: GenerationConfig | None = None
+    """Generation configuration for the model."""
+    tools: list[Tool] | None = None
+    """Tools to provide to the model."""
+    messages_function: AkariModuleType | None = None
+    """A function to generate messages from AkariData."""
+    messages: list[Content] | None = None
+    """Pre-generated messages to send to the model."""
 
 
-class _LLMModule(AkariModule):
-    """Provides an interface to Google's Gemini large language models.
+_model_instances: dict[str, GenerativeModel] = {}
 
-    Enables content generation by sending structured conversation history (as a
-    sequence of `Content` objects) to a specified Gemini model. It manages a
-    local cache of `GenerativeModel` instances to optimize repeated calls to the
-    same model.
-    """
+
+class _GeminiLLMModule(AkariModule):
+    """Module for interacting with the Gemini LLM."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs an _LLMModule instance for interacting with Gemini models.
-
-        Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization.
-            logger (AkariLogger): The logger instance for recording operational
-                details, debugging information, and API interactions.
-        """
+        """Construct a _GeminiLLMModule instance."""
         super().__init__(router, logger)
 
-    def call(self, data: AkariData, params: _LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Sends a request to the specified Google Gemini model to generate textual content.
-
-        The conversation history (prompt) is determined either from the static
-        `params.messages` or dynamically via `params.messages_function`. The module
-        uses a shared, in-memory cache (`_models`) to store and reuse initialized
-        `GenerativeModel` instances, potentially improving performance for
-        subsequent calls to the same model. The generated text from the model's
-        response is then packaged into an `AkariDataSet`.
-
-        Args:
-            data (AkariData): The input `AkariData` object. This is passed to
-                `params.messages_function` if it is set, allowing the prompt to be
-                dynamically constructed based on previous pipeline results.
-            params (_LLMModuleParams): An object containing the target Gemini model
-                name and the conversation content (either directly or via a function).
-            callback (Optional[AkariModuleType]): An optional callback module.
-                This parameter is currently not used by the Gemini LLMModule.
-
-        Returns:
-            AkariDataSet: An `AkariDataSet` where:
-                - `text.main` contains the primary textual content generated by the
-                  Gemini model.
-                - `allData` holds the complete raw response object returned by the
-                  `GenerativeModel.generate_content` method.
-
-        Raises:
-            ValueError: If `params.messages` is `None` and `params.messages_function`
-                is also `None` or returns `None`, meaning no message content is
-                available to send to the model.
-            GoogleAPIError: If the call to the Gemini API fails due to issues such
-                as authentication, network problems, or invalid API usage. (Note:
-                Specific exception types may vary based on the `vertexai` library).
-        """
+    def call(
+        self,
+        data: AkariData,
+        params: _GeminiLLMParams,
+        _callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Generate text using the Gemini LLM."""
         self._logger.debug("LLMModule called")
         self._logger.debug("Data: %s", data)
         self._logger.debug("Params: %s", params)
-        self._logger.debug("Callback: %s", callback)
 
-        if params.messages_function is not None:
-            params.messages = params.messages_function(data)
-        if params.messages is None:
-            raise ValueError("Messages cannot be None. Please provide a valid list of messages.")
-
+        if params.messages_function:
+            message_data = self._router.callModule(
+                params.messages_function, data, None, streaming=False, callback=None
+            )
+            messages = message_data.last().allData
+        else:
+            messages = params.messages
+        if messages is None:
+            error_msg = (
+                "Messages cannot be None. Please provide a valid list of messages."
+            )
+            raise ValueError(error_msg)
         if params.model not in _models:
-            _models[params.model] = GenerativeModel(params.model)
+            error_msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
+            raise ValueError(error_msg)
+        model_name = _models[params.model]
+        if model_name not in _model_instances:
+            self._logger.info("Loading model: %s", model_name)
+            # Assuming vertexai is already initialized elsewhere in the application
+            _model_instances[model_name] = GenerativeModel(
+                model_name,
+                system_instruction=(
+                    Content(role="system", parts=[params.system_instruction])
+                    if params.system_instruction
+                    else None
+                ),
+                safety_settings=params.safety_settings,
+                generation_config=params.generation_config,
+                tools=params.tools,
+            )
+            self._logger.info("Model loaded: %s", model_name)
+        model = _model_instances[model_name]
 
-        model = _models[params.model]
-        response = model.generate_content(params.messages)
+        try:
+            response = model.generate_content(
+                messages,
+                generation_config=params.generation_config,
+                safety_settings=params.safety_settings,
+                tools=params.tools,
+            )
+            self._logger.debug("Received response from model")
 
-        dataset = AkariDataSet()
-        dataset.text = AkariDataSetType(main=response.text)
-        dataset.allData = response
-        return dataset
+            try:
+                text_response = response.text
+            except ValueError:
+                self._logger.warning("Model response is not text.")
+                text_response = ""
+
+            result_dataset = AkariDataSet(
+                text=AkariDataSetType(main=text_response),
+                allData=response,
+            )
+            self._logger.debug("LLMModule call finished successfully")
+            return result_dataset
+        except Exception as e:
+            self._logger.exception("Error during LLM generation: %s", e)
+            error_dataset = AkariDataSet(
+                text=AkariDataSetType(main=f"Error during LLM generation: {e!s}")
+            )
+            return error_dataset
+
+    def stream_call(
+        self,
+        data: AkariData,
+        params: _GeminiLLMParams,
+        _callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
+        """Stream text generation from the Gemini LLM."""
+        self._logger.debug("LLMModule stream_call called")
+
+        if params.messages_function:
+            message_data = self._router.callModule(
+                params.messages_function, data, None, streaming=False, callback=None
+            )
+            messages = message_data.last().allData
+        else:
+            messages = params.messages
+        if messages is None:
+            error_msg = (
+                "Messages cannot be None. Please provide a valid list of messages."
+            )
+            raise ValueError(error_msg)
+        if params.model not in _models:
+            error_msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
+            raise ValueError(error_msg)
+        model_name = _models[params.model]
+        if model_name not in _model_instances:
+            self._logger.info("Loading model for streaming: %s", model_name)
+            # Assuming vertexai is already initialized elsewhere in the application
+            _model_instances[model_name] = GenerativeModel(
+                model_name,
+                system_instruction=(
+                    Content(role="system", parts=[params.system_instruction])
+                    if params.system_instruction
+                    else None
+                ),
+                safety_settings=params.safety_settings,
+                generation_config=params.generation_config,
+                tools=params.tools,
+            )
+            self._logger.info("Model loaded for streaming: %s", model_name)
+        model = _model_instances[model_name]
+        result_dataset = AkariDataSet(
+            text=AkariDataSetType(main="", stream=AkariDataStreamType(delta=[])),
+            allData=None,
+        )
+
+        def stream_generation_thread(model, messages, params, result_dataset):
+            try:
+                stream = model.generate_content(
+                    messages,
+                    generation_config=params.generation_config,
+                    safety_settings=params.safety_settings,
+                    tools=params.tools,
+                    stream=True,
+                )
+                self._logger.debug("Started streaming generation")
+
+                full_response = []
+                for chunk in stream:
+                    self._logger.debug("Received chunk: %s", chunk)
+                    if hasattr(chunk, "text"):
+                        text_chunk = chunk.text
+                        if text_chunk:
+                            result_dataset.text.stream.add(text_chunk)
+                            full_response.append(text_chunk)
+                result_dataset.allData = (
+                    (stream._result) if hasattr(stream, "_result") else None
+                )
+                result_dataset.bool = AkariDataSetType(main=True)
+                self._logger.debug("Streaming generation finished")
+
+            except Exception as e:
+                self._logger.exception("Error during LLM streaming generation: %s", e)
+                result_dataset.text.stream.add(
+                    f"Error during LLM streaming generation: {e!s}"
+                )
+                result_dataset.bool = AkariDataSetType(main=False)
+
+        thread = threading.Thread(
+            target=stream_generation_thread,
+            args=(model, messages, params, result_dataset),
+        )
+        thread.daemon = True
+        thread.start()
+        return result_dataset
