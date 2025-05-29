@@ -82,9 +82,10 @@ class _GoogleTextToSpeechModule(AkariModule):
                 and response.audio_config
                 and hasattr(response.audio_config, "sample_rate_hertz")
             ):
-                meta_info["sample_rate_hertz"] = response.audio_config.sample_rate_hertz
+                meta_info["rate"] = response.audio_config.sample_rate_hertz
             elif params.sample_rate_hertz:
-                meta_info["sample_rate_hertz"] = params.sample_rate_hertz
+                meta_info["rate"] = params.sample_rate_hertz
+            meta_info["channels"] = 1
             result_dataset.meta = AkariDataSetType(main=meta_info)
             return result_dataset
 
