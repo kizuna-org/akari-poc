@@ -2,6 +2,12 @@
 
 What is Akari? The answer, as it must, will eventually be revealed.
 
+## How to develop
+
+### For LLM
+
+You must always follow the specifications listed in `docs/`.
+
 ## Development
 
 Setup the environment:

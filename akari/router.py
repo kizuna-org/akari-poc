@@ -3,7 +3,7 @@ import dataclasses
 import os
 import threading  # 追加
 import time
-from typing import Dict
+from typing import Dict, cast
 
 import akari.data as akari_data
 import akari.logger as logger
@@ -153,9 +153,10 @@ class _AkariRouter:
                 # 2回目以降のストリーム呼び出し: 前回の終了時刻を開始時刻とする
                 startTime_for_dataset = last_stream_call_end_time_in_thread
         else:  # 非ストリーミング
-            if data.datasets and hasattr(data.last(), "module"):
+            if data.datasets and data.last().module is not None:
                 # 前のモジュールの終了時刻を開始時刻とする
-                startTime_for_dataset = data.last().module.endTime
+                last_module = cast(akari_data._AkariDataModuleType, data.last().module)
+                startTime_for_dataset = last_module.endTime
             else:
                 # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
                 startTime_for_dataset = current_perf_counter
@@ -183,16 +184,17 @@ class _AkariRouter:
 
         # --- 結果の処理と AkariDataModuleType の設定 ---
         if isinstance(result, akari_data._AkariDataSet):
-            result.setModule(
-                akari_data._AkariDataModuleType(
-                    moduleType,
-                    params,
-                    streaming,
-                    callback,
-                    startTime_for_dataset,  # 修正後のstartTime
-                    endTime_for_dataset,  # 修正後のendTime
+            if result.module is None:
+                result.setModule(
+                    akari_data._AkariDataModuleType(
+                        moduleType,
+                        params,
+                        streaming,
+                        callback,
+                        startTime_for_dataset,  # 修正後のstartTime
+                        endTime_for_dataset,  # 修正後のendTime
+                    )
                 )
-            )
             data.add(result)
         elif isinstance(result, akari_data._AkariData):
             if result.datasets:  # result が空の AkariData を返す可能性も考慮
@@ -212,7 +214,8 @@ class _AkariRouter:
 
         if self._options.duration:
             # ここでログ出力する duration は、AkariDataModuleType に記録された endTime - startTime
-            duration = endTime_for_dataset - startTime_for_dataset
+            module = data.last().module
+            duration = module.endTime - module.startTime if module else endTime_for_dataset - startTime_for_dataset
             self._logger.info(
                 "[Router] Module %s: %s (ThreadID: %s) took %.4f seconds (elapsed since last relevant call)",
                 "streaming" if streaming else "calling",
