@@ -3,7 +3,7 @@ import dataclasses
 import os
 import threading  # 追加
 import time
-from typing import Dict
+from typing import Dict, cast
 
 import akari.data as akari_data
 import akari.logger as logger
@@ -153,13 +153,10 @@ class _AkariRouter:
                 # 2回目以降のストリーム呼び出し: 前回の終了時刻を開始時刻とする
                 startTime_for_dataset = last_stream_call_end_time_in_thread
         else:  # 非ストリーミング
-            if data.datasets and hasattr(data.last(), "module"):
+            if data.datasets and data.last().module is not None:
                 # 前のモジュールの終了時刻を開始時刻とする
-                last_module = data.last().module
-                if last_module is not None:
-                    startTime_for_dataset = last_module.endTime
-                else:
-                    startTime_for_dataset = current_perf_counter
+                last_module = cast(akari_data._AkariDataModuleType, data.last().module)
+                startTime_for_dataset = last_module.endTime
             else:
                 # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
                 startTime_for_dataset = current_perf_counter
