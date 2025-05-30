@@ -211,7 +211,9 @@ class _AkariDataSet:
         self.audio: _AkariDataSetType[bytes] | None = None
         self.bool: _AkariDataSetType[bool] | None = None
         self.meta: _AkariDataSetType[dict[str, Any]] | None = None
-        self.allData: Any | None = None # N815: allData -> all_data (decided to keep as is for now due to potential widespread use)
+        self.allData: Any | None = (
+            None  # N815: allData -> all_data (decided to keep as is for now due to potential widespread use)
+        )
 
     def set_module(self, module: _AkariDataModuleType) -> None:  # N802 fixed
         """Attaches module execution metadata to this dataset.
@@ -228,7 +230,7 @@ class _AkariDataSet:
 
 
 class _AkariData:
-    """Orchestrates a sequence of datasets, representing the state and flow of data through an Akari processing pipeline.
+    """Orchestrates a sequence of datasets, representing the state and flow of data through an Akari pipeline.
 
     Modules in a pipeline typically receive an `_AkariData` instance, can inspect
     previous datasets (especially the last one), and append new `_AkariDataSet`

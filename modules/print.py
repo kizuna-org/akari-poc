@@ -46,7 +46,7 @@ class _PrintModule(AkariModule):
         except json.JSONDecodeError:
             self._logger.info("Could not serialize last data to json: %s", last)
         except Exception as e:
-            self._logger.exception("An unexpected error occurred while processing last data: %s", e) # TRY401 - e is fine
+            self._logger.exception("An unexpected error occurred while processing last data: %s", e)  # noqa: TRY401
 
         for field in last.__dict__:
             if hasattr(last, field) and field != "module":
@@ -77,6 +77,6 @@ class _PrintModule(AkariModule):
         except json.JSONDecodeError:
             self._logger.info("Could not serialize stream last data to json: %s", last)
         except Exception as e:
-            self._logger.exception("An unexpected error occurred while processing stream last data: %s", e) # TRY401 - e is fine
+            self._logger.exception("An unexpected error occurred while processing stream last data: %s", e)  # noqa: TRY401
 
         return data.last() if data.datasets else AkariDataSet()

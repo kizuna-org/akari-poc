@@ -81,7 +81,7 @@ class _AkariModule(ABC):
         params: _AkariModuleParams,
         callback: _AkariModuleType | None = None,
     ) -> akari_data._AkariDataSet | akari_data._AkariData:
-        """Executes the module's logic in a streaming fashion, suitable for continuous data flows or when intermediate results are needed.
+        """Executes streaming logic for continuous data flows or intermediate results.
 
         Modules that support streaming operations should override this method.
         The default implementation indicates that streaming is not supported.

@@ -103,7 +103,9 @@ class _MicModule(AkariModule):
         super().__init__(router, logger)
         self._thread: threading.Thread = threading.Thread()
 
-    def call(self, _data: AkariData, params: _MicModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet: # ARG002: data -> _data
+    def call(
+        self, _data: AkariData, params: _MicModuleParams, callback: AkariModuleType | None = None
+    ) -> AkariDataSet:  # ARG002: data -> _data
         """Initiates and manages the continuous audio recording loop from the microphone.
 
         Opens a PyAudio stream configured by `params`. It then enters an infinite
@@ -176,7 +178,7 @@ class _MicModule(AkariModule):
                 if current_time - frame_time >= params.stream_duration_milliseconds / 1000:  # N815
                     frames.append(frame)
 
-                    current_call_data = AkariData() # Renamed data to avoid B023 in lambda
+                    current_call_data = AkariData()  # Renamed data to avoid B023 in lambda
                     dataset = AkariDataSet()
                     stream = AkariDataStreamType(frames)
                     dataset.audio = AkariDataSetType(main=b"".join(frames), stream=stream)
@@ -191,10 +193,10 @@ class _MicModule(AkariModule):
                     if callback is not None:
 
                         def call_module_in_thread() -> None:
-                            self._router.call_module( # N802 (from akari.router change)
-                                module_type=callback, # N803 (from akari.router change)
+                            self._router.call_module(  # N802 (from akari.router change)
+                                module_type=callback,  # N803 (from akari.router change)
                                 data=current_call_data,  # noqa: B023 - data is intentionally from outer scope but new for each call
-                                params=params.callback_params, # N815
+                                params=params.callback_params,  # N815
                                 streaming=True,
                                 callback=params.callback_callback,
                             )
@@ -206,7 +208,7 @@ class _MicModule(AkariModule):
                     frame_time = current_time
                     frame = b""
 
-                if len(frames) >= params.destruction_milliseconds / params.stream_duration_milliseconds: # N815
+                if len(frames) >= params.destruction_milliseconds / params.stream_duration_milliseconds:  # N815
                     frames = frames[1:]
 
         finally:

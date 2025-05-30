@@ -94,7 +94,7 @@ class _LLMModule(AkariModule):
         """
         raise error_type(message)
 
-    def call(
+    def call(  # noqa: C901, PLR0912
         self,
         data: AkariData,
         params: _LLMModuleParams,
@@ -163,7 +163,7 @@ class _LLMModule(AkariModule):
             # but params.messages expects Iterable[ChatCompletionMessageParam].
             # Assuming messages_function is correctly typed to return Iterable[ChatCompletionMessageParam]
             # or that AkariData can be converted. For now, leaving as is.
-            params.messages = params.messages_function(data) # type: ignore
+            params.messages = params.messages_function(data)  # type: ignore # noqa: PGH003
         if params.messages is None:
             # EM101, TRY003
             msg = "Messages cannot be None. Please provide a valid list of messages."
@@ -218,7 +218,7 @@ class _LLMModule(AkariModule):
                         msg = "Chunk does not have 'choices' attribute or is improperly formatted."
                         self._handle_api_error(TypeError, msg)
             elif isinstance(response, ChatCompletion):
-                self._logger.debug(response.choices[0].message.content) # type: ignore
+                self._logger.debug(response.choices[0].message.content)  # type: ignore # noqa: PGH003
                 text_main = ""
                 if response.choices[0].message.content:
                     text_main = response.choices[0].message.content
@@ -227,19 +227,18 @@ class _LLMModule(AkariModule):
                 self._logger.debug("LLMModule call finished successfully")
                 return dataset
 
-        except Exception as e: # Added 'as e'
-            self._logger.exception("Error during LLM generation: %s", e) # TRY401 - e is fine
+        except Exception as e:  # Added 'as e'
+            self._logger.exception("Error during LLM generation: %s", e)  # noqa: TRY401
             # EM102, TRY003
             error_text = f"Error during LLM generation: {e!s}"
             return AkariDataSet(text=AkariDataSetType(main=error_text))
 
-    def stream_call( # This method seems to be designed to be called by the router, not directly as a module's stream_call
+    def stream_call(  # noqa: C901
         self,
-        data: AkariData, # Added data, consistent with AkariModule.stream_call
+        data: AkariData,  # Added data, consistent with AkariModule.stream_call
         params: _LLMModuleParams,
-        callback: AkariModuleType | None = None, # Added callback
+        callback: AkariModuleType | None = None,  # Added callback
     ) -> AkariDataSet:
-
         # The original stream_call was not matching AkariModule ABC.
         # This is a placeholder to make it compliant.
         # The actual streaming logic is in the `call` method when params.stream is True,
@@ -267,7 +266,7 @@ class _LLMModule(AkariModule):
 
         # Mimic the `call` method's streaming part:
         if params.messages_function is not None:
-            params.messages = params.messages_function(data) # type: ignore
+            params.messages = params.messages_function(data)  # type: ignore # noqa: PGH003
         if params.messages is None:
             msg = "Messages cannot be None for streaming."
             raise ValueError(msg)
@@ -283,7 +282,7 @@ class _LLMModule(AkariModule):
             try:
                 response_stream = self.client.chat.completions.create(
                     model=current_params.model,
-                    messages=current_params.messages, # type: ignore
+                    messages=current_params.messages,  # type: ignore # noqa: PGH003
                     temperature=current_params.temperature,
                     max_tokens=current_params.max_tokens,
                     top_p=current_params.top_p,
@@ -302,27 +301,31 @@ class _LLMModule(AkariModule):
                                     texts_accumulator.append(choice.delta.content)
 
                                 # Update target_dataset (which is result_dataset from outer scope)
-                                target_dataset.text = AkariDataSetType(main=text_main_accumulator, stream=AkariDataStreamType(delta=list(texts_accumulator)))
-                                target_dataset.allData = chunk # Store last chunk
+                                target_dataset.text = AkariDataSetType(
+                                    main=text_main_accumulator,
+                                    stream=AkariDataStreamType(delta=list(texts_accumulator)),
+                                )
+                                target_dataset.allData = chunk  # Store last chunk
 
                                 # Call callback
                                 cb_data = copy.deepcopy(current_data)
-                                cb_data.add(target_dataset) # Add a copy or the live one? This needs care.
+                                cb_data.add(target_dataset)  # Add a copy or the live one? This needs care.
                                 self._router.call_module(
                                     module_type=current_callback,
                                     data=cb_data,
-                                    params=current_params, # Or specific callback params
+                                    params=current_params,  # Or specific callback params
                                     streaming=True,
                                 )
                 target_dataset.bool = AkariDataSetType(main=True)
             except Exception as e_thread:
-                self._logger.exception("Error in LLM streaming thread: %s", e_thread)
+                self._logger.exception("Error in LLM streaming thread: %s", e_thread)  # noqa: TRY401
                 if target_dataset.text and target_dataset.text.stream:
-                    target_dataset.text.stream.add(f"Error: {e_thread!s}")
+                    target_dataset.text.stream.add(f"Error: {e_thread!s}")  # EM102
                 else:
-                    target_dataset.text = AkariDataSetType(main=f"Error: {e_thread!s}", stream=AkariDataStreamType(delta=[f"Error: {e_thread!s}"]))
+                    target_dataset.text = AkariDataSetType(  # EM102
+                        main=f"Error: {e_thread!s}", stream=AkariDataStreamType(delta=[f"Error: {e_thread!s}"])
+                    )
                 target_dataset.bool = AkariDataSetType(main=False)
-
 
         thread = threading.Thread(
             target=_streaming_thread_target,

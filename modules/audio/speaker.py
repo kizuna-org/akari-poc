@@ -149,7 +149,9 @@ class _SpeakerModule(AkariModule):
             msg = "Channels and rate must be provided or available in metadata."
             raise ValueError(msg)
 
-        buffer = io.BytesIO(audio.stream.last() if audio.stream and audio.stream._delta else audio.main) # Access _delta for check
+        buffer = io.BytesIO(
+            audio.stream.last() if audio.stream and audio.stream._delta else audio.main  # noqa: SLF001
+        )  # Access _delta for check
         return buffer, channels, rate
 
     def call(  # ARG002: callback removed

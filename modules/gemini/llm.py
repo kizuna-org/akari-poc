@@ -120,12 +120,13 @@ class _GeminiLLMModule(AkariModule):
                 allData=response,
             )
             self._logger.debug("LLMModule call finished successfully")
-            return result_dataset
+            # TRY300: No direct else block needed if we return directly after success.
         except Exception as e:
-            self._logger.exception("Error during LLM generation: %s", e) # TRY401 - e is fine here
+            self._logger.exception("Error during LLM generation: %s", e)  # noqa: TRY401
             # EM102, TRY003
             error_text = f"Error during LLM generation: {e!s}"
-            return AkariDataSet(text=AkariDataSetType(main=error_text)) # RET504 fixed
+            return AkariDataSet(text=AkariDataSetType(main=error_text))  # RET504 fixed
+        return result_dataset  # Moved for TRY300
 
     def stream_call(
         self,
@@ -193,12 +194,12 @@ class _GeminiLLMModule(AkariModule):
                         if text_chunk:
                             res_dataset.text.stream.add(text_chunk)
                             full_response.append(text_chunk)
-                res_dataset.allData = (stream._result) if hasattr(stream, "_result") else None # SLF001 - keep
+                res_dataset.allData = (stream._result) if hasattr(stream, "_result") else None  # noqa: SLF001
                 res_dataset.bool = AkariDataSetType(main=True)
                 self._logger.debug("Streaming generation finished")
 
             except Exception as e:
-                self._logger.exception("Error during LLM streaming generation: %s", e) # TRY401 - e is fine here
+                self._logger.exception("Error during LLM streaming generation: %s", e)  # noqa: TRY401
                 # EM102
                 error_text = f"Error during LLM streaming generation: {e!s}"
                 res_dataset.text.stream.add(error_text)
@@ -206,7 +207,7 @@ class _GeminiLLMModule(AkariModule):
 
         thread = threading.Thread(
             target=stream_generation_thread,
-            args=(model, messages, params, result_dataset), # Pass original names here
+            args=(model, messages, params, result_dataset),  # Pass original names here
         )
         thread.daemon = True
         thread.start()

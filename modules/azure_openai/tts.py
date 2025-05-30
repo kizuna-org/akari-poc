@@ -21,6 +21,7 @@ from akari_core.module import (
 
 # ERA001: Commented-out code removed below by not including it.
 
+
 @dataclasses.dataclass
 class _TTSModuleParams(AkariModuleParams):
     """Azure OpenAI TTSモジュール用のパラメータ."""
@@ -74,17 +75,17 @@ class _TTSModule(AkariModule):
             self._logger.debug("TTS synthesis successful")
             # TRY300: No direct else block needed if we return directly after success.
         except Exception as e:
-            self._logger.exception("Error during TTS synthesis: %s", e) # TRY401 - e is fine here
+            self._logger.exception("Error during TTS synthesis: %s", e)  # noqa: TRY401
             # EM102, TRY003
             error_text = f"Error during TTS synthesis: {e!s}"
             return AkariDataSet(text=AkariDataSetType(main=error_text))
-        return result_dataset # Moved return here for TRY300
+        return result_dataset  # Moved return here for TRY300
 
     def stream_call(
         self,
         _data: AkariData,
         _params: _TTSModuleParams,
-        _callback: AkariModuleType | None = None, # No ARG002 for this, it's an abstract method override
+        _callback: AkariModuleType | None = None,  # No ARG002 for this, it's an abstract method override
     ) -> AkariDataSet:
         """stream_call is not implemented for now."""
         # EM101, TRY003

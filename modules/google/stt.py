@@ -1,17 +1,17 @@
 """Google Cloud Speech-to-Text (STT) APIを使用して音声ストリームを文字起こしするAkariモジュール."""
 
-from __future__ import annotations  # Added for FA102 if any, and good practice
+from __future__ import annotations
 
 import dataclasses
 import queue
 import threading  # TC004: Moved out of TYPE_CHECKING
-from collections.abc import Generator, Iterable
+from collections.abc import Generator, Iterable  # noqa: TC003 (Generator), TC003 (Iterable)
 from typing import TYPE_CHECKING
 
 from google.cloud import speech
 
 # StreamingRecognizeResponse is already imported below, so no change needed here
-# from google.cloud.speech_v1.types import StreamingRecognizeResponse
+# from google.cloud.speech_v1.types import StreamingRecognizeResponse # noqa: ERA001
 from akari import (
     AkariData,
     AkariDataSet,
@@ -49,7 +49,7 @@ class _GoogleSpeechToTextStreamParams:  # AkariModuleParams を継承しない
     downstream_callback_params: AkariModuleParams | None = None
     """文字起こし結果を渡すコールバックモジュール用のパラメータ. デフォルトはNone."""
     end_stream_flag: bool = False
-    """(stream_callのparamsとして動的に渡される想定) このフラグがTrueの場合、STTストリームを終了する. デフォルトはFalse."""
+    """(stream_callのparamsとして動的に渡される想定) このフラグがTrueの場合、STTストリームを終了する. デフォルトはFalse."""  # noqa: E501
     callback_when_final: bool = True
     """最終結果をコールバックするかどうか. デフォルトはTrue.(Falseで常にコールバックする)"""
 
@@ -99,11 +99,11 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             except queue.Empty:
                 continue
             except Exception as e:
-                self._logger.exception("Error in audio chunk provider: %s", e)
+                self._logger.exception("Error in audio chunk provider: %s", e)  # noqa: TRY401
                 return
         self._logger.debug("Audio chunk provider loop finished.")
 
-    def _google_stt_processor_thread_target(self) -> None:
+    def _google_stt_processor_thread_target(self) -> None:  # noqa: C901, PLR0912
         """Google STT APIとのストリーミング通信を処理し、結果をコールバックするスレッド関数."""
         if not self._streaming_config:
             self._logger.error("Streaming_config not initialized in thread.")
@@ -116,7 +116,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             responses: Iterable[StreamingRecognizeResponse] = self._client.streaming_recognize(
                 config=self._streaming_config,
                 requests=requests,
-            )  # type: ignore
+            )  # type: ignore # noqa: PGH003
 
             for response in responses:
                 if not self._is_streaming_active and self._audio_queue.empty():
@@ -165,10 +165,10 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                             streaming=True,
                         )
                     except Exception as e_router:
-                        self._logger.exception("Error calling downstream callback module: %s", e_router)
+                        self._logger.exception("Error calling downstream callback module: %s", e_router)  # noqa: TRY401
 
         except Exception as e:
-            self._logger.exception("Exception in Google STT processing thread: %s", e)
+            self._logger.exception("Exception in Google STT processing thread: %s", e)  # noqa: TRY401
         finally:
             self._logger.info("Google STT processing thread finished.")
             with self._lock:
@@ -228,7 +228,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         self,
         data: AkariData,
         params: _GoogleSpeechToTextStreamParams,
-        callback: AkariModuleType | None = None, # No ARG002 for this, it's an abstract method override
+        callback: AkariModuleType | None = None,  # No ARG002 for this, it's an abstract method override
     ) -> AkariDataSet:
         """ストリーミング専用モジュールのため、このメソッドはNotImplementedErrorを発生させます.
 

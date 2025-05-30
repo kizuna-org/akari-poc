@@ -40,7 +40,7 @@ def list_audio_devices() -> None:
     for i in range(p.get_device_count()):
         info = p.get_device_info_by_index(i)
         akari_logger.info(
-            f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})",
+            f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})",  # noqa: G004
         )
     p.terminate()
 
@@ -61,7 +61,7 @@ client = AzureOpenAI(
 
 credentials = service_account.Credentials.from_service_account_file(
     os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "",
-)  # type: ignore
+)  # type: ignore # noqa: PGH003
 vertexai.init(
     location=os.getenv("GOOGLE_LOCATION") or "us-central1",
     credentials=credentials,
@@ -98,223 +98,223 @@ akari_router.add_modules(
 )
 
 # akari_router.call_module(
-#     module_type=modules.RootModule,
-#     data=akari.AkariData(),
-#     params=sample.SampleModule,
-#     streaming=False,
+#     module_type=modules.RootModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
+#     params=sample.SampleModule, # noqa: ERA001
+#     streaming=False, # noqa: ERA001
 # )
 
 # akari_router.call_module(
-#     module_type=azure_openai.LLMModule,
-#     data=akari.AkariData(),
+#     module_type=azure_openai.LLMModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
 #     params=azure_openai.LLMModuleParams(
-#         model="gpt-4o-mini",
+#         model="gpt-4o-mini", # noqa: ERA001
 #         messages=[
-#             {"role": "user", "content": "Hello, Akari!"},
-#             {"role": "system", "content": "You are a helpful assistant."},
+#             {"role": "user", "content": "Hello, Akari!"}, # noqa: ERA001
+#             {"role": "system", "content": "You are a helpful assistant."}, # noqa: ERA001
 #         ],
-#         temperature=0.7,
-#         max_tokens=150,
-#         top_p=1.0,
-#         frequency_penalty=0.0,
-#         presence_penalty=0.0,
-#         stream=True,
+#         temperature=0.7, # noqa: ERA001
+#         max_tokens=150, # noqa: ERA001
+#         top_p=1.0, # noqa: ERA001
+#         frequency_penalty=0.0, # noqa: ERA001
+#         presence_penalty=0.0, # noqa: ERA001
+#         stream=True, # noqa: ERA001
 #     ),
-#     streaming=False,
-#     callback=modules.PrintModule,
+#     streaming=False, # noqa: ERA001
+#     callback=modules.PrintModule, # noqa: ERA001
 # )
 
 
 # data = akari_router.call_module(
-#     module_type=gemini.LLMModule,
-#     data=akari.AkariData(),
+#     module_type=gemini.LLMModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
 #     params=gemini.LLMModuleParams(
-#         model="gemini-2.0-flash",
+#         model="gemini-2.0-flash", # noqa: ERA001
 #         messages=[
-#             Content(role="user", parts=[Part.from_text("Hello, Akari!")]),
+#             Content(role="user", parts=[Part.from_text("Hello, Akari!")]), # noqa: ERA001
 #         ],
 #     ),
-#     streaming=False,
+#     streaming=False, # noqa: ERA001
 # )
 
 
-# data = akari.AkariData()
-# dataset = akari.AkariDataSet()
+# data = akari.AkariData() # noqa: ERA001
+# dataset = akari.AkariDataSet() # noqa: ERA001
 # with open("input.wav", "rb") as audio_file:
-#     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
-# data.add(dataset)
+#     dataset.audio = akari.AkariDataSetType(main=audio_file.read()) # noqa: ERA001
+# data.add(dataset) # noqa: ERA001
 # akari_router.call_module(
-#     module_type=azure_openai.STTModule,
-#     data=data,
+#     module_type=azure_openai.STTModule, # noqa: ERA001
+#     data=data, # noqa: ERA001
 #     params=azure_openai.STTModuleParams(
-#         model="whisper",
-#         language="ja",
-#         prompt="",
-#         temperature=0.7,
+#         model="whisper", # noqa: ERA001
+#         language="ja", # noqa: ERA001
+#         prompt="", # noqa: ERA001
+#         temperature=0.7, # noqa: ERA001
 #     ),
 # )
 
 # data = akari_router.call_module(
-#     module_type=azure_openai.TTSModule,
-#     data=akari.AkariData(),
+#     module_type=azure_openai.TTSModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
 #     params=azure_openai.TTSModuleParams(
-#         model="gpt-4o-mini-tts",
-#         input="あかりだよ、よろしくね！",
-#         voice="alloy",
-#         instructions="日本語で元気溌剌に話してください",
-#         response_format="wav",
-#         speed=1.0,
+#         model="gpt-4o-mini-tts", # noqa: ERA001
+#         input="あかりだよ、よろしくね!", # noqa: ERA001 fixed
+#         voice="alloy", # noqa: ERA001
+#         instructions="日本語で元気溌剌に話してください", # noqa: ERA001
+#         response_format="wav", # noqa: ERA001
+#         speed=1.0, # noqa: ERA001
 #     ),
-#     streaming=False,
+#     streaming=False, # noqa: ERA001
 # )
 
 # with open("output.wav", "wb") as audio_file:
-#     audio_file.write(data.last().audio.main)  # type: ignore
+#     audio_file.write(data.last().audio.main)  # type: ignore # noqa: ERA001,PGH003
 
 
-# data = akari.AkariData()
-# dataset = akari.AkariDataSet()
+# data = akari.AkariData() # noqa: ERA001
+# dataset = akari.AkariDataSet() # noqa: ERA001
 # with open("input.wav", "rb") as audio_file:
-#     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
-# data.add(dataset)
+#     dataset.audio = akari.AkariDataSetType(main=audio_file.read()) # noqa: ERA001
+# data.add(dataset) # noqa: ERA001
 # akari_router.call_module(
-#     module_type=audio.SpeakerModule,
-#     data=data,
-#     params=audio.SpeakerModuleParams(),
-#     streaming=False,
+#     module_type=audio.SpeakerModule, # noqa: ERA001
+#     data=data, # noqa: ERA001
+#     params=audio.SpeakerModuleParams(), # noqa: ERA001
+#     streaming=False, # noqa: ERA001
 # )
 
 
 # akari_router.call_module(
-#     module_type=audio.MicModule,
-#     data=akari.AkariData(),
+#     module_type=audio.MicModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
 #     params=audio.MicModuleParams(
-#         streamDurationMilliseconds=1000,
-#         destructionMilliseconds=5000,
-#         callbackParams=webrtcvad.WebRTCVadParams(),
-#         callback_callback=modules.PrintModule,
+#         streamDurationMilliseconds=1000, # noqa: ERA001
+#         destructionMilliseconds=5000, # noqa: ERA001
+#         callbackParams=webrtcvad.WebRTCVadParams(), # noqa: ERA001
+#         callback_callback=modules.PrintModule, # noqa: ERA001
 #     ),
-#     streaming=False,
-#     callback=webrtcvad.WebRTCVadModule,
+#     streaming=False, # noqa: ERA001
+#     callback=webrtcvad.WebRTCVadModule, # noqa: ERA001
 # )
 
-### 対話
-# akariRouter.callModule(
-#     moduleType=audio.MicModule,
-#     data=akari.AkariData(),
+### 対話 # noqa: ERA001
+# akari_router.call_module(
+#     module_type=audio.MicModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
 #     params=audio.MicModuleParams(
-#         streamDurationMilliseconds=100,
-#         destructionMilliseconds=5000,
-#         # input_device_index=3,
+#         streamDurationMilliseconds=100, # noqa: ERA001
+#         destructionMilliseconds=5000, # noqa: ERA001
+#         # input_device_index=3, # noqa: ERA001
 #         callbackParams=modules.SerialModuleParams(
 #             modules=[
 #                 modules.SerialModuleParamModule(
-#                     moduleType=google.STTModule,
+#                     module_type=google.STTModule, # noqa: ERA001
 #                     moduleParams=google.STTModuleParams(
-#                         model="default",
-#                         language="ja-JP",
-#                         prompt="",
-#                         temperature=0.7,
+#                         model="default", # noqa: ERA001
+#                         language="ja-JP", # noqa: ERA001
+#                         prompt="", # noqa: ERA001
+#                         temperature=0.7, # noqa: ERA001
 #                     ),
 #                 ),
 #                 modules.SerialModuleParamModule(
-#                     moduleType=azure_openai.LLMModule,
+#                     module_type=azure_openai.LLMModule, # noqa: ERA001
 #                     moduleParams=azure_openai.LLMModuleParams(
-#                         model="gpt-4o-mini",
+#                         model="gpt-4o-mini", # noqa: ERA001
 #                         messages_function=lambda data: [
 #                             {
-#                                 "role": "user",
+#                                 "role": "user", # noqa: ERA001
 #                                 "content": (
-#                                     data.last().text.main  # type: ignore
+#                                     data.last().text.main  # type: ignore # noqa: ERA001,PGH003
 #                                     if data.last() and data.last().text
 #                                     else "Hello, Akari!"
 #                                 ),
 #                             },
-#                             {"role": "system", "content": "You are a helpful assistant."},
+#                             {"role": "system", "content": "You are a helpful assistant."}, # noqa: ERA001
 #                         ],
-#                         temperature=0.7,
+#                         temperature=0.7, # noqa: ERA001
 #                     ),
 #                 ),
 #                 modules.SerialModuleParamModule(
-#                     moduleType=azure_openai.TTSModule,
+#                     module_type=azure_openai.TTSModule, # noqa: ERA001
 #                     moduleParams=azure_openai.TTSModuleParams(
-#                         model="gpt-4o-mini-tts",
-#                         voice="alloy",
-#                         instructions="日本語で元気溌剌に話してください",
-#                         speed=1.0,
+#                         model="gpt-4o-mini-tts", # noqa: ERA001
+#                         voice="alloy", # noqa: ERA001
+#                         instructions="日本語で元気溌剌に話してください", # noqa: ERA001
+#                         speed=1.0, # noqa: ERA001
 #                     ),
 #                 ),
 #                 modules.SerialModuleParamModule(
-#                     moduleType=audio.SpeakerModule,
+#                     module_type=audio.SpeakerModule, # noqa: ERA001
 #                     moduleParams=audio.SpeakerModuleParams(
-#                         # output_device_index=1,
+#                         # output_device_index=1, # noqa: ERA001
 #                     ),
 #                 ),
 #             ]
 #         ),
-#         callback_callback=modules.SerialModule,
+#         callback_callback=modules.SerialModule, # noqa: ERA001
 #     ),
-#     streaming=False,
-#     callback=modules.SerialModule,
+#     streaming=False, # noqa: ERA001
+#     callback=modules.SerialModule, # noqa: ERA001
 # )
 
-# akariRouter.callModule(
-#     moduleType=audio.MicModule,
-#     data=akari.AkariData(),
+# akari_router.call_module(
+#     module_type=audio.MicModule, # noqa: ERA001
+#     data=akari.AkariData(), # noqa: ERA001
 #     params=audio.MicModuleParams(
-#         streamDurationMilliseconds=100,
-#         destructionMilliseconds=5000,
+#         streamDurationMilliseconds=100, # noqa: ERA001
+#         destructionMilliseconds=5000, # noqa: ERA001
 #         callbackParams=performance.VADSTTLatencyMeterConfig(
-#             stt_module=google.GoogleSpeechToTextStreamModule,
-#             stt_module_params=google.GoogleSpeechToTextStreamParams(),
-#             vad_module=webrtcvad.WebRTCVadModule,
-#             vad_module_params=webrtcvad.WebRTCVadParams(),
+#             stt_module=google.GoogleSpeechToTextStreamModule, # noqa: ERA001
+#             stt_module_params=google.GoogleSpeechToTextStreamParams(), # noqa: ERA001
+#             vad_module=webrtcvad.WebRTCVadModule, # noqa: ERA001
+#             vad_module_params=webrtcvad.WebRTCVadParams(), # noqa: ERA001
 #             callback_params=modules.SerialModuleParams(
 #                 modules=[
 #                     modules.SerialModuleParamModule(
-#                         moduleType=modules.PrintModule,
-#                         moduleParams=None,
+#                         module_type=modules.PrintModule, # noqa: ERA001
+#                         moduleParams=None, # noqa: ERA001
 #                     ),
 #                     # modules.SerialModuleParamModule(
-#                     #     moduleType=azure_openai.LLMModule,
+#                     #     module_type=azure_openai.LLMModule, # noqa: ERA001
 #                     #     moduleParams=azure_openai.LLMModuleParams(
-#                     #         model="gpt-4o-mini",
+#                     #         model="gpt-4o-mini", # noqa: ERA001
 #                     #         messages_function=lambda data: [
 #                     #             {
-#                     #                 "role": "user",
+#                     #                 "role": "user", # noqa: ERA001
 #                     #                 "content": (
-#                     #                     data.last().text.main  # type: ignore
+#                     #                     data.last().text.main  # type: ignore # noqa: ERA001,PGH003
 #                     #                     if data.last() and data.last().text
 #                     #                     else "Hello, Akari!"
 #                     #                 ),
 #                     #             },
-#                     #             {"role": "system", "content": "You are a helpful assistant."},
+#                     #             {"role": "system", "content": "You are a helpful assistant."}, # noqa: ERA001
 #                     #         ],
-#                     #         temperature=0.7,
+#                     #         temperature=0.7, # noqa: ERA001
 #                     #     ),
 #                     # ),
 #                     # modules.SerialModuleParamModule(
-#                     #     moduleType=azure_openai.TTSModule,
+#                     #     module_type=azure_openai.TTSModule, # noqa: ERA001
 #                     #     moduleParams=azure_openai.TTSModuleParams(
-#                     #         model="gpt-4o-mini-tts",
-#                     #         voice="alloy",
-#                     #         instructions="日本語で元気溌剌に話してください",
-#                     #         speed=1.0,
+#                     #         model="gpt-4o-mini-tts", # noqa: ERA001
+#                     #         voice="alloy", # noqa: ERA001
+#                     #         instructions="日本語で元気溌剌に話してください", # noqa: ERA001
+#                     #         speed=1.0, # noqa: ERA001
 #                     #     ),
 #                     # ),
 #                     # modules.SerialModuleParamModule(
-#                     #     moduleType=audio.SpeakerModule,
+#                     #     module_type=audio.SpeakerModule, # noqa: ERA001
 #                     #     moduleParams=audio.SpeakerModuleParams(
-#                     #         # output_device_index=1,
+#                     #         # output_device_index=1, # noqa: ERA001
 #                     #     ),
 #                     # ),
 #                 ]
 #             ),
 #         ),
-#         callback_callback=modules.SerialModule,
+#         callback_callback=modules.SerialModule, # noqa: ERA001
 #     ),
-#     streaming=False,
-#     callback=performance.VADSTTLatencyMeter,
+#     streaming=False, # noqa: ERA001
+#     callback=performance.VADSTTLatencyMeter, # noqa: ERA001
 # )
 
 data = akari.AkariData()
@@ -332,7 +332,7 @@ akari_router.call_module(
                 moduleParams=google.GoogleTextToSpeechParams(
                     voice_name="ja-JP-Chirp3-HD-Kore",
                     callback_params=audio.SpeakerModuleParams(
-                        # output_device_index=6,
+                        # output_device_index=6, # noqa: ERA001
                     ),
                 ),
                 module_callback=audio.SpeakerModule,
@@ -343,22 +343,22 @@ akari_router.call_module(
 )
 
 # akari_router.call_module(
-#     module_type=modules.SerialModule,
-#     data=data,
+#     module_type=modules.SerialModule, # noqa: ERA001
+#     data=data, # noqa: ERA001
 #     params=modules.SerialModuleParams(
 #         modules=[
-#             modules.SerialModuleParamModule(module_type=modules.PrintModule, moduleParams=None),
+#             modules.SerialModuleParamModule(module_type=modules.PrintModule, moduleParams=None), # noqa: ERA001
 #             modules.SerialModuleParamModule(
-#                 module_type=azure_openai.TTSModule,
+#                 module_type=azure_openai.TTSModule, # noqa: ERA001
 #                 moduleParams=azure_openai.TTSModuleParams(
-#                     model="gpt-4o-mini-tts",
-#                     voice="alloy",
-#                     instructions="日本語で元気溌剌に話してください",
-#                     speed=1.0,
+#                     model="gpt-4o-mini-tts", # noqa: ERA001
+#                     voice="alloy", # noqa: ERA001
+#                     instructions="日本語で元気溌剌に話してください", # noqa: ERA001
+#                     speed=1.0, # noqa: ERA001
 #                 ),
 #             ),
-#             modules.SerialModuleParamModule(module_type=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
+#             modules.SerialModuleParamModule(module_type=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()), # noqa: ERA001,E501
 #         ]
 #     ),
-#     streaming=False,
+#     streaming=False, # noqa: ERA001
 # )

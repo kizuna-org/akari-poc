@@ -81,7 +81,7 @@ class _AkariRouter:
                 msg = f"Module {module_type} already exists in router."
                 raise ValueError(msg)
 
-    def call_module(  # N802
+    def call_module(  # N802 # noqa: C901, PLR0912, PLR0915
         self,
         module_type: module._AkariModuleType,  # N803
         data: akari_data._AkariData,
@@ -163,7 +163,7 @@ class _AkariRouter:
                 start_time_for_dataset = last_stream_call_end_time_in_thread  # N806
         elif data.datasets and data.last().module is not None:
             # 前のモジュールの終了時刻を開始時刻とする
-            last_module = cast("akari_data._AkariDataModuleType", data.last().module)  # SLF001 - keep for now
+            last_module = cast("akari_data._AkariDataModuleType", data.last().module)  # noqa: SLF001
             start_time_for_dataset = last_module.end_time  # N806 (from akari_data change)
         else:
             # 前のモジュールがない場合は、現在の呼び出し処理開始時刻
@@ -188,13 +188,13 @@ class _AkariRouter:
 
         # ストリーミングの場合、このスレッドでの今回の呼び出しの終了時刻を保存
         if streaming:
-            self._thread_last_perf_counter[current_thread_id] = end_time_for_dataset # F821 fixed
+            self._thread_last_perf_counter[current_thread_id] = end_time_for_dataset  # F821 fixed
 
         # --- 結果の処理と AkariDataModuleType の設定 ---
-        if isinstance(result, akari_data._AkariDataSet):  # SLF001 - keep for now
+        if isinstance(result, akari_data._AkariDataSet):  # noqa: SLF001
             if result.module is None:
                 result.set_module(  # N802 (from akari_data change)
-                    akari_data._AkariDataModuleType(  # SLF001 - keep for now
+                    akari_data._AkariDataModuleType(  # noqa: SLF001
                         module_type,
                         params,
                         streaming,
@@ -204,10 +204,10 @@ class _AkariRouter:
                     ),
                 )
             data.add(result)
-        elif isinstance(result, akari_data._AkariData):  # SLF001 - keep for now
+        elif isinstance(result, akari_data._AkariData):  # noqa: SLF001
             if result.datasets:  # result が空の AkariData を返す可能性も考慮
                 result.last().set_module(  # N802 (from akari_data change)
-                    akari_data._AkariDataModuleType(  # SLF001 - keep for now
+                    akari_data._AkariDataModuleType(  # noqa: SLF001
                         module_type,
                         params,
                         streaming,
@@ -218,14 +218,18 @@ class _AkariRouter:
                 )
             data = result
         else:
-            # EM102, TRY003, TRY004
+            # EM102, TRY003
             msg = f"Invalid result type: {type(result)}"
-            raise ValueError(msg)
+            raise TypeError(msg)  # TRY004 fixed
 
         if self._options.duration:
             # ここでログ出力する duration は、AkariDataModuleType に記録された endTime - startTime
-            module_meta = data.last().module # Renamed to avoid conflict with 'module' import
-            duration = module_meta.end_time - module_meta.start_time if module_meta else end_time_for_dataset - start_time_for_dataset # F821 fixed (on right side)
+            module_meta = data.last().module  # Renamed to avoid conflict with 'module' import
+            if module_meta:
+                duration = module_meta.end_time - module_meta.start_time
+            else:
+                duration = end_time_for_dataset - start_time_for_dataset
+            # F821 fixed (on right side)
             self._logger.info(
                 "[Router] Module %s: %s (ThreadID: %s) took %.4f seconds (elapsed since last relevant call)",
                 "streaming" if streaming else "calling",

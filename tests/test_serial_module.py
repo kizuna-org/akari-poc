@@ -55,10 +55,16 @@ def test_serial_module_call(fakegen: Faker, router: AkariRouter) -> None:
         ],
     )
 
-    result = router.call_module(SerialModule, data, serial_module_params, False, None) # N802 (from router change), noqa: FBT003 for False
+    result = router.call_module(
+        SerialModule,
+        data,
+        serial_module_params,
+        False,
+        None,
+    )  # N802 (from router change)
 
-    assert isinstance(result, AkariData)
-    assert len(result.datasets) == 1 + 3
-    assert result.datasets[0].text == dataset.text
+    assert isinstance(result, AkariData)  # noqa: S101
+    assert len(result.datasets) == 1 + 3  # noqa: S101
+    assert result.datasets[0].text == dataset.text  # noqa: S101
     for i in range(1, 4):
-        assert isinstance(result.datasets[i], AkariDataSet)
+        assert isinstance(result.datasets[i], AkariDataSet)  # noqa: S101

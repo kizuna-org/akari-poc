@@ -216,7 +216,9 @@ class _WebRTCVadModule(AkariModule):
         if len(audio.main) < frame_size_bytes:
             # EM102, TRY003
             # E501: Line too long - will be left for formatter or manual wrap if needed
-            msg = f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+            msg = (
+                f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+            )
             raise ValueError(msg)
 
         buffer.seek(-frame_size_bytes, io.SEEK_END)
@@ -246,11 +248,11 @@ class _WebRTCVadModule(AkariModule):
 
         self._logger.debug("WebRTC VAD functional detected speech: %s", is_speech)
 
-        if callback: # noqa: SIM102
+        if callback:  # noqa: SIM102
             if (not params.callback_when_speech_ended and is_speech) or (
                 params.callback_when_speech_ended and not is_speech and not self._callbacked
             ):
-                data = self._router.call_module(callback, data, params.callback_params, True, None) # N802, FBT003 (True) - add noqa for FBT003 if needed
+                data = self._router.call_module(callback, data, params.callback_params, True, None)
                 self._callbacked = True
                 self._audio_buffer = b""
 

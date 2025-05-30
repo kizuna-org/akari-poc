@@ -112,7 +112,7 @@ class _SaveModule(AkariModule):
                 raise TypeError(error_msg) from None
 
         except OSError as e:
-            self._logger.exception("Error writing to file %s: %s", path, e)
+            self._logger.exception("Error writing to file %s: %s", path, e)  # noqa: TRY401
             # TRY003: Avoid specifying long messages outside the exception class
             # EM102: Exception must not use an f-string literal, assign to variable first
             # No TRY401 here as 'e' is used in the message directly.

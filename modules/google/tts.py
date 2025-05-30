@@ -58,11 +58,11 @@ class _GoogleTextToSpeechModule(AkariModule):
         self._client = client
 
     # C901, PLR0915 - complex method, skipping automatic fix
-    def call( # C901 - Will add noqa if still present after other fixes
+    def call(  # C901 - Will add noqa if still present after other fixes
         self,
         data: AkariData,
         params: _GoogleTextToSpeechParams,
-        # callback: AkariModuleType | None = None, # ARG002 was here, removing callback
+        # callback: AkariModuleType | None = None, # ARG002 was here, removing callback # noqa: ERA001
     ) -> AkariDataSet:
         """Send text to the Google Cloud TTS API and receive the synthesized audio data."""
         input_text = ""
@@ -105,19 +105,19 @@ class _GoogleTextToSpeechModule(AkariModule):
             result_dataset.audio = AkariDataSetType(main=response.audio_content)
         except Exception as e:
             # BLE001, TRY400, G004, EM101, TRY003, EM102, F841 - Kept comments for context
-            self._logger.exception("Error during Google TTS streaming synthesis: %s", e)  # TRY401 fixed (e is fine)
+            self._logger.exception("Error during Google TTS streaming synthesis: %s", e)  # noqa: TRY401
             # EM102, TRY003
             error_text = f"Error during Google TTS streaming synthesis: {e!s}"
-            result_dataset = AkariDataSet() # Ensure dataset is initialized in except block too
+            result_dataset = AkariDataSet()  # Ensure dataset is initialized in except block too
             result_dataset.text = AkariDataSetType(main=error_text)
-            return result_dataset # Return early on exception
-        return result_dataset # TRY300: Moved return here
+            return result_dataset  # Return early on exception
+        return result_dataset  # TRY300: Moved return here
 
-    def stream_call( # ARG002 for data, params, callback
+    def stream_call(  # ARG002 for data, params, callback
         self,
-        _data: AkariData, # Prefix with _ if unused
-        _params: _GoogleTextToSpeechParams, # Prefix with _ if unused
-        _callback: AkariModuleType | None = None, # Prefix with _ if unused
+        _data: AkariData,  # Prefix with _ if unused
+        _params: _GoogleTextToSpeechParams,  # Prefix with _ if unused
+        _callback: AkariModuleType | None = None,  # Prefix with _ if unused
     ) -> AkariDataSet:
         # EM101, TRY003
         msg = "GoogleTextToSpeechModule does not support streaming."
@@ -126,5 +126,5 @@ class _GoogleTextToSpeechModule(AkariModule):
 
     def close(self) -> None:
         self._logger.info(
-            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech." # noqa: E501
+            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech."  # noqa: E501
         )
