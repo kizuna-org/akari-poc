@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import dataclasses
 import io
+from typing import TYPE_CHECKING
 
-from akari_core.logger import AkariLogger
+if TYPE_CHECKING:
+    from akari_core.logger import AkariLogger
+    from openai import AzureOpenAI
+    from openai.types.audio import Transcription
+
 from akari_core.module import (
     AkariData,
     AkariDataSet,
@@ -17,8 +22,8 @@ from akari_core.module import (
 )
 
 # from typing import Literal, Optional # Removed unused imports
-from openai import AzureOpenAI
-from openai.types.audio import Transcription
+# from openai import AzureOpenAI # Moved to TYPE_CHECKING
+# from openai.types.audio import Transcription # Moved to TYPE_CHECKING
 
 
 @dataclasses.dataclass
@@ -57,7 +62,6 @@ class _STTModule(AkariModule):
         self,
         data: AkariData,
         params: _STTModuleParams,
-        # ARG002: Unused method argument: `callback` - removed
     ) -> AkariDataSet:
         """Convert spoken audio into text using the configured Azure OpenAI STT model.
 

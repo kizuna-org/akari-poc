@@ -24,11 +24,11 @@ class _SerialModuleParams(AkariModuleParams):
     """SerialModule用のパラメータ."""
 
     message_interval_ms: int = 100
-    """メッセージ間の遅延時間（ミリ秒）. デフォルトは100ms."""
+    """メッセージ間の遅延時間(ミリ秒). デフォルトは100ms."""
 
 
-class _SerialModule(AkariModule):  # Class cannot subclass "AkariModule" (has type "Any") - skipping for now
-    """AkariDataの各DataSetを逐次（シリアルに）処理するモジュール."""
+class _SerialModule(AkariModule):
+    """AkariDataの各DataSetを逐次(シリアルに)処理するモジュール."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
         """SerialModuleを初期化します."""

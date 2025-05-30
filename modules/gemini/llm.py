@@ -3,24 +3,24 @@
 from __future__ import annotations
 
 import dataclasses
+import threading
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from akari_core.logger import AkariLogger
+    from akari_core.module import AkariDataStreamType
 
 from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
-    AkariLogger,
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
     AkariRouter,
 )
-from vertexai.generative_models import (
-    Content,
-    GenerationConfig,
-    GenerativeModel,
-    SafetySetting,
-    Tool,
-)
+from google.generativeai import GenerativeModel
+from google.generativeai.types import Content
 
 _models = {
     "gemini-pro": "gemini-pro",

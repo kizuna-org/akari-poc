@@ -6,15 +6,16 @@ import copy
 import dataclasses
 import threading
 from collections.abc import Iterable
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
-from akari_core.logger import AkariLogger
+if TYPE_CHECKING:
+    from akari_core.logger import AkariLogger
+    from akari_core.module import AkariDataStreamType
+
 from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
-    AkariDataStreamType,
-    AkariLogger,
     AkariModule,
     AkariModuleType,
     AkariRouter,
@@ -218,6 +219,7 @@ class _LLMModule(AkariModule):
                         raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
             elif isinstance(response, ChatCompletion):
                 self._logger.debug(response.choices[0].message.content)
+                text_main = ""
                 if response.choices[0].message.content:
                     text_main = response.choices[0].message.content
                 dataset.text = AkariDataSetType(main=text_main)

@@ -1,10 +1,12 @@
-# modules/google/stt.py
+"""Google Cloud Speech-to-Text (STT) APIを使用して音声ストリームを文字起こしするAkariモジュール."""
+
 from __future__ import annotations
 
 import dataclasses
 import queue
 import threading
 from collections.abc import Generator, Iterable  # Iterable をインポート
+from typing import TYPE_CHECKING  # Added TYPE_CHECKING
 
 from google.cloud import speech
 from google.cloud.speech_v1.types import StreamingRecognizeResponse
@@ -20,6 +22,13 @@ from akari import (
     AkariModuleType,
     AkariRouter,
 )
+
+if TYPE_CHECKING:
+    # Import Generator, Iterable, StreamingRecognizeResponse, and threading here for type hinting
+    import threading  # Added threading import
+    from collections.abc import Generator, Iterable
+
+    from google.cloud.speech_v1.types import StreamingRecognizeResponse
 
 
 # AkariModuleParamsを直接継承しないように変更
@@ -90,7 +99,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
             except queue.Empty:
                 continue
             except Exception as e:
-                self._logger.error(f"Error in audio chunk provider: {e}")
+                self._logger.exception("Error in audio chunk provider: %s", e)
                 return
         self._logger.debug("Audio chunk provider loop finished.")
 
@@ -124,7 +133,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
                 transcript = result.alternatives[0].transcript
                 is_final = result.is_final
 
-                self._logger.debug(f"STT Result: '{transcript}' (Final: {is_final})")
+                self._logger.debug("STT Result: '%s' (Final: %s)", transcript, is_final)
 
                 # 逐次レスポンス保存
                 if transcript:

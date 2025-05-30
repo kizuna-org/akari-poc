@@ -39,7 +39,7 @@ class _RootModule(AkariModule):  # Class cannot subclass "AkariModule" (has type
         self,
         data: AkariData,
         params: _RootModuleParams,
-        callback: AkariModuleType | None = None,
+        _callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Initiate the Akari pipeline by invoking the first module."""
         self._logger.debug("RootModule call called")
@@ -57,7 +57,7 @@ class _RootModule(AkariModule):  # Class cannot subclass "AkariModule" (has type
         self,
         data: AkariData,
         params: AkariModuleParams,  # ARG002 - keeping for now
-        callback: AkariModuleType | None = None,  # ARG002 - keeping for now
+        _callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Initiate the Akari streaming pipeline by invoking the first module."""
         self._logger.debug("RootModule stream_call called")
