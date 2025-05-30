@@ -59,9 +59,7 @@ class _LLMModuleParams:
 
     model: str
     messages: Iterable[ChatCompletionMessageParam] | None = None
-    messages_function: (
-        Callable[[AkariData], Iterable[ChatCompletionMessageParam]] | None
-    ) = None
+    messages_function: Callable[[AkariData], Iterable[ChatCompletionMessageParam]] | None = None
     temperature: float = 1.0
     max_tokens: int = 1024
     top_p: float = 1.0
@@ -80,9 +78,7 @@ class _LLMModule(AkariModule):
     of the message history based on incoming AkariData.
     """
 
-    def __init__(
-        self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI
-    ) -> None:
+    def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
         """Constructs an _LLMModule instance.
 
         Args:
@@ -171,9 +167,7 @@ class _LLMModule(AkariModule):
         if params.messages_function is not None:
             params.messages = params.messages_function(data)
         if params.messages is None:
-            messages_error_msg = (
-                "Messages cannot be None. Please provide a valid list of messages."
-            )
+            messages_error_msg = "Messages cannot be None. Please provide a valid list of messages."
             self._handle_api_error(ValueError, messages_error_msg)
 
         try:
@@ -193,24 +187,16 @@ class _LLMModule(AkariModule):
             if params.stream:
                 texts: list[str] = []
                 for chunk in response:
-                    if isinstance(chunk, ChatCompletionChunk) and hasattr(
-                        chunk, "choices"
-                    ):
+                    if isinstance(chunk, ChatCompletionChunk) and hasattr(chunk, "choices"):
                         for choice in chunk.choices:
-                            if hasattr(choice, "delta") and hasattr(
-                                choice.delta, "content"
-                            ):
-                                text_main += (
-                                    choice.delta.content if choice.delta.content else ""
-                                )
+                            if hasattr(choice, "delta") and hasattr(choice.delta, "content"):
+                                text_main += choice.delta.content if choice.delta.content else ""
                                 if choice.delta.content is not None:
                                     texts.append(choice.delta.content)
                                 stream: AkariDataStreamType[str] = AkariDataStreamType(
                                     delta=texts,
                                 )
-                                dataset.text = AkariDataSetType(
-                                    main=text_main, stream=stream
-                                )
+                                dataset.text = AkariDataSetType(main=text_main, stream=stream)
                                 if callback is not None:
                                     call_data = copy.deepcopy(data)
                                     call_data.add(dataset)
@@ -221,12 +207,8 @@ class _LLMModule(AkariModule):
                                         streaming=True,
                                     )
                                 else:
-                                    callback_none_error = (
-                                        "Callback is None, but streaming is enabled."
-                                    )
-                                    self._handle_api_error(
-                                        ValueError, callback_none_error
-                                    )
+                                    callback_none_error = "Callback is None, but streaming is enabled."
+                                    self._handle_api_error(ValueError, callback_none_error)
                             else:
                                 delta_content_error = "Chunk does not have 'delta' or 'content' attribute."
                                 self._handle_api_error(TypeError, delta_content_error)
@@ -281,9 +263,7 @@ class _LLMModule(AkariModule):
                         if text_chunk:
                             result_dataset.text.stream.add(text_chunk)
                             full_response.append(text_chunk)
-                result_dataset.allData = (
-                    (response._result) if hasattr(response, "_result") else None
-                )
+                result_dataset.allData = (response._result) if hasattr(response, "_result") else None
                 result_dataset.bool = AkariDataSetType(main=True)
                 self._logger.debug("Streaming generation finished")
 
