@@ -1,12 +1,17 @@
-"""Module for executing a series of Akari modules sequentially."""
+"""Akari serial module."""
 
 from __future__ import annotations
 
 import dataclasses
+import time
+from typing import TYPE_CHECKING  # TC002
 
-from akari_core.logger import AkariLogger
+if TYPE_CHECKING:
+    from akari_core.logger import AkariLogger
+
 from akari_core.module import (
     AkariData,
+    AkariDataSet,
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
@@ -15,89 +20,47 @@ from akari_core.module import (
 
 
 @dataclasses.dataclass
-class _SerialModuleParamModule:
-    """Define a step in the serial module pipeline."""
-
-    module_type: AkariModuleType
-    module_params: AkariModuleParams
-    module_callback: AkariModuleType | None = None
-
-
-@dataclasses.dataclass
 class _SerialModuleParams(AkariModuleParams):
-    """Parameters for the SerialModule."""
+    """SerialModule用のパラメータ."""
 
-    modules: list[_SerialModuleParamModule]
-    """List of module configurations to execute in sequence."""
+    message_interval_ms: int = 100
+    """メッセージ間の遅延時間（ミリ秒）. デフォルトは100ms."""
 
 
-class _SerialModule(AkariModule):
-    """Execute a list of modules in sequence."""
+class _SerialModule(AkariModule):  # Class cannot subclass "AkariModule" (has type "Any") - skipping for now
+    """AkariDataの各DataSetを逐次（シリアルに）処理するモジュール."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Construct a _SerialModule instance."""
+        """SerialModuleを初期化します."""
         super().__init__(router, logger)
 
     def call(
         self,
         data: AkariData,
         params: _SerialModuleParams,
-        _callback: AkariModuleType | None = None,
-    ) -> AkariData:
-        """Process an AkariData object sequentially through configured modules."""
-        self._logger.debug("SerialModule called")
-        current_data = data
+        callback: AkariModuleType | None = None,  # ARG002 - keeping for now
+    ) -> AkariDataSet:
+        """Process each DataSet in AkariData sequentially with a delay."""
+        self._logger.debug("SerialModule call called")
+        self._logger.debug("Data: %s", data)
+        self._logger.debug("Params: %s", params)
 
-        for module_config in params.modules:
-            self._logger.debug(
-                "Calling module: %s with params: %s",
-                module_config.module_type,
-                module_config.module_params,
-            )
-            result_data_set = self._router.callModule(
-                module_config.module_type,
-                current_data,
-                module_config.module_params,
-                streaming=False,
-                callback=module_config.module_callback,
-            )
-            if result_data_set:
-                current_data.add(result_data_set)
+        result_data = AkariData()
 
-        self._logger.debug("SerialModule finished")
-        return current_data
+        for dataset in data.datasets:
+            result_data.add(dataset)
+            if callback:
+                self._router.callModule(callback, result_data, None, streaming=True)
 
-    def stream_call(
-        self,
-        data: AkariData,
-        params: _SerialModuleParams,
-        _callback: AkariModuleType | None = None,
-    ) -> AkariData:
-        """Process an AkariData object sequentially through configured modules.
+            time.sleep(params.message_interval_ms / 1000)
 
-        Although named stream_call, this implementation currently iterates
-        through modules in a blocking manner similar to call.
-        True streaming would require managing concurrent module execution or
-        a different pipeline architecture.
-        """
-        self._logger.debug("SerialModule stream_call called")
-        current_data = data
+        # After processing all datasets, call the callback one last time with the full result
+        if callback:
+            self._router.callModule(callback, result_data, None, streaming=False)
 
-        for module_config in params.modules:
-            self._logger.debug(
-                "Streaming calling module: %s with params: %s",
-                module_config.module_type,
-                module_config.module_params,
-            )
-            result_data_set = self._router.callModule(
-                module_config.module_type,
-                current_data,
-                module_config.module_params,
-                streaming=True,
-                callback=module_config.module_callback,
-            )
-            if result_data_set:
-                current_data.add(result_data_set)
+        # Return the accumulated data, though in a serial processing context,
+        # the primary interaction is via callbacks.
+        return result_data.last() if result_data.datasets else AkariDataSet()
 
-        self._logger.debug("SerialModule stream_call finished")
-        return current_data
+    # stream_call is not typically used for a serial processing module like this
+    # If streaming input is received, it will be processed by the call method anyway.

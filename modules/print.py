@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
-from akari_core.logger import AkariLogger
+if TYPE_CHECKING:
+    from akari_core.logger import AkariLogger
+
 from akari_core.module import (
     AkariData,
     AkariDataSet,
@@ -20,15 +23,7 @@ class _PrintModule(AkariModule):
     """A module for printing and logging AkariData contents."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs a PrintModule instance.
-
-        Args:
-            router (AkariRouter): The Akari router instance, used for potential
-                inter-module communication (though not directly used in this module's
-                current implementation beyond the base class).
-            logger (AkariLogger): The logger instance to which the dataset
-                information will be written.
-        """
+        """Constructs a PrintModule instance."""
         super().__init__(router, logger)
 
     def call(

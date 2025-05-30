@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import dataclasses
 import io
 import time
 from enum import Enum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import webrtcvad
 
@@ -16,6 +18,10 @@ from akari import (
     AkariModuleType,
     AkariRouter,
 )
+
+if TYPE_CHECKING:
+    import webrtcvad
+    from akari_core.logger import AkariLogger
 
 
 class _WebRTCVadMode(Enum):
@@ -43,7 +49,7 @@ class _WebRTCVadMode(Enum):
 
 
 @dataclasses.dataclass
-class _WebRTCVadParams:
+class _WebRTCVadParams(AkariModuleParams):
     """Configures the behavior of the WebRTC VAD module.
 
     Settings include VAD sensitivity, expected audio properties (sample rate, frame
@@ -124,7 +130,12 @@ class _WebRTCVadModule(AkariModule):
         self._callbacked = True
         self._audio_buffer: bytes = b""
 
-    def call(self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None) -> AkariDataSet:
+    def call(
+        self,
+        data: AkariData,
+        params: _WebRTCVadParams,
+        callback: AkariModuleType | None = None,
+    ) -> AkariDataSet:
         """Standard, non-streaming invocation (not supported for this module).
 
         The WebRTC VAD module is inherently stream-oriented as it processes audio

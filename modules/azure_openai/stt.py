@@ -1,89 +1,65 @@
+"""Azure OpenAI STT module."""
+
+from __future__ import annotations
+
 import dataclasses
 import io
-import wave
 
-from openai import AzureOpenAI
-
-from akari import (
+from akari_core.logger import AkariLogger
+from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
-    AkariLogger,
     AkariModule,
-    AkariModuleType,
+    AkariModuleParams,
+    # AkariModuleType, # Removed unused import
     AkariRouter,
 )
 
+# from typing import Literal, Optional # Removed unused imports
+from openai import AzureOpenAI
+from openai.types.audio import Transcription
+
 
 @dataclasses.dataclass
-class _STTModuleParams:
-    """Specifies configuration for audio transcription requests to the Azure OpenAI STT service.
-
-    Details include the AI model to use, language hints for improved accuracy,
-    contextual prompts, temperature for controlling randomness, and physical
-    properties of the input audio stream.
-
-    Attributes:
-        model (str): Identifier of the Azure OpenAI STT model to be employed for
-            transcription (e.g., "whisper-1").
-        language (Optional[str]): The ISO-639-1 code for the language spoken in the
-            audio (e.g., "en" for English, "ja" for Japanese). Providing this can
-            enhance transcription accuracy and reduce latency. If `None`, the service
-            may attempt to auto-detect the language.
-        prompt (Optional[str]): A textual prompt that can be used to guide the
-            transcription model, potentially improving accuracy for specific terms,
-            names, or styles, or to provide context from a previous audio segment.
-            The prompt should be in the same language as the audio.
-        temperature (float): Controls the randomness of the transcription process,
-            affecting word choice when alternatives exist. Values are typically
-            between 0 and 1. Lower values (e.g., 0.2) yield more deterministic
-            and common results, while higher values (e.g., 0.8) produce more varied
-            but potentially less accurate output.
-        channels (int): The number of audio channels present in the input audio
-            data (e.g., 1 for mono, 2 for stereo). This information is crucial for
-            correctly interpreting the raw audio bytes. Defaults to 1 (mono).
-        sample_width (int): The size of each audio sample in bytes (e.g., 2 for
-            16-bit audio, 1 for 8-bit audio). This, along with `channels` and `rate`,
-            defines the audio format. Defaults to 2 (16-bit).
-        rate (int): The sampling rate (or frame rate) of the input audio in Hertz
-            (samples per second), such as 16000, 24000, or 44100. This must match
-            the actual sample rate of the audio data. Defaults to 24000 Hz.
-    """
+class _STTModuleParams(AkariModuleParams):
+    """Azure OpenAI STTモジュール用のパラメータ."""
 
     model: str
     language: str | None
     prompt: str | None
     temperature: float
     channels: int = 1
-    sample_width: int = 2
-    rate: int = 24000
+    rate: int = 16000
+    callback_params: AkariModuleParams | None = None
+    """文字起こし結果を渡すコールバックモジュール用のパラメータ. デフォルトはNone."""
+    end_stream_flag: bool = False
+    """このフラグがTrueの場合、STTストリームを終了する. デフォルトはFalse."""
+    callback_when_final: bool = True
+    """最終結果をコールバックするかどうか. デフォルトはTrue.(Falseで常にコールバックする)"""
 
 
 class _STTModule(AkariModule):
-    """Performs audio-to-text transcription by leveraging Azure OpenAI's speech recognition capabilities.
-
-    Takes raw audio data (expected as PCM bytes) from an AkariDataSet,
-    encapsulates it into a WAV format in-memory buffer, and then sends this
-    audio to the configured Azure OpenAI STT model for transcription. The
-    resulting text is then placed back into an AkariDataSet.
-    """
+    """Azure OpenAI Speech-to-Text APIを使用して音声を文字起こしするAkariモジュール."""
 
     def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
-        """Constructs an _STTModule instance.
+        """Initialize the GoogleSpeechToTextStreamModule.
 
         Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization.
-            logger (AkariLogger): The logger instance for recording operational
-                details and debugging information.
-            client (AzureOpenAI): An initialized instance of the `AzureOpenAI`
-                client, pre-configured for accessing the speech-to-text service.
+            router: Akari router instance.
+            logger: Akari logger instance.
+            client: Initialized Google Cloud Speech client instance.
         """
         super().__init__(router, logger)
         self.client = client
 
-    def call(self, data: AkariData, params: _STTModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Converts spoken audio, provided as raw PCM data, into written text using the configured Azure OpenAI STT model.
+    def call(
+        self,
+        data: AkariData,
+        params: _STTModuleParams,
+        # ARG002: Unused method argument: `callback` - removed
+    ) -> AkariDataSet:
+        """Convert spoken audio into text using the configured Azure OpenAI STT model.
 
         The method expects audio data to be present in `data.last().audio.main`.
         This data is then wrapped into a WAV audio format in an in-memory buffer.
@@ -97,8 +73,6 @@ class _STTModule(AkariModule):
             params (_STTModuleParams): Configuration parameters for the transcription,
                 such as the STT model name, language, prompt, temperature, and
                 audio properties (channels, sample width, rate).
-            callback (Optional[AkariModuleType]): An optional callback module. This
-                parameter is currently not used by the STTModule.
 
         Returns:
             AkariDataSet: An `AkariDataSet` where:
@@ -111,37 +85,38 @@ class _STTModule(AkariModule):
             OpenAIError: If the Azure OpenAI API call fails for any reason
                 (e.g., authentication, network issues, invalid parameters).
         """
-        self._logger.debug("STTModule called")
-        self._logger.debug("Data: %s", data)
-        self._logger.debug("Params: %s", params)
-
         audio = data.last().audio
         if audio is None:
-            raise ValueError("Audio data is missing or empty.")
+            error_msg = "Audio data is missing or empty."
+            raise ValueError(error_msg)
 
         pcm_buffer = io.BytesIO(audio.main)
-        wav_buffer = io.BytesIO()
-        with wave.open(wav_buffer, "wb") as wav_file:
-            wav_file.setnchannels(params.channels)
-            wav_file.setsampwidth(params.sample_width)
-            wav_file.setframerate(params.rate)
-            wav_file.writeframes(pcm_buffer.read())
 
-        wav_buffer.seek(0)
-        wav_buffer.name = "input.wav"
+        try:
+            transcript: Transcription = self.client.audio.transcriptions.create(
+                model=params.model,
+                file=pcm_buffer,
+                language=params.language,
+                prompt=params.prompt,
+                temperature=params.temperature,
+            )
 
-        response = self.client.audio.transcriptions.create(
-            model=params.model,
-            file=wav_buffer,
-            language=params.language if params.language else "",
-            prompt=params.prompt if params.prompt else "",
-            response_format="text",
-            temperature=params.temperature,
-        )
+            result_dataset = AkariDataSet()
+            result_dataset.text = AkariDataSetType(main=transcript.text)
+            result_dataset.bool = AkariDataSetType(main=True)
+            # Add more metadata if available and relevant
+            # For now, just include the basic text result.
+            self._logger.debug("STT transcription successful: %s", transcript.text)
+            return result_dataset
 
-        text_main = str(response)
+        except Exception as e:
+            self._logger.exception("Error during STT transcription: %s", e)
+            error_msg = f"Error during STT transcription: {e!s}"
+            return AkariDataSet(text=AkariDataSetType(main=error_msg))
 
-        dataset = AkariDataSet()
-        dataset.text = AkariDataSetType(main=text_main)
-        dataset.allData = response
-        return dataset
+    # stream_call is not implemented for Azure OpenAI STT for now
+    # async_call is not implemented for Azure OpenAI STT for now
+
+    def close(self) -> None:
+        """Perform cleanup operations if necessary."""
+        self._logger.info("AzureOpenAI STT module closed.")

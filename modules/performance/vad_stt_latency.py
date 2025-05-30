@@ -3,23 +3,22 @@
 from __future__ import annotations
 
 import dataclasses
-import threading
-import time
 import io
+import time
 
-from typing import Optional
+# TC002: Move third-party import `akari_core.logger.AkariLogger` into a type-checking block
+from typing import TYPE_CHECKING
 
+import webrtcvad
 from akari_core.module import (
     AkariData,
     AkariDataSet,
+    AkariDataSetType,
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
     AkariRouter,
 )
-
-# TC002: Move third-party import `akari_core.logger.AkariLogger` into a type-checking block
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from akari_core.logger import AkariLogger
@@ -32,6 +31,8 @@ class _VADSTTLatencyMeterConfig:
     vad_module: AkariModuleType
     vad_module_params: AkariModuleParams
     callback_params: AkariModuleParams
+    frame_duration_ms: int
+    callback_when_speech_ended: bool
 
 
 class _VADSTTLatencyMeter(AkariModule):
@@ -48,27 +49,19 @@ class _VADSTTLatencyMeter(AkariModule):
         self._vad_start_time: float | None = None
         self._vad_end_time: float | None = None
         self._is_vad_end: bool = True
+        self._callbacked: bool = False
+        self._audio_buffer: bytes = b""
+        self._vad = webrtcvad.Vad(3)
 
     def call(
         self,
         data: AkariData,
-        params: _VADSTTLatencyMeterConfig,
-        _callback: AkariModuleType | None = None,
+        params: AkariModuleParams,
+        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
-        """Process data for VAD/STT latency measurement.
-
-        This method processes data chunks in a streaming fashion,
-        measuring latency between Voice Activity Detection (VAD)
-        speech detection and the arrival of corresponding
-        Speech-to-Text (STT) results.
-        """
-        # This module is designed for streaming, so call is not supported
-        # ERA001: Found commented-out code (This is a comment, not commented out code)
-        # not_implemented_msg = "VADSTTLatencyMeter does not support call method. Use stream_call instead."
-        # raise NotImplementedError(not_implemented_msg)
-        raise NotImplementedError(
-            "VADSTTLatencyMeter does not support call method. Use stream_call instead."
-        )
+        """Standard, non-streaming invocation (not supported for this module)."""
+        not_implemented_msg = "VADSTTLatencyMeter does not support call method. Use stream_call instead."
+        raise NotImplementedError(not_implemented_msg)
 
     def stream_call(
         self,
@@ -76,30 +69,21 @@ class _VADSTTLatencyMeter(AkariModule):
         params: _VADSTTLatencyMeterConfig,
         callback: AkariModuleType | None = None,
     ) -> AkariData:
-        """Analyze an incoming audio chunk for voice activity using WebRTC VAD.
-
-        If speech is detected or ends, trigger the specified callback.
-        """
+        """Analyzes an incoming audio chunk for voice activity using the WebRTC VAD algorithm."""
         self._logger.debug("VADSTTLatencyMeter stream_call called")
 
         audio = data.last().audio
         if audio is None:
-            # TRY003: Avoid specifying long messages outside the exception class
-            # EM101: Exception must not use a string literal, assign to variable first
             error_msg = "Audio data is missing or empty."
             raise ValueError(error_msg)
 
         frame_size_bytes = int(
-            params.frame_duration_ms
-            * audio.sample_rate
-            / 1000
-            * audio.num_channels
-            * audio.sample_width
+            params.frame_duration_ms * audio.sample_rate / 1000 * audio.num_channels * audio.sample_width
         )
         if len(audio.main) < frame_size_bytes:
-            # TRY003: Avoid specifying long messages outside the exception class
-            # EM102: Exception must not use an f-string literal, assign to variable first
-            error_msg = f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+            error_msg = (
+                f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+            )
             raise ValueError(error_msg)
 
         buffer = io.BytesIO(self._audio_buffer + audio.main)
@@ -110,10 +94,8 @@ class _VADSTTLatencyMeter(AkariModule):
 
         try:
             is_speech = self._vad.is_speech(frame, audio.sample_rate)
-            self._logger.debug("WebRTC VAD detected speech: %s", is_speech)
-        except Exception as e:  # BLE001: Do not catch blind exception: `Exception`
-            # TRY003: Avoid specifying long messages outside the exception class
-            # EM102: Exception must not use an f-string literal, assign to variable first
+            self._logger.debug("WebRTC VAD functional detected speech: %s", is_speech)
+        except Exception as e:
             error_msg = f"Error processing audio data with WebRTC VAD: {e}"
             raise ValueError(error_msg) from e
 
@@ -121,19 +103,11 @@ class _VADSTTLatencyMeter(AkariModule):
         dataset.bool = AkariDataSetType(main=is_speech)
         dataset.float = AkariDataSetType(main=time.time())
 
-        # SIM102: Use a single `if` statement instead of nested `if` statements
         if callback and (
             (not params.callback_when_speech_ended and is_speech)
-            or (
-                params.callback_when_speech_ended
-                and not is_speech
-                and not self._callbacked
-            )
+            or (params.callback_when_speech_ended and not is_speech and not self._callbacked)
         ):
-            # FBT003: Boolean positional value in function call (Assuming True is intentional positional arg)
-            data = self._router.callModule(
-                callback, data, params.callback_params, True, None
-            )
+            data = self._router.callModule(callback, data, params.callback_params, streaming=True)
             self._callbacked = True
             self._audio_buffer = b""
 

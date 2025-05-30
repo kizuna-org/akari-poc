@@ -72,9 +72,7 @@ class _SaveModule(AkariModule):
 
         except AttributeError:
             # TRY003, EM102: Assign exception message to variable
-            error_msg = (
-                f"Data does not contain the attribute '{params.save_from_data}'."
-            )
+            error_msg = f"Data does not contain the attribute '{params.save_from_data}'."
             raise ValueError(error_msg) from None
 
         if not save_data:
@@ -85,26 +83,16 @@ class _SaveModule(AkariModule):
         path_str = params.file_path
         if params.with_timestamp:
             paths = path_str.rsplit(".", 1)
-            timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
-                "%Y%m%d%H%M%S"
-            )
+            timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S")
             # SIM108: Use ternary operator
-            path_str = (
-                f"{paths[0]}_{timestamp}.{paths[1]}"
-                if len(paths) > 1
-                else f"{path_str}_{timestamp}"
-            )
+            path_str = f"{paths[0]}_{timestamp}.{paths[1]}" if len(paths) > 1 else f"{path_str}_{timestamp}"
         path = Path(path_str)
         if params.ensure_dir:
             path.parent.mkdir(parents=True, exist_ok=True)
             self._logger.debug("Ensured directory exists: %s", path.parent)
 
         try:
-            if (
-                path_str.endswith(".wav")
-                and params.save_from_data == "audio"
-                and isinstance(save_data, bytes)
-            ):
+            if path_str.endswith(".wav") and params.save_from_data == "audio" and isinstance(save_data, bytes):
                 # Assuming save_data is bytes for WAV
                 with wave.open(str(path), "wb") as wf:
                     wf.setnchannels(1)  # Mono
@@ -124,9 +112,6 @@ class _SaveModule(AkariModule):
                 raise TypeError(error_msg) from None
 
         except OSError as e:
-            # TRY400: Use logging.exception
-            # G004: Logging statement uses f-string
-            # TRY401: Redundant exception object included in `logging.exception` call
             self._logger.exception("Error writing to file %s: %s", path, e)
             # TRY003: Avoid specifying long messages outside the exception class
             # EM102: Exception must not use an f-string literal, assign to variable first

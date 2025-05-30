@@ -217,11 +217,8 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
 
     def call(
         self,
-        # ARG002: Unused method argument: `data` - This method is not implemented for non-streaming.
         data: AkariData,
-        # ARG002: Unused method argument: `params` - This method is not implemented for non-streaming.
         params: _GoogleSpeechToTextStreamParams,
-        # ARG002: Unused method argument: `callback` - This method is not implemented for non-streaming.
         callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """ストリーミング専用モジュールのため、このメソッドはNotImplementedErrorを発生させます.

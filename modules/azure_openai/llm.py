@@ -220,18 +220,15 @@ class _LLMModule(AkariModule):
                 self._logger.debug(response.choices[0].message.content)
                 if response.choices[0].message.content:
                     text_main = response.choices[0].message.content
-            else:
-                raise TypeError("Response is not of type ChatCompletion.")
+                dataset.text = AkariDataSetType(main=text_main)
+                dataset.allData = response
+                self._logger.debug("LLMModule call finished successfully")
+                return dataset
 
-            dataset.text = AkariDataSetType(main=text_main)
-            dataset.allData = response
-            self._logger.debug("LLMModule call finished successfully")
-            return dataset
         except Exception as e:
             self._logger.exception("Error during LLM generation: %s", e)
             error_msg = f"Error during LLM generation: {e!s}"
-            error_dataset = AkariDataSet(text=AkariDataSetType(main=error_msg))
-            return error_dataset
+            return AkariDataSet(text=AkariDataSetType(main=error_msg))
 
     def stream_call(
         self,
