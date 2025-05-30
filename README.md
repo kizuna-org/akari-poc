@@ -8,6 +8,13 @@ What is Akari? The answer, as it must, will eventually be revealed.
 
 You must always follow the specifications listed in `docs/`.
 
+When you type Python-based commands, you need to prefix them with `poetry run`, as shown in [#Tasks](#tasks).
+
+Example:
+
+- to lint `poetry run flake8 .`
+- to format `poetry run black .`
+
 ## Development
 
 Setup the environment:
