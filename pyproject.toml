@@ -15,7 +15,7 @@ audioop-lts = "^0.2.1"
 google-cloud-aiplatform = "^1.94.0"
 google-auth = "^2.40.2"
 webrtcvad = "^2.0.10"
-setuptools = "^80.8.0"
+setuptools = "^80.9.0"
 google-cloud-speech = "^2.32.0"
 google-cloud-texttospeech = "^2.27.0"
 
