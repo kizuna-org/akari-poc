@@ -230,7 +230,7 @@ class _AkariDataSet:
 
 
 class _AkariData:
-    """Orchestrates a sequence of datasets, representing the state and flow of data through an Akari pipeline.
+    """Orchestrates dataset sequences for Akari pipeline data flow.
 
     Modules in a pipeline typically receive an `_AkariData` instance, can inspect
     previous datasets (especially the last one), and append new `_AkariDataSet`
