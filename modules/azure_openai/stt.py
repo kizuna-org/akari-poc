@@ -17,13 +17,8 @@ from akari_core.module import (
     AkariDataSetType,
     AkariModule,
     AkariModuleParams,
-    # AkariModuleType, # Removed unused import
     AkariRouter,
 )
-
-# from typing import Literal, Optional # Removed unused imports
-# from openai import AzureOpenAI # Moved to TYPE_CHECKING
-# from openai.types.audio import Transcription # Moved to TYPE_CHECKING
 
 
 @dataclasses.dataclass

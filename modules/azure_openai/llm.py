@@ -5,22 +5,27 @@ from __future__ import annotations
 import copy
 import dataclasses
 import threading
-from collections.abc import Iterable
 from typing import TYPE_CHECKING, Callable
 
+# TC003: Iterable should be in type checking block
 if TYPE_CHECKING:
-    from akari_core.logger import AkariLogger
-    from akari_core.module import AkariDataStreamType
+    from collections.abc import Iterable
 
+    from akari_core.logger import AkariLogger
+
+    # TC002: AzureOpenAI should be inside type checking block
+    from openai import AzureOpenAI
+
+# TC004: AkariDataStreamType should be outside type checking block
 from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
+    AkariDataStreamType,
     AkariModule,
     AkariModuleType,
     AkariRouter,
 )
-from openai import AzureOpenAI
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -43,40 +48,20 @@ class _LLMModuleParams:
             message objects representing the conversation history. Each message
             should conform to the `ChatCompletionMessageParam` structure. This
             attribute is used if `messages_function` is not provided or returns None.
-        messages_function (Optional[Callable[[AkariData], Iterable[ChatCompletionMessageParam]]]):
-            A callable that accepts an `AkariData` instance and returns a sequence
-            of `ChatCompletionMessageParam` objects. This allows for dynamic
-            construction of the conversation history based on data from previous
-            pipeline steps. If provided, it takes precedence over the static `messages`
-            attribute. Defaults to None.
-        temperature (float): Controls the randomness of the output. Lower values
-            (e.g., 0.2) make the output more deterministic and focused, while higher
-            values (e.g., 0.8) make it more random and creative. Must be between
-            0 and 2. Defaults to 1.0.
-        max_tokens (int): The maximum number of tokens (words and punctuation)
-            to generate in the chat completion. This limits the length of the
-            response. Defaults to 1024.
-        top_p (float): Implements nucleus sampling. The model considers only tokens
-            comprising the top `top_p` probability mass. A value of 0.1 means
-            only tokens from the top 10% probability distribution are considered.
-            This is an alternative to temperature-based sampling. Defaults to 1.0.
-        frequency_penalty (float): A value between -2.0 and 2.0. Positive values
-            reduce the likelihood of the model repeating lines verbatim by penalizing
-            tokens based on their existing frequency in the generated text.
-            Defaults to 0.0.
-        presence_penalty (float): A value between -2.0 and 2.0. Positive values
-            encourage the model to introduce new topics by penalizing tokens based
-            on their appearance in the text so far. Defaults to 0.0.
-        stream (bool): If True, requests the API to stream back the response in
-            chunks as it's generated. This requires a `callback` module to be
-            configured in the `call` method to process these chunks. If False,
-            the full response is received after generation is complete.
-            Defaults to False.
+        messages_function: Callable[[AkariData], Iterable[ChatCompletionMessageParam]] | None = None
+        temperature: float = 1.0
+        max_tokens: int = 1024
+        top_p: float = 1.0
+        frequency_penalty: float = 0.0
+        presence_penalty: float = 0.0
+        stream: bool = False
     """
 
     model: str
     messages: Iterable[ChatCompletionMessageParam] | None = None
-    messages_function: Callable[[AkariData], Iterable[ChatCompletionMessageParam]] | None = None
+    messages_function: (
+        Callable[[AkariData], Iterable[ChatCompletionMessageParam]] | None
+    ) = None
     temperature: float = 1.0
     max_tokens: int = 1024
     top_p: float = 1.0
@@ -95,7 +80,9 @@ class _LLMModule(AkariModule):
     of the message history based on incoming AkariData.
     """
 
-    def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
+    def __init__(
+        self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI
+    ) -> None:
         """Constructs an _LLMModule instance.
 
         Args:
@@ -108,6 +95,15 @@ class _LLMModule(AkariModule):
         """
         super().__init__(router, logger)
         self.client = client
+
+    def _handle_api_error(self, error_type: type[Exception], message: str) -> None:
+        """Helper function to raise API-related errors.
+
+        Args:
+            error_type: The type of exception to raise (e.g., ValueError, TypeError).
+            message: The error message.
+        """
+        raise error_type(message)
 
     def call(
         self,
@@ -127,7 +123,8 @@ class _LLMModule(AkariModule):
               content is appended to a growing `text_main` and added to a list
               of `texts`. An `AkariDataSet` with the current `text_main` and
               the stream of `texts` is created and sent to the `callback` module
-              via the router in a non-blocking way (though the router call itself might be blocking).
+              via the router in a non-blocking way (though the router call itself
+              might be blocking).
         If `params.stream` is False:
             - The method waits for the full API response.
             - The content of the first choice's message is extracted as `text_main`.
@@ -168,12 +165,16 @@ class _LLMModule(AkariModule):
         self._logger.debug("Callback: %s", callback)
 
         if params.stream and callback is None:
-            raise ValueError("Callback must be provided when streaming is enabled.")
+            callback_error_msg = "Callback must be provided when streaming is enabled."
+            self._handle_api_error(ValueError, callback_error_msg)
 
         if params.messages_function is not None:
             params.messages = params.messages_function(data)
         if params.messages is None:
-            raise ValueError("Messages cannot be None. Please provide a valid list of messages.")
+            messages_error_msg = (
+                "Messages cannot be None. Please provide a valid list of messages."
+            )
+            self._handle_api_error(ValueError, messages_error_msg)
 
         try:
             response = self.client.chat.completions.create(
@@ -192,31 +193,46 @@ class _LLMModule(AkariModule):
             if params.stream:
                 texts: list[str] = []
                 for chunk in response:
-                    if isinstance(chunk, ChatCompletionChunk) and hasattr(chunk, "choices"):
+                    if isinstance(chunk, ChatCompletionChunk) and hasattr(
+                        chunk, "choices"
+                    ):
                         for choice in chunk.choices:
-                            if hasattr(choice, "delta") and hasattr(choice.delta, "content"):
-                                text_main += choice.delta.content if choice.delta.content else ""
+                            if hasattr(choice, "delta") and hasattr(
+                                choice.delta, "content"
+                            ):
+                                text_main += (
+                                    choice.delta.content if choice.delta.content else ""
+                                )
                                 if choice.delta.content is not None:
                                     texts.append(choice.delta.content)
                                 stream: AkariDataStreamType[str] = AkariDataStreamType(
                                     delta=texts,
                                 )
-                                dataset.text = AkariDataSetType(main=text_main, stream=stream)
+                                dataset.text = AkariDataSetType(
+                                    main=text_main, stream=stream
+                                )
                                 if callback is not None:
-                                    callData = copy.deepcopy(data)
-                                    callData.add(dataset)
+                                    call_data = copy.deepcopy(data)
+                                    call_data.add(dataset)
                                     self._router.callModule(
                                         moduleType=callback,
-                                        data=callData,
+                                        data=call_data,
                                         params=params,
                                         streaming=True,
                                     )
                                 else:
-                                    raise ValueError("Callback is None, but streaming is enabled.")
+                                    callback_none_error = (
+                                        "Callback is None, but streaming is enabled."
+                                    )
+                                    self._handle_api_error(
+                                        ValueError, callback_none_error
+                                    )
                             else:
-                                raise TypeError("Chunk does not have 'delta' or 'content' attribute.")
+                                delta_content_error = "Chunk does not have 'delta' or 'content' attribute."
+                                self._handle_api_error(TypeError, delta_content_error)
                     else:
-                        raise TypeError("Chunk does not have 'choices' attribute or is improperly formatted.")
+                        choices_error = "Chunk does not have 'choices' attribute or is improperly formatted."
+                        self._handle_api_error(TypeError, choices_error)
             elif isinstance(response, ChatCompletion):
                 self._logger.debug(response.choices[0].message.content)
                 text_main = ""
@@ -227,9 +243,9 @@ class _LLMModule(AkariModule):
                 self._logger.debug("LLMModule call finished successfully")
                 return dataset
 
-        except Exception as e:
-            self._logger.exception("Error during LLM generation: %s", e)
-            error_msg = f"Error during LLM generation: {e!s}"
+        except Exception:
+            self._logger.exception("Error during LLM generation: %s")
+            error_msg = f"Error during LLM generation: {Exception!s}"
             return AkariDataSet(text=AkariDataSetType(main=error_msg))
 
     def stream_call(
@@ -265,13 +281,15 @@ class _LLMModule(AkariModule):
                         if text_chunk:
                             result_dataset.text.stream.add(text_chunk)
                             full_response.append(text_chunk)
-                result_dataset.allData = (response._result) if hasattr(response, "_result") else None
+                result_dataset.allData = (
+                    (response._result) if hasattr(response, "_result") else None
+                )
                 result_dataset.bool = AkariDataSetType(main=True)
                 self._logger.debug("Streaming generation finished")
 
-            except Exception as e:
-                self._logger.exception("Error during LLM streaming generation: %s", e)
-                error_msg = f"Error during LLM streaming generation: {e!s}"
+            except Exception:
+                self._logger.exception("Error during LLM streaming generation: %s")
+                error_msg = f"Error during LLM streaming generation: {Exception!s}"
                 result_dataset.text.stream.add(error_msg)
                 result_dataset.bool = AkariDataSetType(main=False)
 

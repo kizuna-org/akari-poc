@@ -73,6 +73,7 @@ class _TTSModule(AkariModule):
             result_dataset.audio = AkariDataSetType(main=response.content)
             result_dataset.bool = AkariDataSetType(main=True)
             self._logger.debug("TTS synthesis successful")
+
             return result_dataset
 
         except Exception as e:
@@ -87,7 +88,8 @@ class _TTSModule(AkariModule):
         _callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """stream_call is not implemented for now."""
-        raise NotImplementedError("stream_call is not implemented for Azure OpenAI TTS for now")
+        not_implemented_msg = "stream_call is not implemented for Azure OpenAI TTS for now"
+        raise NotImplementedError(not_implemented_msg)
 
     def close(self) -> None:
         """Perform cleanup operations if necessary."""
