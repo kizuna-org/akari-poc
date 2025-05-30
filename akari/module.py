@@ -1,13 +1,17 @@
-from __future__ import annotations
+from __future__ import annotations  # Added
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-import akari.data as akari_data
-from akari import logger
-
+# These imports are correctly under TYPE_CHECKING for type hints
+# to avoid circular dependencies if they were top-level.
+# Ruff's TC001 might be overly aggressive here or indicative of a complex setup.
 if TYPE_CHECKING:
-    from akari import router
+    import akari.data as akari_data  # TC001 - keep here
+    from akari import (
+        logger,  # TC001 - keep here
+        router,
+    )
 
 _AkariModuleParams = Any
 _AkariModuleType = type["_AkariModule"]
@@ -100,4 +104,6 @@ class _AkariModule(ABC):
         Raises:
             NotImplementedError: If the concrete subclass does not support streaming calls.
         """
-        raise NotImplementedError("stream_call is not implemented in this module.")
+        # EM101
+        msg = "stream_call is not implemented in this module."
+        raise NotImplementedError(msg)

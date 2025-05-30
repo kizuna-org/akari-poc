@@ -1,16 +1,17 @@
 """Google Cloud Speech-to-Text (STT) APIを使用して音声ストリームを文字起こしするAkariモジュール."""
 
-from __future__ import annotations
+from __future__ import annotations  # Added for FA102 if any, and good practice
 
 import dataclasses
 import queue
-import threading
-from collections.abc import Generator, Iterable  # Iterable をインポート
-from typing import TYPE_CHECKING  # Added TYPE_CHECKING
+import threading  # TC004: Moved out of TYPE_CHECKING
+from collections.abc import Generator, Iterable
+from typing import TYPE_CHECKING
 
 from google.cloud import speech
-from google.cloud.speech_v1.types import StreamingRecognizeResponse
 
+# StreamingRecognizeResponse is already imported below, so no change needed here
+# from google.cloud.speech_v1.types import StreamingRecognizeResponse
 from akari import (
     AkariData,
     AkariDataSet,
@@ -23,12 +24,11 @@ from akari import (
     AkariRouter,
 )
 
+# Ensure imports inside TYPE_CHECKING are only for type hinting
 if TYPE_CHECKING:
-    # Import Generator, Iterable, StreamingRecognizeResponse, and threading here for type hinting
-    import threading  # Added threading import
-    from collections.abc import Generator, Iterable
-
-    from google.cloud.speech_v1.types import StreamingRecognizeResponse
+    # Iterable and Generator already imported above
+    # threading already imported above
+    from google.cloud.speech_v1.types import StreamingRecognizeResponse  # This is fine here
 
 
 # AkariModuleParamsを直接継承しないように変更
@@ -228,7 +228,7 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         self,
         data: AkariData,
         params: _GoogleSpeechToTextStreamParams,
-        callback: AkariModuleType | None = None,
+        callback: AkariModuleType | None = None, # No ARG002 for this, it's an abstract method override
     ) -> AkariDataSet:
         """ストリーミング専用モジュールのため、このメソッドはNotImplementedErrorを発生させます.
 
@@ -242,12 +242,11 @@ class _GoogleSpeechToTextStreamModule(AkariModule):
         Raises:
             NotImplementedError: このメソッドは実装されていません.
         """
-        not_implemented_msg = (
-            "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT."
-        )
-        raise NotImplementedError(not_implemented_msg)
+        # EM101, TRY003
+        msg = "call() is not implemented for GoogleSpeechToTextStreamModule. Use stream_call() for streaming STT."
+        raise NotImplementedError(msg)
 
-    def stream_call(
+    def stream_call(  # noqa: C901, PLR0912
         self,
         data: AkariData,
         params: _GoogleSpeechToTextStreamParams,

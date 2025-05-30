@@ -4,7 +4,7 @@ import sys
 _AkariLogger = logging.Logger
 
 
-def _getLogger(name: str, level: int = logging.DEBUG) -> _AkariLogger:
+def _get_logger(name: str, level: int = logging.DEBUG) -> _AkariLogger:  # N802
     """Sets up and provides a customized logger instance for use within the Akari framework.
 
     Creates a logger with the specified name and severity level. To prevent

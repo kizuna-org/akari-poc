@@ -17,12 +17,12 @@ from modules import audio, azure_openai, gemini, google, io, performance, webrtc
 dotenv.load_dotenv()
 
 
-akariLogger = akari.getLogger(
+akari_logger = akari.getLogger(
     "Akari",
     logging.INFO,
 )
 
-akariLogger.info("Hello, Akari!")
+akari_logger.info("Hello, Akari!")
 
 
 def list_audio_devices() -> None:
@@ -39,7 +39,7 @@ def list_audio_devices() -> None:
     p = pyaudio.PyAudio()
     for i in range(p.get_device_count()):
         info = p.get_device_info_by_index(i)
-        akariLogger.info(
+        akari_logger.info(
             f"Device {i}: {info['name']} (Input: {info['maxInputChannels']}, Output: {info['maxOutputChannels']})",
         )
     p.terminate()
@@ -70,42 +70,42 @@ vertexai.init(
 speech_client = speech.SpeechClient(credentials=credentials)
 tts_client = texttospeech.TextToSpeechClient(credentials=credentials)
 
-akariRouter = akari.AkariRouter(
-    logger=akariLogger,
+akari_router = akari.AkariRouter(
+    logger=akari_logger,
     options=akari.AkariRouterLoggerOptions(info=False, duration=True),
 )
-akariRouter.addModules(
+akari_router.add_modules(
     {
-        modules.RootModule: modules.RootModule(akariRouter, akariLogger),
-        modules.PrintModule: modules.PrintModule(akariRouter, akariLogger),
-        modules.SerialModule: modules.SerialModule(akariRouter, akariLogger),
-        sample.SampleModule: sample.SampleModule(akariRouter, akariLogger),
-        azure_openai.LLMModule: azure_openai.LLMModule(akariRouter, akariLogger, client),
-        azure_openai.TTSModule: azure_openai.TTSModule(akariRouter, akariLogger, client),
+        modules.RootModule: modules.RootModule(akari_router, akari_logger),
+        modules.PrintModule: modules.PrintModule(akari_router, akari_logger),
+        modules.SerialModule: modules.SerialModule(akari_router, akari_logger),
+        sample.SampleModule: sample.SampleModule(akari_router, akari_logger),
+        azure_openai.LLMModule: azure_openai.LLMModule(akari_router, akari_logger, client),
+        azure_openai.TTSModule: azure_openai.TTSModule(akari_router, akari_logger, client),
         google.GoogleSpeechToTextStreamModule: google.GoogleSpeechToTextStreamModule(
-            akariRouter,
-            akariLogger,
+            akari_router,
+            akari_logger,
             speech_client,
         ),
-        google.GoogleTextToSpeechModule: google.GoogleTextToSpeechModule(akariRouter, akariLogger, tts_client),
-        gemini.LLMModule: gemini.LLMModule(akariRouter, akariLogger),
-        audio.SpeakerModule: audio.SpeakerModule(akariRouter, akariLogger),
-        audio.MicModule: audio.MicModule(akariRouter, akariLogger),
-        webrtcvad.WebRTCVadModule: webrtcvad.WebRTCVadModule(akariRouter, akariLogger),
-        io.SaveModule: io.SaveModule(akariRouter, akariLogger),
-        performance.VADSTTLatencyMeter: performance.VADSTTLatencyMeter(akariRouter, akariLogger),
+        google.GoogleTextToSpeechModule: google.GoogleTextToSpeechModule(akari_router, akari_logger, tts_client),
+        gemini.LLMModule: gemini.LLMModule(akari_router, akari_logger),
+        audio.SpeakerModule: audio.SpeakerModule(akari_router, akari_logger),
+        audio.MicModule: audio.MicModule(akari_router, akari_logger),
+        webrtcvad.WebRTCVadModule: webrtcvad.WebRTCVadModule(akari_router, akari_logger),
+        io.SaveModule: io.SaveModule(akari_router, akari_logger),
+        performance.VADSTTLatencyMeter: performance.VADSTTLatencyMeter(akari_router, akari_logger),
     },
 )
 
-# akariRouter.callModule(
-#     moduleType=modules.RootModule,
+# akari_router.call_module(
+#     module_type=modules.RootModule,
 #     data=akari.AkariData(),
 #     params=sample.SampleModule,
 #     streaming=False,
 # )
 
-# akariRouter.callModule(
-#     moduleType=azure_openai.LLMModule,
+# akari_router.call_module(
+#     module_type=azure_openai.LLMModule,
 #     data=akari.AkariData(),
 #     params=azure_openai.LLMModuleParams(
 #         model="gpt-4o-mini",
@@ -125,8 +125,8 @@ akariRouter.addModules(
 # )
 
 
-# data = akariRouter.callModule(
-#     moduleType=gemini.LLMModule,
+# data = akari_router.call_module(
+#     module_type=gemini.LLMModule,
 #     data=akari.AkariData(),
 #     params=gemini.LLMModuleParams(
 #         model="gemini-2.0-flash",
@@ -143,8 +143,8 @@ akariRouter.addModules(
 # with open("input.wav", "rb") as audio_file:
 #     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 # data.add(dataset)
-# akariRouter.callModule(
-#     moduleType=azure_openai.STTModule,
+# akari_router.call_module(
+#     module_type=azure_openai.STTModule,
 #     data=data,
 #     params=azure_openai.STTModuleParams(
 #         model="whisper",
@@ -154,8 +154,8 @@ akariRouter.addModules(
 #     ),
 # )
 
-# data = akariRouter.callModule(
-#     moduleType=azure_openai.TTSModule,
+# data = akari_router.call_module(
+#     module_type=azure_openai.TTSModule,
 #     data=akari.AkariData(),
 #     params=azure_openai.TTSModuleParams(
 #         model="gpt-4o-mini-tts",
@@ -177,16 +177,16 @@ akariRouter.addModules(
 # with open("input.wav", "rb") as audio_file:
 #     dataset.audio = akari.AkariDataSetType(main=audio_file.read())
 # data.add(dataset)
-# akariRouter.callModule(
-#     moduleType=audio.SpeakerModule,
+# akari_router.call_module(
+#     module_type=audio.SpeakerModule,
 #     data=data,
 #     params=audio.SpeakerModuleParams(),
 #     streaming=False,
 # )
 
 
-# akariRouter.callModule(
-#     moduleType=audio.MicModule,
+# akari_router.call_module(
+#     module_type=audio.MicModule,
 #     data=akari.AkariData(),
 #     params=audio.MicModuleParams(
 #         streamDurationMilliseconds=1000,
@@ -321,35 +321,35 @@ data = akari.AkariData()
 dataset = akari.AkariDataSet()
 dataset.text = akari.AkariDataSetType(main="Hello, Akari!")
 data.add(dataset)
-akariRouter.callModule(
-    moduleType=modules.SerialModule,
+akari_router.call_module(
+    module_type=modules.SerialModule,
     data=data,
     params=modules.SerialModuleParams(
         modules=[
-            modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
+            modules.SerialModuleParamModule(module_type=modules.PrintModule, moduleParams=None),
             modules.SerialModuleParamModule(
-                moduleType=google.GoogleTextToSpeechModule,
+                module_type=google.GoogleTextToSpeechModule,
                 moduleParams=google.GoogleTextToSpeechParams(
                     voice_name="ja-JP-Chirp3-HD-Kore",
                     callback_params=audio.SpeakerModuleParams(
                         # output_device_index=6,
                     ),
                 ),
-                moduleCallback=audio.SpeakerModule,
+                module_callback=audio.SpeakerModule,
             ),
         ],
     ),
     streaming=False,
 )
 
-# akariRouter.callModule(
-#     moduleType=modules.SerialModule,
+# akari_router.call_module(
+#     module_type=modules.SerialModule,
 #     data=data,
 #     params=modules.SerialModuleParams(
 #         modules=[
-#             modules.SerialModuleParamModule(moduleType=modules.PrintModule, moduleParams=None),
+#             modules.SerialModuleParamModule(module_type=modules.PrintModule, moduleParams=None),
 #             modules.SerialModuleParamModule(
-#                 moduleType=azure_openai.TTSModule,
+#                 module_type=azure_openai.TTSModule,
 #                 moduleParams=azure_openai.TTSModuleParams(
 #                     model="gpt-4o-mini-tts",
 #                     voice="alloy",
@@ -357,7 +357,7 @@ akariRouter.callModule(
 #                     speed=1.0,
 #                 ),
 #             ),
-#             modules.SerialModuleParamModule(moduleType=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
+#             modules.SerialModuleParamModule(module_type=audio.SpeakerModule, moduleParams=audio.SpeakerModuleParams()),
 #         ]
 #     ),
 #     streaming=False,

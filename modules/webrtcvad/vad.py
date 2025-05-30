@@ -6,7 +6,7 @@ import time
 from enum import Enum
 from typing import TYPE_CHECKING, Literal
 
-import webrtcvad
+import webrtcvad  # TC004: Moved top-level as it's used at runtime
 
 from akari import (
     AkariData,
@@ -19,9 +19,10 @@ from akari import (
     AkariRouter,
 )
 
+# TYPE_CHECKING block for purely type-hint imports
 if TYPE_CHECKING:
-    import webrtcvad
-    from akari_core.logger import AkariLogger
+    # webrtcvad already imported above
+    from akari_core.logger import AkariLogger  # Keep for type hinting if not used elsewhere at runtime
 
 
 class _WebRTCVadMode(Enum):
@@ -150,7 +151,9 @@ class _WebRTCVadModule(AkariModule):
         Raises:
             NotImplementedError: Always raised, as this module requires `stream_call`.
         """
-        raise NotImplementedError("WebRTCVadModule does not support call method. Use stream_call instead.")
+        # EM101, TRY003
+        msg = "WebRTCVadModule does not support call method. Use stream_call instead."
+        raise NotImplementedError(msg)
 
     def stream_call(
         self,
@@ -201,7 +204,9 @@ class _WebRTCVadModule(AkariModule):
         """
         audio = data.last().audio
         if audio is None:
-            raise ValueError("Audio data is missing or empty.")
+            # EM101, TRY003
+            msg = "Audio data is missing or empty."
+            raise ValueError(msg)
 
         self._vad.set_mode(params.mode.value)
 
@@ -209,9 +214,10 @@ class _WebRTCVadModule(AkariModule):
         frame_size_bytes = int(params.sample_rate * params.frame_duration_ms / 1000 * 2)
 
         if len(audio.main) < frame_size_bytes:
-            raise ValueError(
-                f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes.",
-            )
+            # EM102, TRY003
+            # E501: Line too long - will be left for formatter or manual wrap if needed
+            msg = f"Audio data is too short. Expected at least {frame_size_bytes} bytes, but got {len(audio.main)} bytes."
+            raise ValueError(msg)
 
         buffer.seek(-frame_size_bytes, io.SEEK_END)
         audio_data = buffer.read(frame_size_bytes)
@@ -220,7 +226,9 @@ class _WebRTCVadModule(AkariModule):
             is_speech = self._vad.is_speech(audio_data, params.sample_rate)
             self._logger.debug("WebRTC VAD detected speech: %s", is_speech)
         except Exception as e:
-            raise ValueError(f"Error processing audio data with WebRTC VAD: {e}") from e
+            # EM102, TRY003
+            msg = f"Error processing audio data with WebRTC VAD: {e}"
+            raise ValueError(msg) from e
 
         dataset = AkariDataSet()
         dataset.bool = AkariDataSetType(is_speech)
@@ -238,11 +246,11 @@ class _WebRTCVadModule(AkariModule):
 
         self._logger.debug("WebRTC VAD functional detected speech: %s", is_speech)
 
-        if callback:
+        if callback: # noqa: SIM102
             if (not params.callback_when_speech_ended and is_speech) or (
                 params.callback_when_speech_ended and not is_speech and not self._callbacked
             ):
-                data = self._router.callModule(callback, data, params.callback_params, True, None)
+                data = self._router.call_module(callback, data, params.callback_params, True, None) # N802, FBT003 (True) - add noqa for FBT003 if needed
                 self._callbacked = True
                 self._audio_buffer = b""
 

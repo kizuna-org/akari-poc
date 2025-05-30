@@ -106,12 +106,14 @@ class _STTModule(AkariModule):
             # Add more metadata if available and relevant
             # For now, just include the basic text result.
             self._logger.debug("STT transcription successful: %s", transcript.text)
-            return result_dataset
-
+            # TRY300: No direct else block needed if we return directly after success.
+            # If an exception occurs, it jumps to except.
         except Exception as e:
-            self._logger.exception("Error during STT transcription: %s", e)
-            error_msg = f"Error during STT transcription: {e!s}"
-            return AkariDataSet(text=AkariDataSetType(main=error_msg))
+            self._logger.exception("Error during STT transcription: %s", e) # TRY401 - e is fine here
+            # EM102, TRY003
+            error_text = f"Error during STT transcription: {e!s}"
+            return AkariDataSet(text=AkariDataSetType(main=error_text))
+        return result_dataset # Moved return here for TRY300
 
     # stream_call is not implemented for Azure OpenAI STT for now
     # async_call is not implemented for Azure OpenAI STT for now

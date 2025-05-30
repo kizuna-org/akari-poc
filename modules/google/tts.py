@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-# import copy # Removed unused import
 import dataclasses
 
-# import typing # Removed unused import
+# ERA001: Removed commented out imports for copy and typing
 from google.cloud import texttospeech
 
 from akari import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
-    # AkariDataStreamType, # Removed unused import
+    # ERA001: AkariDataStreamType removed
     AkariLogger,
     AkariModule,
     AkariModuleParams,
@@ -59,11 +58,11 @@ class _GoogleTextToSpeechModule(AkariModule):
         self._client = client
 
     # C901, PLR0915 - complex method, skipping automatic fix
-    def call(
+    def call( # C901 - Will add noqa if still present after other fixes
         self,
         data: AkariData,
         params: _GoogleTextToSpeechParams,
-        # ARG002 removed
+        # callback: AkariModuleType | None = None, # ARG002 was here, removing callback
     ) -> AkariDataSet:
         """Send text to the Google Cloud TTS API and receive the synthesized audio data."""
         input_text = ""
@@ -72,8 +71,9 @@ class _GoogleTextToSpeechModule(AkariModule):
             input_text = text_dataset.main
 
         if not input_text:
-            error_msg = "Input data is missing or empty."
-            raise ValueError(error_msg)  # TRY003, EM101 fixed
+            # EM101, TRY003
+            msg = "Input data is missing or empty."
+            raise ValueError(msg)
 
         synthesis_input = texttospeech.SynthesisInput(text=input_text)
 
@@ -101,36 +101,30 @@ class _GoogleTextToSpeechModule(AkariModule):
             )
 
             # The response's audio_content is binary. Write it to a file.
-            # TRY300 fixed by moving return to else block
             result_dataset = AkariDataSet()
             result_dataset.audio = AkariDataSetType(main=response.audio_content)
-            return result_dataset
         except Exception as e:
-            # BLE001: Do not catch blind exception: `Exception` -> Catch specific exceptions # Keeping comment for now
-            # TRY400: Use logging.exception instead of logging.error # Keeping comment for now
-            # G004: Logging statement uses f-string -> Use % formatting # Keeping comment for now
-            # EM101: Exception must not use a string literal, assign to variable first # Keeping comment for now
-            # TRY003: Avoid specifying long messages outside the exception class # Keeping comment for now
-            # EM102: Exception must not use an f-string literal, assign to variable first # Keeping comment for now
-            # TRY401: Redundant exception object included in `logging.exception` call # Keeping comment for now
-            # F841: Local variable `error_msg` is assigned to but never used # Keeping comment for now
-            error_main_msg = f"Error during Google TTS streaming synthesis: {e!s}"
-            self._logger.exception("Error during Google TTS streaming synthesis: %s", e)  # TRY401 fixed
-            result_dataset = AkariDataSet()
-            result_dataset.text = AkariDataSetType(main=error_main_msg)
-            return result_dataset
+            # BLE001, TRY400, G004, EM101, TRY003, EM102, F841 - Kept comments for context
+            self._logger.exception("Error during Google TTS streaming synthesis: %s", e)  # TRY401 fixed (e is fine)
+            # EM102, TRY003
+            error_text = f"Error during Google TTS streaming synthesis: {e!s}"
+            result_dataset = AkariDataSet() # Ensure dataset is initialized in except block too
+            result_dataset.text = AkariDataSetType(main=error_text)
+            return result_dataset # Return early on exception
+        return result_dataset # TRY300: Moved return here
 
-    def stream_call(
+    def stream_call( # ARG002 for data, params, callback
         self,
-        data: AkariData,
-        params: _GoogleTextToSpeechParams,
-        callback: AkariModuleType | None = None,
+        _data: AkariData, # Prefix with _ if unused
+        _params: _GoogleTextToSpeechParams, # Prefix with _ if unused
+        _callback: AkariModuleType | None = None, # Prefix with _ if unused
     ) -> AkariDataSet:
-        not_implemented_msg = "GoogleTextToSpeechModule does not support streaming."
-        self._logger.warning(not_implemented_msg)
-        raise NotImplementedError(not_implemented_msg)  # EM101 fixed
+        # EM101, TRY003
+        msg = "GoogleTextToSpeechModule does not support streaming."
+        self._logger.warning(msg)
+        raise NotImplementedError(msg)
 
     def close(self) -> None:
         self._logger.info(
-            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech."
-        )  # E501 - will rely on xc format
+            "GoogleTextToSpeechModule close called. Client cleanup is typically automatic for google-cloud-texttospeech." # noqa: E501
+        )

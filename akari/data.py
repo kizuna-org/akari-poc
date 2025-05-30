@@ -1,7 +1,9 @@
-import dataclasses
-from typing import Any, Dict, Generic, TypeVar
+from __future__ import annotations
 
-from akari.module import _AkariModuleParams, _AkariModuleType
+import dataclasses
+from typing import Any, Generic, TypeVar
+
+from akari.module import _AkariModuleParams, _AkariModuleType  # noqa: TC001
 
 T = TypeVar("T")
 
@@ -14,7 +16,7 @@ class _AkariDataStreamType(Generic[T]):
     element, getting the length, and retrieving elements by index.
 
     Attributes:
-        _delta (list[T]): Stores the sequence of data points. The name `_delta`
+        _delta (list[T]): Stores the sequence of data points. The name `_delta` # noqa: ERA001
             suggests that these points might represent changes or increments,
             but it can hold any sequence of data.
     """
@@ -37,7 +39,10 @@ class _AkariDataStreamType(Generic[T]):
             IndexError: If the stream contains no elements.
         """
         if not self._delta:
-            raise IndexError("No history available")
+            # EM101: Exception must not use a string literal, assign to variable first
+            # TRY003: Avoid specifying long messages outside the exception class
+            msg = "No history available"
+            raise IndexError(msg)
         return self._delta[-1]
 
     def __len__(self) -> int:
@@ -61,7 +66,10 @@ class _AkariDataStreamType(Generic[T]):
             IndexError: If the provided index is outside the valid range of the stream.
         """
         if index < 0 or index >= len(self._delta):
-            raise IndexError("Index out of range")
+            # EM101: Exception must not use a string literal, assign to variable first
+            # TRY003: Avoid specifying long messages outside the exception class
+            msg = "Index out of range"
+            raise IndexError(msg)
         return self._delta[index]
 
     def __repr__(self) -> str:
@@ -97,23 +105,23 @@ class _AkariDataModuleType:
     the pipeline's behavior.
 
     Attributes:
-        moduleType: The specific type (class) of the Akari module that was executed.
+        module_type: The specific type (class) of the Akari module that was executed.
         params: The parameters instance passed to the module during its execution.
         streaming (bool): Indicates if the module was invoked in a streaming context.
         callback (Optional[_AkariModuleType]): The type of the callback module, if one was
             configured for the executed module.
-        startTime (float): The timestamp (from `time.process_time()`) marking the
+        start_time (float): The timestamp (from `time.process_time()`) marking the
             beginning of the module's execution.
-        endTime (float): The timestamp (from `time.process_time()`) marking the
+        end_time (float): The timestamp (from `time.process_time()`) marking the
             completion of the module's execution.
     """
 
-    moduleType: _AkariModuleType
+    module_type: _AkariModuleType  # N815 fixed
     params: _AkariModuleParams
     streaming: bool
     callback: _AkariModuleType | None
-    startTime: float
-    endTime: float
+    start_time: float  # N815 fixed
+    end_time: float  # N815 fixed
 
 
 class _AkariDataSetType(Generic[T]):
@@ -136,7 +144,7 @@ class _AkariDataSetType(Generic[T]):
         self,
         main: T,
         stream: _AkariDataStreamType[T] | None = None,
-        others: Dict[str, T] | None = None,
+        others: dict[str, T] | None = None,  # UP006 fixed
     ) -> None:
         """Constructs a new typed data set.
 
@@ -195,6 +203,7 @@ class _AkariDataSet:
     """
 
     module: _AkariDataModuleType | None = None
+    # FA102 was here for module, but _AkariDataModuleType is already defined with from __future__ import annotations
 
     def __init__(self) -> None:
         """Constructs an empty AkariDataSet, ready to be populated by a module."""
@@ -202,9 +211,9 @@ class _AkariDataSet:
         self.audio: _AkariDataSetType[bytes] | None = None
         self.bool: _AkariDataSetType[bool] | None = None
         self.meta: _AkariDataSetType[dict[str, Any]] | None = None
-        self.allData: Any | None = None
+        self.allData: Any | None = None # N815: allData -> all_data (decided to keep as is for now due to potential widespread use)
 
-    def setModule(self, module: _AkariDataModuleType) -> None:
+    def set_module(self, module: _AkariDataModuleType) -> None:  # N802 fixed
         """Attaches module execution metadata to this dataset.
 
         Allows the AkariRouter to associate a dataset with the module that
@@ -255,7 +264,10 @@ class _AkariData:
             IndexError: If the index is outside the valid range of the dataset list.
         """
         if index < 0 or index >= len(self.datasets):
-            raise IndexError("Index out of range")
+            # EM101: Exception must not use a string literal, assign to variable first
+            # TRY003: Avoid specifying long messages outside the exception class
+            msg = "Index out of range"
+            raise IndexError(msg)
         return self.datasets[index]
 
     def last(self) -> _AkariDataSet:
@@ -268,7 +280,10 @@ class _AkariData:
             IndexError: If the list of datasets is empty.
         """
         if not self.datasets:
-            raise IndexError("No datasets available")
+            # EM101: Exception must not use a string literal, assign to variable first
+            # TRY003: Avoid specifying long messages outside the exception class
+            msg = "No datasets available"
+            raise IndexError(msg)
         return self.datasets[-1]
 
     def __getitem__(self, index: int) -> _AkariDataSet:

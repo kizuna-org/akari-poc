@@ -1,3 +1,5 @@
+from __future__ import annotations  # For good practice
+
 import pytest
 from faker import Faker
 
@@ -53,7 +55,7 @@ def test_serial_module_call(fakegen: Faker, router: AkariRouter) -> None:
         ],
     )
 
-    result = router.callModule(SerialModule, data, serial_module_params, False, None)
+    result = router.call_module(SerialModule, data, serial_module_params, False, None) # N802 (from router change), noqa: FBT003 for False
 
     assert isinstance(result, AkariData)
     assert len(result.datasets) == 1 + 3

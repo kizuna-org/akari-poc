@@ -115,8 +115,9 @@ class _SaveModule(AkariModule):
             self._logger.exception("Error writing to file %s: %s", path, e)
             # TRY003: Avoid specifying long messages outside the exception class
             # EM102: Exception must not use an f-string literal, assign to variable first
-            error_msg = f"Error saving data to {path}: {e!s}"
-            raise OSError(error_msg) from e
+            # No TRY401 here as 'e' is used in the message directly.
+            error_text = f"Error saving data to {path}: {e!s}"
+            raise OSError(error_text) from e
 
         return AkariDataSet()
 

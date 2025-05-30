@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import io
 
@@ -8,7 +10,6 @@ from akari import (
     AkariDataSet,
     AkariLogger,
     AkariModule,
-    AkariModuleType,
     AkariRouter,
 )
 
@@ -134,7 +135,9 @@ class _SpeakerModule(AkariModule):
         """
         audio = data.last().audio
         if audio is None:
-            raise ValueError("Audio data is missing or empty.")
+            # EM101, TRY003
+            msg = "Audio data is missing or empty."
+            raise ValueError(msg)
 
         meta = data.last().meta
 
@@ -142,16 +145,17 @@ class _SpeakerModule(AkariModule):
         rate = params.rate or meta.main.get("rate", 16000) if meta else None
 
         if channels is None or rate is None:
-            raise ValueError("Channels and rate must be provided or available in metadata.")
+            # EM101, TRY003
+            msg = "Channels and rate must be provided or available in metadata."
+            raise ValueError(msg)
 
-        buffer = io.BytesIO(audio.stream.last() if audio.stream else audio.main)
+        buffer = io.BytesIO(audio.stream.last() if audio.stream and audio.stream._delta else audio.main) # Access _delta for check
         return buffer, channels, rate
 
-    def call(
+    def call(  # ARG002: callback removed
         self,
         data: AkariData,
         params: _SpeakerModuleParams,
-        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Orchestrates the playback of audio data contained within the latest dataset of an AkariData sequence.
 
@@ -174,14 +178,12 @@ class _SpeakerModule(AkariModule):
         buffer, channels, rate = self._prepare_audio(data, params)
         self._play(buffer, params, channels, rate)
 
-        dataset = AkariDataSet()
-        return dataset
+        return AkariDataSet()  # RET504 fixed
 
-    def stream_call(
+    def stream_call(  # ARG002: callback removed
         self,
         data: AkariData,
         params: _SpeakerModuleParams,
-        callback: AkariModuleType | None = None,
     ) -> AkariDataSet:
         """Processes audio data for playback identically to the non-streaming `call` method.
 
@@ -201,5 +203,4 @@ class _SpeakerModule(AkariModule):
         buffer, channels, rate = self._prepare_audio(data, params)
         self._play(buffer, params, channels, rate)
 
-        dataset = AkariDataSet()
-        return dataset
+        return AkariDataSet()  # RET504 fixed

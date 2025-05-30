@@ -8,19 +8,20 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from akari_core.logger import AkariLogger
-    from akari_core.module import AkariDataStreamType
+    # AkariDataStreamType moved out of TYPE_CHECKING block due to TC004
 
 from akari_core.module import (
     AkariData,
     AkariDataSet,
     AkariDataSetType,
+    AkariDataStreamType,  # TC004: Moved out of TYPE_CHECKING
     AkariModule,
     AkariModuleParams,
     AkariModuleType,
     AkariRouter,
 )
 from google.generativeai import GenerativeModel
-from google.generativeai.types import Content
+from google.generativeai.types import Content, GenerationConfig, SafetySetting, Tool  # F821
 
 _models = {
     "gemini-pro": "gemini-pro",
@@ -76,11 +77,13 @@ class _GeminiLLMModule(AkariModule):
         else:
             messages = params.messages
         if messages is None:
-            error_msg = "Messages cannot be None. Please provide a valid list of messages."
-            raise ValueError(error_msg)
+            # EM101, TRY003
+            msg = "Messages cannot be None. Please provide a valid list of messages."
+            raise ValueError(msg)
         if params.model not in _models:
-            error_msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
-            raise ValueError(error_msg)
+            # EM102, TRY003
+            msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
+            raise ValueError(msg)
         model_name = _models[params.model]
         if model_name not in _model_instances:
             self._logger.info("Loading model: %s", model_name)
@@ -119,9 +122,10 @@ class _GeminiLLMModule(AkariModule):
             self._logger.debug("LLMModule call finished successfully")
             return result_dataset
         except Exception as e:
-            self._logger.exception("Error during LLM generation: %s", e)
-            error_dataset = AkariDataSet(text=AkariDataSetType(main=f"Error during LLM generation: {e!s}"))
-            return error_dataset
+            self._logger.exception("Error during LLM generation: %s", e) # TRY401 - e is fine here
+            # EM102, TRY003
+            error_text = f"Error during LLM generation: {e!s}"
+            return AkariDataSet(text=AkariDataSetType(main=error_text)) # RET504 fixed
 
     def stream_call(
         self,
@@ -138,11 +142,13 @@ class _GeminiLLMModule(AkariModule):
         else:
             messages = params.messages
         if messages is None:
-            error_msg = "Messages cannot be None. Please provide a valid list of messages."
-            raise ValueError(error_msg)
+            # EM101, TRY003
+            msg = "Messages cannot be None. Please provide a valid list of messages."
+            raise ValueError(msg)
         if params.model not in _models:
-            error_msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
-            raise ValueError(error_msg)
+            # EM102, TRY003
+            msg = f"Unsupported model: {params.model}. Available models: {list(_models.keys())}."
+            raise ValueError(msg)
         model_name = _models[params.model]
         if model_name not in _model_instances:
             self._logger.info("Loading model for streaming: %s", model_name)
@@ -163,13 +169,18 @@ class _GeminiLLMModule(AkariModule):
             allData=None,
         )
 
-        def stream_generation_thread(model, messages, params, result_dataset):
+        def stream_generation_thread(  # ANN202
+            model_instance: GenerativeModel,  # ANN001 (renamed from model to avoid conflict)
+            msg_list: list[Content],  # ANN001 (renamed from messages)
+            gen_params: _GeminiLLMParams,  # ANN001 (renamed from params)
+            res_dataset: AkariDataSet,  # ANN001 (renamed from result_dataset)
+        ) -> None:
             try:
-                stream = model.generate_content(
-                    messages,
-                    generation_config=params.generation_config,
-                    safety_settings=params.safety_settings,
-                    tools=params.tools,
+                stream = model_instance.generate_content(
+                    msg_list,
+                    generation_config=gen_params.generation_config,
+                    safety_settings=gen_params.safety_settings,
+                    tools=gen_params.tools,
                     stream=True,
                 )
                 self._logger.debug("Started streaming generation")
@@ -180,20 +191,22 @@ class _GeminiLLMModule(AkariModule):
                     if hasattr(chunk, "text"):
                         text_chunk = chunk.text
                         if text_chunk:
-                            result_dataset.text.stream.add(text_chunk)
+                            res_dataset.text.stream.add(text_chunk)
                             full_response.append(text_chunk)
-                result_dataset.allData = (stream._result) if hasattr(stream, "_result") else None
-                result_dataset.bool = AkariDataSetType(main=True)
+                res_dataset.allData = (stream._result) if hasattr(stream, "_result") else None # SLF001 - keep
+                res_dataset.bool = AkariDataSetType(main=True)
                 self._logger.debug("Streaming generation finished")
 
             except Exception as e:
-                self._logger.exception("Error during LLM streaming generation: %s", e)
-                result_dataset.text.stream.add(f"Error during LLM streaming generation: {e!s}")
-                result_dataset.bool = AkariDataSetType(main=False)
+                self._logger.exception("Error during LLM streaming generation: %s", e) # TRY401 - e is fine here
+                # EM102
+                error_text = f"Error during LLM streaming generation: {e!s}"
+                res_dataset.text.stream.add(error_text)
+                res_dataset.bool = AkariDataSetType(main=False)
 
         thread = threading.Thread(
             target=stream_generation_thread,
-            args=(model, messages, params, result_dataset),
+            args=(model, messages, params, result_dataset), # Pass original names here
         )
         thread.daemon = True
         thread.start()

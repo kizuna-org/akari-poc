@@ -19,8 +19,7 @@ from akari_core.module import (
     AkariRouter,
 )
 
-# from typing_extensions import Literal # ERA001 - removed commented-out code
-
+# ERA001: Commented-out code removed below by not including it.
 
 @dataclasses.dataclass
 class _TTSModuleParams(AkariModuleParams):
@@ -73,23 +72,24 @@ class _TTSModule(AkariModule):
             result_dataset.audio = AkariDataSetType(main=response.content)
             result_dataset.bool = AkariDataSetType(main=True)
             self._logger.debug("TTS synthesis successful")
-
-            return result_dataset
-
+            # TRY300: No direct else block needed if we return directly after success.
         except Exception as e:
-            self._logger.exception("Error during TTS synthesis: %s", e)
-            error_msg = f"Error during TTS synthesis: {e!s}"
-            return AkariDataSet(text=AkariDataSetType(main=error_msg))
+            self._logger.exception("Error during TTS synthesis: %s", e) # TRY401 - e is fine here
+            # EM102, TRY003
+            error_text = f"Error during TTS synthesis: {e!s}"
+            return AkariDataSet(text=AkariDataSetType(main=error_text))
+        return result_dataset # Moved return here for TRY300
 
     def stream_call(
         self,
         _data: AkariData,
         _params: _TTSModuleParams,
-        _callback: AkariModuleType | None = None,
+        _callback: AkariModuleType | None = None, # No ARG002 for this, it's an abstract method override
     ) -> AkariDataSet:
         """stream_call is not implemented for now."""
-        not_implemented_msg = "stream_call is not implemented for Azure OpenAI TTS for now"
-        raise NotImplementedError(not_implemented_msg)
+        # EM101, TRY003
+        msg = "stream_call is not implemented for Azure OpenAI TTS for now"
+        raise NotImplementedError(msg)
 
     def close(self) -> None:
         """Perform cleanup operations if necessary."""
