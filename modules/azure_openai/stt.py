@@ -17,37 +17,36 @@ from akari import (
 
 @dataclasses.dataclass
 class _STTModuleParams:
-    """Specifies configuration for audio transcription requests to the Azure OpenAI STT service.
+    """Azure OpenAI STT サービスへの音声文字起こしリクエストの設定を指定します。
 
-    Details include the AI model to use, language hints for improved accuracy,
-    contextual prompts, temperature for controlling randomness, and physical
-    properties of the input audio stream.
+    詳細には、使用する AI モデル、精度向上のための言語ヒント、文脈プロンプト、
+    ランダム性を制御するための温度、入力オーディオストリームの物理的特性が含まれます。
 
     Attributes:
-        model (str): Identifier of the Azure OpenAI STT model to be employed for
-            transcription (e.g., "whisper-1").
-        language (Optional[str]): The ISO-639-1 code for the language spoken in the
-            audio (e.g., "en" for English, "ja" for Japanese). Providing this can
-            enhance transcription accuracy and reduce latency. If `None`, the service
-            may attempt to auto-detect the language.
-        prompt (Optional[str]): A textual prompt that can be used to guide the
-            transcription model, potentially improving accuracy for specific terms,
-            names, or styles, or to provide context from a previous audio segment.
-            The prompt should be in the same language as the audio.
-        temperature (float): Controls the randomness of the transcription process,
-            affecting word choice when alternatives exist. Values are typically
-            between 0 and 1. Lower values (e.g., 0.2) yield more deterministic
-            and common results, while higher values (e.g., 0.8) produce more varied
-            but potentially less accurate output.
-        channels (int): The number of audio channels present in the input audio
-            data (e.g., 1 for mono, 2 for stereo). This information is crucial for
-            correctly interpreting the raw audio bytes. Defaults to 1 (mono).
-        sample_width (int): The size of each audio sample in bytes (e.g., 2 for
-            16-bit audio, 1 for 8-bit audio). This, along with `channels` and `rate`,
-            defines the audio format. Defaults to 2 (16-bit).
-        rate (int): The sampling rate (or frame rate) of the input audio in Hertz
-            (samples per second), such as 16000, 24000, or 44100. This must match
-            the actual sample rate of the audio data. Defaults to 24000 Hz.
+        model (str): 文字起こしに使用する Azure OpenAI STT モデルの識別子
+            （例: "whisper-1"）。
+        language (Optional[str]): 音声で話されている言語の ISO-639-1 コード
+            （例: 英語の場合は "en"、日本語の場合は "ja"）。これを提供すると、
+            文字起こしの精度が向上し、レイテンシが短縮される可能性があります。`None` の場合、
+            サービスは言語を自動検出する場合があります。
+        prompt (Optional[str]): 文字起こしモデルをガイドするために使用できるテキストプロンプト。
+            特定の用語、名前、スタイルの精度を向上させたり、以前のオーディオセグメントからの
+            コンテキストを提供したりする可能性があります。プロンプトはオーディオと同じ言語である必要があります。
+        temperature (float): 文字起こしプロセスのランダム性を制御し、
+            代替手段が存在する場合の単語の選択に影響を与えます。値は通常 0 から 1 の間です。
+            低い値（例: 0.2）は、より決定論的で一般的な結果を生成し、高い値（例: 0.8）は、
+            より多様ですが、潜在的に精度の低い出力を生成します。
+        channels (int): 入力オーディオデータに存在するオーディオチャンネルの数
+            （例: モノラルの場合は 1、ステレオの場合は 2）。この情報は、生のオーディオバイトを
+            正しく解釈するために不可欠です。デフォルトは 1（モノラル）です。
+        sample_width (int): 各オーディオサンプルのバイト単位のサイズ
+            （例: 16 ビットオーディオの場合は 2、8 ビットオーディオの場合は 1）。
+            これは、`channels` および `rate` とともにオーディオ形式を定義します。
+            デフォルトは 2（16 ビット）です。
+        rate (int): ヘルツ単位（サンプル/秒）の入力オーディオのサンプリングレート
+            （またはフレームレート）。16000、24000、44100 など。これは、
+            オーディオデータの実際のサンプルレートと一致する必要があります。
+            デフォルトは 24000 Hz です。
     """
 
     model: str
@@ -60,56 +59,51 @@ class _STTModuleParams:
 
 
 class _STTModule(AkariModule):
-    """Performs audio-to-text transcription by leveraging Azure OpenAI's speech recognition capabilities.
+    """Azure OpenAI の音声認識機能を活用して、音声からテキストへの文字起こしを実行します。
 
-    Takes raw audio data (expected as PCM bytes) from an AkariDataSet,
-    encapsulates it into a WAV format in-memory buffer, and then sends this
-    audio to the configured Azure OpenAI STT model for transcription. The
-    resulting text is then placed back into an AkariDataSet.
+    AkariDataSet から生のオーディオデータ（PCM バイトとして期待される）を取得し、
+    それをメモリ内バッファの WAV 形式にカプセル化し、その後このオーディオを
+    設定された Azure OpenAI STT モデルに送信して文字起こしを行います。
+    結果のテキストは、その後 AkariDataSet に戻されます。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
-        """Constructs an _STTModule instance.
+        """_STTModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization.
-            logger (AkariLogger): The logger instance for recording operational
-                details and debugging information.
-            client (AzureOpenAI): An initialized instance of the `AzureOpenAI`
-                client, pre-configured for accessing the speech-to-text service.
+            router (AkariRouter): Akari ルーターインスタンス。ベースモジュールの初期化に使用されます。
+            logger (AkariLogger): 操作の詳細とデバッグ情報を記録するためのロガーインスタンス。
+            client (AzureOpenAI): `AzureOpenAI` クライアントの初期化済みインスタンス。
+                音声認識サービスへのアクセス用に事前設定されています。
         """
         super().__init__(router, logger)
         self.client = client
 
     def call(self, data: AkariData, params: _STTModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Converts spoken audio, provided as raw PCM data, into written text using the configured Azure OpenAI STT model.
+        """設定された Azure OpenAI STT モデルを使用して、生の PCM データとして提供された話し言葉の音声を書き言葉のテキストに変換します。
 
-        The method expects audio data to be present in `data.last().audio.main`.
-        This data is then wrapped into a WAV audio format in an in-memory buffer.
-        This WAV data is subsequently sent to the Azure OpenAI audio transcriptions API.
-        The transcription result (as plain text) is then stored in a new
-        `AkariDataSet`.
+        このメソッドは、オーディオデータが `data.last().audio.main` に存在することを期待します。
+        このデータは、その後、メモリ内バッファの WAV オーディオ形式にラップされます。
+        この WAV データは、その後 Azure OpenAI オーディオ文字起こし API に送信されます。
+        文字起こしの結果（プレーンテキストとして）は、その後新しい `AkariDataSet` に格納されます。
 
         Args:
-            data (AkariData): The `AkariData` object containing the input audio.
-                The audio bytes are expected in `data.last().audio.main`.
-            params (_STTModuleParams): Configuration parameters for the transcription,
-                such as the STT model name, language, prompt, temperature, and
-                audio properties (channels, sample width, rate).
-            callback (Optional[AkariModuleType]): An optional callback module. This
-                parameter is currently not used by the STTModule.
+            data (AkariData): 入力オーディオを含む `AkariData` オブジェクト。
+                オーディオバイトは `data.last().audio.main` にあることが期待されます。
+            params (_STTModuleParams): STT モデル名、言語、プロンプト、温度、
+                オーディオプロパティ（チャンネル、サンプル幅、レート）など、文字起こしの設定パラメータ。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                このパラメータは現在 STTModule では使用されていません。
 
         Returns:
-            AkariDataSet: An `AkariDataSet` where:
-                - `text.main` contains the transcribed text as a string.
-                - `allData` holds the raw response object from the Azure OpenAI API.
+            AkariDataSet: 次のような `AkariDataSet`:
+                - `text.main` には、文字起こしされたテキストが文字列として含まれます。
+                - `allData` には、Azure OpenAI API からの生の応答オブジェクトが保持されます。
 
         Raises:
-            ValueError: If `data.last().audio` is None or does not contain
-                audio data.
-            OpenAIError: If the Azure OpenAI API call fails for any reason
-                (e.g., authentication, network issues, invalid parameters).
+            ValueError: `data.last().audio` が None であるか、オーディオデータが含まれていない場合。
+            OpenAIError: Azure OpenAI API 呼び出しが何らかの理由で失敗した場合
+                （例: 認証、ネットワークの問題、無効なパラメータ）。
         """
         self._logger.debug("STTModule called")
         self._logger.debug("Data: %s", data)
