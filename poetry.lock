@@ -711,14 +711,14 @@ protobuf = ">=3.20.2,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4
 
 [[package]]
 name = "google-cloud-speech"
-version = "2.32.0"
+version = "2.33.0"
 description = "Google Cloud Speech API client library"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "google_cloud_speech-2.32.0-py3-none-any.whl", hash = "sha256:537b279d8697fe5b5bc5f485f2d48a6b343fc76f73385b5776806c37bc5f8ea1"},
-    {file = "google_cloud_speech-2.32.0.tar.gz", hash = "sha256:89c2618b131d310c6c00e7c04d290ffa9a5d68c20191030766a7737850f04e77"},
+    {file = "google_cloud_speech-2.33.0-py3-none-any.whl", hash = "sha256:4ba16c8517c24a6abcde877289b0f40b719090504bf06b1adea248198ccd50a5"},
+    {file = "google_cloud_speech-2.33.0.tar.gz", hash = "sha256:fd08511b5124fdaa768d71a4054e84a5d8eb02531cb6f84f311c0387ea1314ed"},
 ]
 
 [package.dependencies]
@@ -2137,4 +2137,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13.4"
-content-hash = "08547c9f30a8802f285041376aa83045fc37b2fd79f683297f981c7dcca266ee"
+content-hash = "6532f6a5c3edb38057000feb70ffdf8570cfe2fc1a8bc38430d469c937166852"
