@@ -16,7 +16,7 @@ google-cloud-aiplatform = "^1.97.0"
 google-auth = "^2.40.3"
 webrtcvad = "^2.0.10"
 setuptools = "^80.9.0"
-google-cloud-speech = "^2.32.0"
+google-cloud-speech = "^2.33.0"
 google-cloud-texttospeech = "^2.27.0"
 
 [tool.poetry.group.dev.dependencies]
