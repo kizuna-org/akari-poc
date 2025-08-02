@@ -28,7 +28,7 @@ black = "25.1.0"
 flake8-docstrings = "1.7.0"
 
 no-print-checker = { path = "./plugins/no_print_checker", develop = true }
-faker = "37.4.2"
+faker = "37.5.3"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
