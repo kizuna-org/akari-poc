@@ -16,27 +16,25 @@ from akari import (
 
 @dataclasses.dataclass
 class _SpeakerModuleParams:
-    """Defines settings for audio playback via a speaker.
+    """スピーカー経由の音声再生設定を定義します。
 
-    Includes configurations for audio format (sample type, rate, channels),
-    the specific output device to use, and buffering parameters for playback.
+    音声形式（サンプルタイプ、レート、チャンネル）、使用する特定の出力デバイス、
+    再生用のバッファリングパラメータなどの設定が含まれます。
 
     Attributes:
-        format (int): The PyAudio format constant for audio samples (e.g.,
-            `pyaudio.paInt16` for 16-bit signed integers). This determines the
-            bit depth and type of each audio sample. Defaults to `pyaudio.paInt16`.
-        rate (Optional[int]): The desired sampling rate in Hertz (samples per
-            second) for playback. If set to `None`, the module will attempt to
-            derive the rate from the input audio's metadata. Defaults to `None`.
-        channels (Optional[int]): The number of audio channels (e.g., 1 for mono,
-            2 for stereo). If `None`, the module attempts to get this from the
-            input audio's metadata. Defaults to `None`.
-        chunk (int): The number of audio frames to read from the input buffer and
-            write to the output stream at a time. This can affect playback latency
-            and smoothness. Defaults to 1024 frames.
-        output_device_index (Optional[int]): The numerical index of the audio output
-            device to use for playback. If `None`, PyAudio's default output
-            device is selected. Defaults to `None`.
+        format (int): 音声サンプルの PyAudio 形式定数（例: 16 ビット符号付き整数の場合は
+            `pyaudio.paInt16`）。これにより、各音声サンプルのビット深度とタイプが決まります。
+            デフォルトは `pyaudio.paInt16` です。
+        rate (Optional[int]): 再生用の目的のサンプリングレート（ヘルツ単位、サンプル/秒）。
+            `None` に設定すると、モジュールは入力音声のメタデータからレートを導き出そうとします。
+            デフォルトは `None` です。
+        channels (Optional[int]): オーディオチャンネルの数（例: モノラルは 1、ステレオは 2）。
+            `None` の場合、モジュールは入力音声のメタデータからこれを取得しようとします。
+            デフォルトは `None` です。
+        chunk (int): 入力バッファから読み取り、一度に出力ストリームに書き込むオーディオフレームの数。
+            これは再生のレイテンシと滑らかさに影響を与える可能性があります。デフォルトは 1024 フレームです。
+        output_device_index (Optional[int]): 再生に使用するオーディオ出力デバイスの数値インデックス。
+            `None` の場合、PyAudio のデフォルト出力デバイスが選択されます。デフォルトは `None` です。
     """
 
     format: int = pyaudio.paInt16
@@ -47,38 +45,38 @@ class _SpeakerModuleParams:
 
 
 class _SpeakerModule(AkariModule):
-    """Facilitates audio playback through a system's speaker or selected audio output device.
+    """システムのスピーカーまたは選択されたオーディオ出力デバイスを介した音声再生を容易にします。
 
-    Retrieves audio data from an `AkariDataSet`, potentially using associated
-    metadata for playback parameters (like sample rate and channels), and then
-    streams this data to the chosen audio output using the PyAudio library.
+    `AkariDataSet` からオーディオデータを取得し、再生パラメータ（サンプルレートやチャンネルなど）に
+    関連するメタデータを使用する可能性があります。その後、PyAudio ライブラリを使用して、
+    このデータを目的のオーディオ出力にストリーミングします。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs a SpeakerModule instance.
+        """SpeakerModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization (though not directly for playback logic).
-            logger (AkariLogger): The logger instance for recording operational
-                details, such as playback errors or informational messages.
+            router (AkariRouter): Akari ルーターインスタンス。ベースモジュールの初期化に使用されます
+                （ただし、再生ロジックには直接使用されません）。
+            logger (AkariLogger): 再生エラーや情報メッセージなどの操作の詳細を記録するための
+                ロガーインスタンス。
         """
         super().__init__(router, logger)
 
     def _play(self, buffer: io.BytesIO, params: _SpeakerModuleParams, channels: int, rate: int) -> None:
-        """Handles the low-level audio playback using PyAudio.
+        """PyAudio を使用して低レベルのオーディオ再生を処理します。
 
-        Opens a PyAudio output stream configured with the provided parameters.
-        It then reads audio data in chunks from the `buffer` and writes these
-        chunks to the stream until the buffer is exhausted. Ensures that PyAudio
-        resources are properly released after playback.
+        提供されたパラメータで設定された PyAudio 出力ストリームを開きます。
+        次に、`buffer` からチャンク単位でオーディオデータを読み取り、バッファがなくなるまで
+        これらのチャンクをストリームに書き込みます。再生後に PyAudio リソースが
+        適切に解放されるようにします。
 
         Args:
-            buffer (io.BytesIO): A byte stream containing the raw audio data to be played.
-            params (_SpeakerModuleParams): Playback configuration, including format,
-                chunk size, and output device index.
-            channels (int): The number of channels in the audio data.
-            rate (int): The sampling rate (in Hz) of the audio data.
+            buffer (io.BytesIO): 再生する生のオーディオデータを含むバイトストリーム。
+            params (_SpeakerModuleParams): 形式、チャンクサイズ、出力デバイスインデックスなどの
+                再生設定。
+            channels (int): オーディオデータのチャンネル数。
+            rate (int): オーディオデータのサンプリングレート（Hz 単位）。
         """
         p = pyaudio.PyAudio()
         try:
@@ -108,30 +106,29 @@ class _SpeakerModule(AkariModule):
             p.terminate()
 
     def _prepare_audio(self, data: AkariData, params: _SpeakerModuleParams) -> tuple[io.BytesIO, int, int]:
-        """Extracts and validates audio data and essential playback parameters from an AkariData object.
+        """AkariData オブジェクトからオーディオデータと重要な再生パラメータを抽出して検証します。
 
-        This method attempts to retrieve the audio content (as bytes) from the
-        last `AkariDataSet` in the provided `AkariData`. It also determines the
-        number of channels and the sampling rate, prioritizing values explicitly
-        set in `params` and falling back to metadata stored within the `AkariDataSet`
-        if available.
+        このメソッドは、提供された `AkariData` の最後の `AkariDataSet` から
+        オーディオコンテンツ（バイトとして）を取得しようとします。また、チャンネル数と
+        サンプリングレートを決定し、`params` で明示的に設定された値を優先し、
+        利用可能な場合は `AkariDataSet` 内に格納されているメタデータにフォールバックします。
 
         Args:
-            data (AkariData): The `AkariData` instance from which to extract audio.
-                The audio is expected in `data.last().audio`, and metadata in
-                `data.last().meta`.
-            params (_SpeakerModuleParams): Configuration parameters that may override
-                or provide missing audio properties like channels and rate.
+            data (AkariData): オーディオを抽出する `AkariData` インスタンス。
+                オーディオは `data.last().audio` に、メタデータは `data.last().meta` に
+                あることが期待されます。
+            params (_SpeakerModuleParams): チャンネルやレートなどの不足している
+                オーディオプロパティをオーバーライドまたは提供する可能性のある設定パラメータ。
 
         Returns:
-            tuple[io.BytesIO, int, int]: A tuple where the first element is an
-            `io.BytesIO` buffer containing the audio data, the second is the
-            number of channels, and the third is the sampling rate.
+            tuple[io.BytesIO, int, int]: 最初の要素がオーディオデータを含む
+            `io.BytesIO` バッファ、2番目の要素がチャンネル数、3番目の要素が
+            サンプリングレートであるタプル。
 
         Raises:
-            ValueError: If the audio data field (`data.last().audio`) is missing
-                or empty, or if the number of channels or sampling rate cannot be
-                determined either from `params` or the audio metadata.
+            ValueError: オーディオデータフィールド（`data.last().audio`）が見つからないか空の場合、
+                またはチャンネル数やサンプリングレートを `params` またはオーディオメタデータから
+                特定できない場合。
         """
         audio = data.last().audio
         if audio is None:
@@ -151,23 +148,23 @@ class _SpeakerModule(AkariModule):
     def call(
         self, data: AkariData, params: _SpeakerModuleParams, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
-        """Orchestrates the playback of audio data contained within the latest dataset of an AkariData sequence.
+        """AkariData シーケンスの最新のデータセットに含まれるオーディオデータの再生を調整します。
 
-        This method first calls `_prepare_audio` to extract the audio bytes and
-        determine necessary playback parameters (channels, rate). It then invokes
-        the `_play` method to perform the actual audio output.
+        このメソッドは最初に `_prepare_audio` を呼び出してオーディオバイトを抽出し、
+        必要な再生パラメータ（チャンネル、レート）を決定します。次に、`_play` メソッドを
+        呼び出して実際のオーディオ出力を実行します。
 
         Args:
-            data (AkariData): The `AkariData` object containing the audio data,
-                typically in the `audio` field of its last `AkariDataSet`.
-            params (_SpeakerModuleParams): Configuration parameters for playback,
-                such as output device, audio format, etc.
-            callback (Optional[AkariModuleType]): An optional callback module.
-                This parameter is currently not used by the SpeakerModule.
+            data (AkariData): オーディオデータを含む `AkariData` オブジェクト。
+                通常、最後の `AkariDataSet` の `audio` フィールドにあります。
+            params (_SpeakerModuleParams): 出力デバイス、オーディオ形式などの再生用の
+                設定パラメータ。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                このパラメータは現在 SpeakerModule では使用されていません。
 
         Returns:
-            AkariDataSet: An empty `AkariDataSet`, as the module's primary effect
-            is audio output, not data transformation or generation.
+            AkariDataSet: モジュールの主な効果はオーディオ出力であり、データの変換や生成ではないため、
+            空の `AkariDataSet`。
         """
         buffer, channels, rate = self._prepare_audio(data, params)
         self._play(buffer, params, channels, rate)
@@ -178,20 +175,19 @@ class _SpeakerModule(AkariModule):
     def stream_call(
         self, data: AkariData, params: _SpeakerModuleParams, callback: AkariModuleType | None = None
     ) -> AkariDataSet:
-        """Processes audio data for playback identically to the non-streaming `call` method.
+        """非ストリーミング `call` メソッドとまったく同じように再生用のオーディオデータを処理します。
 
-        This module does not implement distinct logic for streaming versus
-        non-streaming calls. Both invoke the same audio preparation and playback
-        sequence.
+        このモジュールは、ストリーミングコールと非ストリーミングコールの個別のロジックを実装していません。
+        どちらも同じオーディオ準備と再生シーケンスを呼び出します。
 
         Args:
-            data (AkariData): The `AkariData` object containing the audio.
-            params (_SpeakerModuleParams): Playback configuration parameters.
-            callback (Optional[AkariModuleType]): An optional callback module,
-                currently unused.
+            data (AkariData): オーディオを含む `AkariData` オブジェクト。
+            params (_SpeakerModuleParams): 再生設定パラメータ。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                現在は使用されていません。
 
         Returns:
-            AkariDataSet: An empty `AkariDataSet`.
+            AkariDataSet: 空の `AkariDataSet`。
         """
         buffer, channels, rate = self._prepare_audio(data, params)
         self._play(buffer, params, channels, rate)
