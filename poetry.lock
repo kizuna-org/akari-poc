@@ -769,14 +769,14 @@ tracing = ["opentelemetry-api (>=1.1.0)"]
 
 [[package]]
 name = "google-cloud-texttospeech"
-version = "2.27.0"
+version = "2.29.0"
 description = "Google Cloud Texttospeech API client library"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "google_cloud_texttospeech-2.27.0-py3-none-any.whl", hash = "sha256:0f7c5fe05281beb6d005ea191f61c913085e8439e5ffd2d5d21e29d106150b54"},
-    {file = "google_cloud_texttospeech-2.27.0.tar.gz", hash = "sha256:94a382c95b7cc58efd2505a24c2968e2614fc6bdf9d76fb9a819d4ed29ae188e"},
+    {file = "google_cloud_texttospeech-2.29.0-py3-none-any.whl", hash = "sha256:fde126e928379958d5ef8fa7bad84ac7ede6291a6fccea8d4b218b7520b91d52"},
+    {file = "google_cloud_texttospeech-2.29.0.tar.gz", hash = "sha256:2c0b7378ba7639f70737f4a39de2493d30c85d387b8c16822c6e7e100c1c75a3"},
 ]
 
 [package.dependencies]
@@ -2160,4 +2160,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13.7"
-content-hash = "623cf9cd1b63a4c90b614dee5d2f571f56d71b277771b7227fc43c62d3c5bdcf"
+content-hash = "130547f1c43d49a7238cb86e2e74f572611dfcf4b94b37fda1e0781c2d4a3e9a"
