@@ -87,7 +87,7 @@ jobs:
       - uses: ./.github/actions/setup-python
       - name: Run lint check
         run: |
-          poetry run flake8 .
+          poetry run flake8 . --config=.flake8
 
   python-type-check:
     runs-on: ubuntu-latest
