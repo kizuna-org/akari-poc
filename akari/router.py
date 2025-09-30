@@ -12,16 +12,15 @@ import akari.module as module
 
 @dataclasses.dataclass
 class _AkariRouterLoggerOptions:
-    """Specifies logging preferences for the AkariRouter.
+    """AkariRouter のロギング設定を指定します。
 
-    Controls the verbosity of informational messages and the tracking of
-    module execution durations.
+    情報メッセージの冗長性とモジュール実行期間の追跡を制御します。
 
     Attributes:
-        info (bool): Enables or disables logging of general informational messages
-            during router operations. Defaults to False.
-        duration (bool): Enables or disables logging of the execution time for
-            each called module. Defaults to False.
+        info (bool): ルーター操作中の一般的な情報メッセージのロギングを有効または無効にします。
+            デフォルトは False です。
+        duration (bool): 呼び出された各モジュールの実行時間のロギングを有効または無効にします。
+            デフォルトは False です。
     """
 
     info: bool = False
@@ -29,23 +28,21 @@ class _AkariRouterLoggerOptions:
 
 
 class _AkariRouter:
-    """Orchestrates the execution of Akari modules.
+    """Akari モジュールの実行を調整します。
 
-    Maintains a registry of available modules and dispatches calls to them
-    based on their type. It handles data flow, parameter passing, streaming
-    logic, and logging of module interactions. It also records metadata about
-    module execution, such as timing and parameters used.
+    利用可能なモジュールのレジストリを維持し、それらのタイプに基づいて呼び出しをディスパッチします。
+    データフロー、パラメータ渡し、ストリーミングロジック、モジュールインタラクションのロギングを処理します。
+    また、タイミングや使用されたパラメータなど、モジュール実行に関するメタデータも記録します。
     """
 
     def __init__(self, logger: logger._AkariLogger, options: _AkariRouterLoggerOptions | None = None) -> None:
-        """Constructs an AkariRouter instance.
+        """AkariRouter インスタンスを構築します。
 
         Args:
-            logger (_AkariLogger): The logger instance to be used for all router
-                and module logging activities.
-            options (Optional[_AkariRouterLoggerOptions]): Specific configuration
-                for the router's logging behavior. If None, default logging
-                options are applied.
+            logger (_AkariLogger): すべてのルーターおよびモジュールのロギングアクティビティに使用される
+                ロガーインスタンス。
+            options (Optional[_AkariRouterLoggerOptions]): ルーターのロギング動作の特定の設定。
+                None の場合、デフォルトのロギングオプションが適用されます。
         """
         if options is None:
             options = _AkariRouterLoggerOptions()
@@ -56,20 +53,17 @@ class _AkariRouter:
         self._thread_last_perf_counter: Dict[int, float] = {}
 
     def addModules(self, modules: Dict[module._AkariModuleType, module._AkariModule]) -> None:
-        """Registers one or more modules with the router, making them available for execution.
+        """1つ以上のモジュールをルーターに登録し、実行可能にします。
 
-        Each module is added to an internal registry, keyed by its type.
-        Attempting to add a module type that already exists in the registry
-        will result in an error.
+        各モジュールは、そのタイプをキーとして内部レジストリに追加されます。
+        レジストリに既に存在するモジュールタイプを追加しようとすると、エラーが発生します。
 
         Args:
-            modules (Dict[_AkariModuleType, _AkariModule]): A dictionary where keys
-                are module types (classes inheriting from `_AkariModule`) and values
-                are instances of those modules.
+            modules (Dict[_AkariModuleType, _AkariModule]): キーがモジュールタイプ
+                （`_AkariModule` を継承するクラス）で、値がそれらのモジュールのインスタンスである辞書。
 
         Raises:
-            ValueError: If a module type included in the `modules` dictionary
-                has already been registered with the router.
+            ValueError: `modules` 辞書に含まれるモジュールタイプが既にルーターに登録されている場合。
         """
         for moduleType, moduleInstance in modules.items():
             if moduleType not in self._modules:
@@ -85,33 +79,32 @@ class _AkariRouter:
         streaming: bool,
         callback: module._AkariModuleType | None = None,
     ) -> akari_data._AkariData:
-        """Executes a specified Akari module.
+        """指定された Akari モジュールを実行します。
 
-        Handles data flow, parameter passing, and optional streaming callbacks.
-        It also records metadata about the module's execution, such as start
-        and end times, and attaches this metadata to the resulting dataset.
-        A deep copy of the input `data` is made before passing it to the
-        selected module to ensure data isolation if needed.
+        データフロー、パラメータ渡し、およびオプションのストリーミングコールバックを処理します。
+        また、開始時刻や終了時刻など、モジュールの実行に関するメタデータを記録し、
+        このメタデータを結果のデータセットに添付します。
+        必要に応じてデータ分離を確保するために、入力 `data` のディープコピーが
+        選択されたモジュールに渡される前に作成されます。
 
         Args:
-            moduleType (module._AkariModuleType): The class type of the Akari module to execute.
-            data (akari_data._AkariData): The input data object for the module.
-            params (module._AkariModuleParams): The parameters to be passed to the module.
-            streaming (bool): A flag indicating whether the module should be called
-                in streaming mode. If True, `selected_module.stream_call` is used;
-                otherwise, `selected_module.call` is used.
-            callback (Optional[module._AkariModuleType]): An optional module type to be
-                used as a callback by the executed module, particularly relevant
-                for streaming operations.
+            moduleType (module._AkariModuleType): 実行する Akari モジュールのクラスタイプ。
+            data (akari_data._AkariData): モジュールの入力データオブジェクト。
+            params (module._AkariModuleParams): モジュールに渡されるパラメータ。
+            streaming (bool): モジュールをストリーミングモードで呼び出すかどうかを示すフラグ。
+                True の場合、`selected_module.stream_call` が使用されます。
+                それ以外の場合、`selected_module.call` が使用されます。
+            callback (Optional[module._AkariModuleType]): 実行されたモジュールによって
+                コールバックとして使用されるオプションのモジュールタイプ。特にストリーミング操作に関連します。
 
         Returns:
-            akari_data._AkariData: The `data` object, potentially modified or augmented
-            with new datasets produced by the executed module.
+            akari_data._AkariData: 実行されたモジュールによって生成された新しいデータセットで
+                変更または拡張された可能性のある `data` オブジェクト。
 
         Raises:
-            ValueError: If the router's module registry has not been initialized,
-                if the requested `moduleType` is not found in the registry, or if
-                the executed module returns a result of an unexpected type.
+            ValueError: ルーターのモジュールレジストリが初期化されていない場合、
+                要求された `moduleType` がレジストリに見つからない場合、または
+                実行されたモジュールが予期しない型の結果を返す場合。
         """
         if self._modules is None:
             raise ValueError("Modules not set in router.")

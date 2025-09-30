@@ -23,48 +23,44 @@ from akari import (
 
 @dataclasses.dataclass
 class _LLMModuleParams:
-    """Configures requests to the Azure OpenAI Chat Completion API.
+    """Azure OpenAI Chat Completion API へのリクエストを設定します。
 
-    Specifies the target model, conversation history (either directly or via a
-    function), and various parameters controlling the generation process such as
-    creativity (temperature), response length (max_tokens), and streaming behavior.
+    ターゲットモデル、会話履歴（直接または関数経由）、および生成プロセスを制御する
+    さまざまなパラメータ（創造性（temperature）、応答長（max_tokens）、
+    ストリーミング動作など）を指定します。
 
     Attributes:
-        model (str): Identifier of the Azure OpenAI model to be used for chat
-            completion (e.g., "gpt-4o-mini", "gpt-35-turbo").
-        messages (Optional[Iterable[ChatCompletionMessageParam]]): A sequence of
-            message objects representing the conversation history. Each message
-            should conform to the `ChatCompletionMessageParam` structure. This
-            attribute is used if `messages_function` is not provided or returns None.
+        model (str): チャット補完に使用する Azure OpenAI モデルの識別子
+            （例: "gpt-4o-mini", "gpt-35-turbo"）。
+        messages (Optional[Iterable[ChatCompletionMessageParam]]): 会話履歴を表す
+            メッセージオブジェクトのシーケンス。各メッセージは
+            `ChatCompletionMessageParam` 構造に準拠する必要があります。
+            この属性は、`messages_function` が提供されていないか、None を返す場合に使用されます。
         messages_function (Optional[Callable[[AkariData], Iterable[ChatCompletionMessageParam]]]):
-            A callable that accepts an `AkariData` instance and returns a sequence
-            of `ChatCompletionMessageParam` objects. This allows for dynamic
-            construction of the conversation history based on data from previous
-            pipeline steps. If provided, it takes precedence over the static `messages`
-            attribute. Defaults to None.
-        temperature (float): Controls the randomness of the output. Lower values
-            (e.g., 0.2) make the output more deterministic and focused, while higher
-            values (e.g., 0.8) make it more random and creative. Must be between
-            0 and 2. Defaults to 1.0.
-        max_tokens (int): The maximum number of tokens (words and punctuation)
-            to generate in the chat completion. This limits the length of the
-            response. Defaults to 1024.
-        top_p (float): Implements nucleus sampling. The model considers only tokens
-            comprising the top `top_p` probability mass. A value of 0.1 means
-            only tokens from the top 10% probability distribution are considered.
-            This is an alternative to temperature-based sampling. Defaults to 1.0.
-        frequency_penalty (float): A value between -2.0 and 2.0. Positive values
-            reduce the likelihood of the model repeating lines verbatim by penalizing
-            tokens based on their existing frequency in the generated text.
-            Defaults to 0.0.
-        presence_penalty (float): A value between -2.0 and 2.0. Positive values
-            encourage the model to introduce new topics by penalizing tokens based
-            on their appearance in the text so far. Defaults to 0.0.
-        stream (bool): If True, requests the API to stream back the response in
-            chunks as it's generated. This requires a `callback` module to be
-            configured in the `call` method to process these chunks. If False,
-            the full response is received after generation is complete.
-            Defaults to False.
+            `AkariData` インスタンスを受け入れ、`ChatCompletionMessageParam` オブジェクトの
+            シーケンスを返す呼び出し可能オブジェクト。これにより、以前のパイプラインステップの
+            データに基づいて会話履歴を動的に構築できます。提供されている場合、
+            静的な `messages` 属性よりも優先されます。デフォルトは None です。
+        temperature (float): 出力のランダム性を制御します。低い値（例: 0.2）は
+            出力をより決定論的で集中的なものにし、高い値（例: 0.8）は
+            よりランダムで創造的なものにします。0 から 2 の間でなければなりません。
+            デフォルトは 1.0 です。
+        max_tokens (int): チャット補完で生成するトークン（単語と句読点）の最大数。
+            これにより、応答の長さが制限されます。デフォルトは 1024 です。
+        top_p (float): ニュークリアスサンプリングを実装します。モデルは、上位 `top_p` の
+            確率質量を構成するトークンのみを考慮します。値 0.1 は、上位 10% の
+            確率分布のトークンのみが考慮されることを意味します。これは、
+            温度ベースのサンプリングの代替手段です。デフォルトは 1.0 です。
+        frequency_penalty (float): -2.0 から 2.0 の間の値。正の値は、
+            生成されたテキスト内の既存の頻度に基づいてトークンにペナルティを課すことにより、
+            モデルが逐語的に行を繰り返す可能性を減らします。デフォルトは 0.0 です。
+        presence_penalty (float): -2.0 から 2.0 の間の値。正の値は、
+            これまでのテキスト内での出現に基づいてトークンにペナルティを課すことにより、
+            モデルが新しいトピックを導入することを奨励します。デフォルトは 0.0 です。
+        stream (bool): True の場合、生成時に応答をチャンクでストリーミングバックするよう
+            API に要求します。これには、これらのチャンクを処理するために `call` メソッドで
+            `callback` モジュールを設定する必要があります。False の場合、
+            生成が完了した後に完全な応答が受信されます。デフォルトは False です。
     """
 
     model: str
@@ -79,76 +75,72 @@ class _LLMModuleParams:
 
 
 class _LLMModule(AkariModule):
-    """Integrates with Azure OpenAI's chat completion service to generate text-based responses.
+    """Azure OpenAI のチャット補完サービスと統合して、テキストベースの応答を生成します。
 
-    Leverages an AzureOpenAI client to send chat prompts (a sequence of messages)
-    to a specified language model. It supports both standard blocking requests
-    for complete responses and streaming requests where response chunks are
-    processed via a callback module. The module allows for dynamic construction
-    of the message history based on incoming AkariData.
+    AzureOpenAI クライアントを利用して、チャットプロンプト（メッセージのシーケンス）を
+    指定された言語モデルに送信します。完全な応答のための標準的なブロッキングリクエストと、
+    応答チャンクがコールバックモジュール経由で処理されるストリーミングリクエストの両方をサポートします。
+    このモジュールは、受信した AkariData に基づいてメッセージ履歴を動的に構築できます。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger, client: AzureOpenAI) -> None:
-        """Constructs an _LLMModule instance.
+        """_LLMModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for invoking
-                callback modules during streaming operations.
-            logger (AkariLogger): The logger instance for recording operational
-                details, debugging information, and API responses.
-            client (AzureOpenAI): An initialized instance of the `AzureOpenAI`
-                client, pre-configured with API keys and endpoint information.
+            router (AkariRouter): Akari ルーターインスタンス。ストリーミング操作中に
+                コールバックモジュールを呼び出すために使用されます。
+            logger (AkariLogger): 操作の詳細、デバッグ情報、API 応答を記録するための
+                ロガーインスタンス。
+            client (AzureOpenAI): `AzureOpenAI` クライアントの初期化済みインスタンス。
+                API キーとエンドポイント情報で事前設定されています。
         """
         super().__init__(router, logger)
         self.client = client
 
     def call(self, data: AkariData, params: _LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Sends a request to the Azure OpenAI Chat Completion API and processes the response.
+        """Azure OpenAI Chat Completion API にリクエストを送信し、応答を処理します。
 
-        The method determines the conversation history either from `params.messages`
-        or by invoking `params.messages_function` with the input `data`.
-        It then makes a call to `client.chat.completions.create`.
+        このメソッドは、`params.messages` から、または入力 `data` で `params.messages_function` を
+        呼び出すことによって、会話履歴を決定します。
+        その後、`client.chat.completions.create` を呼び出します。
 
-        If `params.stream` is True:
-            - A `callback` module must be provided.
-            - The method iterates through response chunks. Each chunk containing
-              content is appended to a growing `text_main` and added to a list
-              of `texts`. An `AkariDataSet` with the current `text_main` and
-              the stream of `texts` is created and sent to the `callback` module
-              via the router in a non-blocking way (though the router call itself might be blocking).
-        If `params.stream` is False:
-            - The method waits for the full API response.
-            - The content of the first choice's message is extracted as `text_main`.
+        `params.stream` が True の場合:
+            - `callback` モジュールを提供する必要があります。
+            - メソッドは応答チャンクを反復処理します。コンテンツを含む各チャンクは、
+              増加する `text_main` に追加され、`texts` のリストに追加されます。
+              現在の `text_main` と `texts` のストリームを持つ `AkariDataSet` が作成され、
+              ルーター経由で `callback` モジュールに非ブロッキング方式で送信されます
+              （ただし、ルーター呼び出し自体はブロッキングである可能性があります）。
+        `params.stream` が False の場合:
+            - メソッドは完全な API 応答を待ちます。
+            - 最初の選択肢のメッセージのコンテンツが `text_main` として抽出されます。
 
-        In both cases, the resulting `text_main` and the raw API response
-        (or the last chunk for streaming) are stored in the returned `AkariDataSet`.
+        どちらの場合も、結果の `text_main` と生の API 応答（ストリーミングの場合は最後のチャンク）が
+        返される `AkariDataSet` に格納されます。
 
         Args:
-            data (AkariData): The input `AkariData` object. This is primarily used
-                if `params.messages_function` is set, to dynamically build the
-                list of messages for the API call.
-            params (_LLMModuleParams): An object containing all necessary parameters
-                for the API call, such as model name, messages, temperature,
-                and streaming preference.
-            callback (Optional[AkariModuleType]): The Akari module type to be invoked
-                with each response chunk if `params.stream` is True. This callback
-                module receives a copy of the input `data` augmented with the
-                current streaming `AkariDataSet`.
+            data (AkariData): 入力 `AkariData` オブジェクト。これは主に、
+                API 呼び出しのメッセージのリストを動的に構築するために `params.messages_function` が
+                設定されている場合に使用されます。
+            params (_LLMModuleParams): モデル名、メッセージ、温度、ストリーミング設定など、
+                API 呼び出しに必要なすべてのパラメータを含むオブジェクト。
+            callback (Optional[AkariModuleType]): `params.stream` が True の場合に
+                各応答チャンクで呼び出される Akari モジュールタイプ。このコールバックモジュールは、
+                現在のストリーミング `AkariDataSet` で拡張された入力 `data` のコピーを受信します。
 
         Returns:
-            AkariDataSet: An `AkariDataSet` where:
-                - `text.main` contains the complete generated text.
-                - `text.stream` (if streamed) contains the list of text chunks received.
-                - `allData` contains the raw `ChatCompletion` object (for non-streaming)
-                  or the last `ChatCompletionChunk` object (for streaming).
+            AkariDataSet: 次のような `AkariDataSet`:
+                - `text.main` には、生成された完全なテキストが含まれます。
+                - `text.stream`（ストリーミングの場合）には、受信したテキストチャンクのリストが含まれます。
+                - `allData` には、生の `ChatCompletion` オブジェクト（非ストリーミングの場合）または
+                  最後の `ChatCompletionChunk` オブジェクト（ストリーミングの場合）が含まれます。
 
         Raises:
-            ValueError: If `params.stream` is True but `callback` is None, or if
-                `params.messages` is None and `params.messages_function` also
-                results in None messages.
-            TypeError: If an API response chunk in streaming mode does not conform
-                to the expected structure (missing `choices`, `delta`, or `content`),
-                or if the non-streaming response is not a `ChatCompletion` object.
+            ValueError: `params.stream` が True で `callback` が None の場合、または
+                `params.messages` が None で `params.messages_function` も None のメッセージになる場合。
+            TypeError: ストリーミングモードの API 応答チャンクが期待される構造
+                （`choices`、`delta`、または `content` がない）に準拠していない場合、または
+                非ストリーミング応答が `ChatCompletion` オブジェクトでない場合。
         """
         self._logger.debug("LLMModule called")
         self._logger.debug("Data: %s", data)

@@ -20,21 +20,20 @@ from akari import (
 
 
 class _WebRTCVadMode(Enum):
-    """Specifies the sensitivity level for the WebRTC Voice Activity Detector (VAD).
+    """WebRTC 音声アクティビティ検出器（VAD）の感度レベルを指定します。
 
-    The VAD aggressiveness determines how likely it is to classify an audio
-    frame as speech. A higher numeric mode corresponds to a more aggressive
-    (less sensitive) VAD that is more restrictive in identifying speech.
+    VAD の積極性は、オーディオフレームを音声として分類する可能性を決定します。
+    数値モードが高いほど、より積極的（感度が低い）な VAD に対応し、音声の識別に
+    より制限的になります。
 
     Attributes:
-        VERY_SENSITIVE (int): Mode 0. Least aggressive, most likely to classify
-            audio as speech. Suitable for environments with low background noise.
-        SENSITIVE (int): Mode 1. A balanced level of sensitivity.
-        LOW_SENSITIVE (int): Mode 2. More aggressive than SENSITIVE, less likely
-            to classify borderline audio as speech.
-        STRICT (int): Mode 3. Most aggressive, most restrictive in classifying
-            audio as speech. Best for noisy environments where clear speech
-            detection is paramount.
+        VERY_SENSITIVE (int): モード 0。最も積極的でなく、オーディオを音声として
+            分類する可能性が最も高いです。バックグラウンドノイズの少ない環境に適しています。
+        SENSITIVE (int): モード 1。バランスの取れた感度レベル。
+        LOW_SENSITIVE (int): モード 2。SENSITIVE よりも積極的で、境界線のオーディオを
+            音声として分類する可能性が低くなります。
+        STRICT (int): モード 3。最も積極的で、音声の分類に最も制限的です。
+            明確な音声検出が最重要である騒がしい環境に最適です。
     """
 
     VERY_SENSITIVE = 0
@@ -45,35 +44,32 @@ class _WebRTCVadMode(Enum):
 
 @dataclasses.dataclass
 class _WebRTCVadParams:
-    """Configures the behavior of the WebRTC VAD module.
+    """WebRTC VAD モジュールの動作を設定します。
 
-    Settings include VAD sensitivity, expected audio properties (sample rate, frame
-    duration), and logic for triggering callbacks based on speech events.
+    設定には、VAD 感度、期待されるオーディオプロパティ（サンプルレート、フレーム期間）、
+    および音声イベントに基づくコールバックのトリガーロジックが含まれます。
 
     Attributes:
-        mode (_WebRTCVadMode): Determines the aggressiveness of the VAD algorithm.
-            Higher modes are more restrictive in classifying audio as speech.
-            Defaults to `_WebRTCVadMode.VERY_SENSITIVE`.
-        sample_rate (Literal[8000, 16000, 32000, 48000]): The sample rate of the
-            input audio, in Hertz. The WebRTC VAD library supports specific rates.
-            Defaults to 16000 Hz.
-        frame_duration_ms (Literal[10, 20, 30]): The duration of individual audio
-            frames, in milliseconds, that the VAD processes. The WebRTC VAD
-            library supports specific frame durations. Defaults to 30 ms.
-        speech_sleep_duration_ms (int): A hysteresis mechanism. If the VAD detects
-            non-speech, but speech was detected within this many milliseconds prior,
-            the module can functionally treat it as continued speech. This helps
-            avoid prematurely cutting off speech segments. A value of 0 disables
-            this feature. Defaults to 0.
-        callback_when_speech_ended (bool): Controls callback timing. If `True`,
-            the configured callback module is invoked only when a speech segment
-            ends (i.e., a transition from speech to non-speech, considering
-            `speech_sleep_duration_ms`). If `False`, the callback is invoked
-            upon any frame classified as speech (or functionally speech).
-            Defaults to `False`.
-        callback_params (Optional[AkariModuleParams]): Arbitrary parameters to be
-            passed to the callback module when it's invoked by this VAD module.
-            This allows contextual data to flow through the pipeline. Defaults to `None`.
+        mode (_WebRTCVadMode): VAD アルゴリズムの積極性を決定します。
+            モードが高いほど、オーディオを音声として分類する際に制限が厳しくなります。
+            デフォルトは `_WebRTCVadMode.VERY_SENSITIVE` です。
+        sample_rate (Literal[8000, 16000, 32000, 48000]): 入力オーディオのサンプルレート（ヘルツ単位）。
+            WebRTC VAD ライブラリは特定のレートをサポートしています。デフォルトは 16000 Hz です。
+        frame_duration_ms (Literal[10, 20, 30]): VAD が処理する個々のオーディオフレームの
+            期間（ミリ秒単位）。WebRTC VAD ライブラリは特定のフレーム期間をサポートしています。
+            デフォルトは 30 ミリ秒です。
+        speech_sleep_duration_ms (int): ヒステリシスメカニズム。VAD が非音声を検出したが、
+            このミリ秒以内に音声が検出されていた場合、モジュールは機能的にそれを
+            継続的な音声として扱うことができます。これにより、音声セグメントが途中で
+            途切れるのを防ぐことができます。値 0 はこの機能を無効にします。デフォルトは 0 です。
+        callback_when_speech_ended (bool): コールバックのタイミングを制御します。`True` の場合、
+            設定されたコールバックモジュールは、音声セグメントが終了したときにのみ呼び出されます
+            （つまり、`speech_sleep_duration_ms` を考慮して、音声から非音声への遷移）。
+            `False` の場合、音声（または機能的な音声）として分類されたフレームでコールバックが
+            呼び出されます。デフォルトは `False` です。
+        callback_params (Optional[AkariModuleParams]): この VAD モジュールによって呼び出されたときに
+            コールバックモジュールに渡される任意のパラメータ。これにより、コンテキストデータが
+            パイプラインを通過できます。デフォルトは `None` です。
     """
 
     mode: _WebRTCVadMode = _WebRTCVadMode.VERY_SENSITIVE
@@ -85,22 +81,21 @@ class _WebRTCVadParams:
 
 
 class _WebRTCVadModule(AkariModule):
-    """Detects speech segments in real-time audio streams using the WebRTC Voice Activity Detection engine.
+    """WebRTC 音声アクティビティ検出エンジンを使用して、リアルタイムオーディオストリームの音声セグメントを検出します。
 
-    This module is designed for streaming audio data. It analyzes incoming audio
-    chunks frame by frame, determines if each frame contains speech, and manages
-    an internal buffer of audio segments identified as speech. Based on configured
-    parameters, it can trigger a callback Akari module when speech starts or ends,
-    passing along the accumulated speech audio.
+    このモジュールは、ストリーミングオーディオデータ用に設計されています。受信オーディオチャンクを
+    フレームごとに分析し、各フレームに音声が含まれているかどうかを判断し、音声として識別された
+    オーディオセグメントの内部バッファを管理します。設定されたパラメータに基づいて、
+    音声の開始時または終了時にコールバック Akari モジュールをトリガーし、蓄積された音声オーディオを渡します。
 
     Attributes:
-        _vad (webrtcvad.Vad): An instance of the WebRTC VAD algorithm.
-        _last_speech_time (float): Timestamp of the last frame detected as speech.
-            Used for implementing `speech_sleep_duration_ms`.
-        _callbacked (bool): Flag indicating if a callback has been made for the
-            current speech segment, to avoid redundant callbacks.
-        _audio_buffer (bytes): Accumulates audio frames that are part of the
-            current speech segment. This buffer is sent to the callback module.
+        _vad (webrtcvad.Vad): WebRTC VAD アルゴリズムのインスタンス。
+        _last_speech_time (float): 音声として検出された最後のフレームのタイムスタンプ。
+            `speech_sleep_duration_ms` の実装に使用されます。
+        _callbacked (bool): 現在の音声セグメントに対してコールバックが行われたかどうかを示すフラグ。
+            冗長なコールバックを回避するために使用されます。
+        _audio_buffer (bytes): 現在の音声セグメントの一部であるオーディオフレームを蓄積します。
+            このバッファはコールバックモジュールに送信されます。
     """
 
     def __init__(
@@ -108,16 +103,16 @@ class _WebRTCVadModule(AkariModule):
         router: AkariRouter,
         logger: AkariLogger,
     ) -> None:
-        """Constructs a _WebRTCVadModule instance.
+        """_WebRTCVadModule インスタンスを構築します。
 
-        Initializes the WebRTC VAD object and internal state variables for
-        tracking speech timing, callback status, and audio buffering.
+        WebRTC VAD オブジェクトと、音声タイミング、コールバックステータス、
+        およびオーディオバッファリングを追跡するための内部状態変数を初期化します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for invoking
-                the configured callback module.
-            logger (AkariLogger): The logger instance for recording VAD activity,
-                speech detection events, and errors.
+            router (AkariRouter): Akari ルーターインスタンス。設定されたコールバックモジュールの
+                呼び出しに使用されます。
+            logger (AkariLogger): VAD アクティビティ、音声検出イベント、およびエラーを記録するための
+                ロガーインスタンス。
         """
         super().__init__(router, logger)
         self._vad = webrtcvad.Vad()
@@ -126,65 +121,62 @@ class _WebRTCVadModule(AkariModule):
         self._audio_buffer: bytes = b""
 
     def call(self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Standard, non-streaming invocation (not supported for this module).
+        """標準の非ストリーミング呼び出し（このモジュールではサポートされていません）。
 
-        The WebRTC VAD module is inherently stream-oriented as it processes audio
-        chunks over time to detect speech segments. Therefore, it does not
-        implement a traditional blocking `call` method.
+        WebRTC VAD モジュールは、音声セグメントを検出するために時間とともにオーディオチャンクを
+        処理するため、本質的にストリーム指向です。したがって、従来のブロッキング `call` メソッドは
+        実装していません。
 
         Args:
-            data (AkariData): Input data (unused).
-            params (_WebRTCVadParams): VAD parameters (unused).
-            callback (Optional[AkariModuleType]): Callback module (unused).
+            data (AkariData): 入力データ（未使用）。
+            params (_WebRTCVadParams): VAD パラメータ（未使用）。
+            callback (Optional[AkariModuleType]): コールバックモジュール（未使用）。
 
         Raises:
-            NotImplementedError: Always raised, as this module requires `stream_call`.
+            NotImplementedError: このモジュールは `stream_call` を必要とするため、常に発生します。
         """
         raise NotImplementedError("WebRTCVadModule does not support call method. Use stream_call instead.")
 
     def stream_call(
         self, data: AkariData, params: _WebRTCVadParams, callback: AkariModuleType | None = None
     ) -> AkariData:
-        """Analyzes an incoming audio chunk for voice activity using the WebRTC VAD algorithm.
+        """WebRTC VAD アルゴリズムを使用して、受信オーディオチャンクの音声アクティビティを分析します。
 
-        This method expects an audio chunk in `data.last().audio.main`. It processes
-        this chunk according to the configured `params` (mode, sample rate, frame duration).
-        If speech is detected, the audio chunk (from `data.last().audio.stream.last()`
-        if available, otherwise `data.last().audio.main`) is appended to an internal
-        `_audio_buffer`.
+        このメソッドは、`data.last().audio.main` にオーディオチャンクがあることを期待します。
+        設定された `params`（モード、サンプルレート、フレーム期間）に従ってこのチャンクを処理します。
+        音声が検出された場合、オーディオチャンク（利用可能な場合は `data.last().audio.stream.last()` から、
+        そうでない場合は `data.last().audio.main` から）が内部 `_audio_buffer` に追加されます。
 
-        A callback mechanism is implemented based on `params.callback_when_speech_ended`
-        and `params.speech_sleep_duration_ms`.
-        - If `callback_when_speech_ended` is False, the callback is triggered as soon
-          as speech (or functional speech considering `speech_sleep_duration_ms`) is detected.
-        - If `callback_when_speech_ended` is True, the callback is triggered only when a
-          speech segment ends (i.e., VAD reports non-speech after a period of speech,
-          and the `speech_sleep_duration_ms` hysteresis has passed).
+        コールバックメカニズムは、`params.callback_when_speech_ended` と
+        `params.speech_sleep_duration_ms` に基づいて実装されます。
+        - `callback_when_speech_ended` が False の場合、音声（または `speech_sleep_duration_ms` を
+          考慮した機能的な音声）が検出されるとすぐにコールバックがトリガーされます。
+        - `callback_when_speech_ended` が True の場合、音声セグメントが終了したときにのみ
+          コールバックがトリガーされます（つまり、VAD が一定期間の音声の後に非音声を報告し、
+          `speech_sleep_duration_ms` ヒステリシスが経過した場合）。
 
-        When a callback is triggered, the accumulated `_audio_buffer` is sent to the
-        specified `callback` module via the AkariRouter. The buffer is then cleared.
-        The method updates the input `AkariData` object with a new `AkariDataSet`
-        containing the boolean VAD result for the current chunk and the state of the
-        audio buffer.
+        コールバックがトリガーされると、蓄積された `_audio_buffer` が AkariRouter を介して
+        指定された `callback` モジュールに送信されます。その後、バッファはクリアされます。
+        このメソッドは、現在のチャンクのブール VAD 結果とオーディオバッファの状態を含む
+        新しい `AkariDataSet` で入力 `AkariData` オブジェクトを更新します。
 
         Args:
-            data (AkariData): The `AkariData` object containing the latest audio chunk.
-                Expected audio location: `data.last().audio.main` for the VAD frame,
-                and `data.last().audio.stream.last()` (or `.main`) for buffering.
-            params (_WebRTCVadParams): Configuration parameters for VAD sensitivity,
-                audio properties, and callback logic.
-            callback (Optional[AkariModuleType]): The Akari module type to be invoked
-                when a speech event (start or end, per configuration) occurs.
+            data (AkariData): 最新のオーディオチャンクを含む `AkariData` オブジェクト。
+                期待されるオーディオの場所: VAD フレームの場合は `data.last().audio.main`、
+                バッファリングの場合は `data.last().audio.stream.last()`（または `.main`）。
+            params (_WebRTCVadParams): VAD 感度、オーディオプロパティ、およびコールバックロジックの
+                設定パラメータ。
+            callback (Optional[AkariModuleType]): 音声イベント（設定ごとの開始または終了）が
+                発生したときに呼び出される Akari モジュールタイプ。
 
         Returns:
-            AkariData: The modified `AkariData` object, which includes a new
-            `AkariDataSet` with the VAD's boolean output for the processed frame
-            and details of the current audio buffer.
+            AkariData: 変更された `AkariData` オブジェクト。処理されたフレームの VAD の
+            ブール出力と現在のオーディオバッファの詳細を含む新しい `AkariDataSet` が含まれます。
 
         Raises:
-            ValueError: If `data.last().audio` is missing or empty, if the audio
-                chunk is too short for the configured frame size, or if an error
-                occurs during `self._vad.is_speech()`.
+            ValueError: `data.last().audio` がないか空の場合、オーディオチャンクが
+                設定されたフレームサイズに対して短すぎる場合、または `self._vad.is_speech()` 中に
+                エラーが発生した場合。
         """
         audio = data.last().audio
         if audio is None:

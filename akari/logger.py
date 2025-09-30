@@ -5,21 +5,21 @@ _AkariLogger = logging.Logger
 
 
 def _getLogger(name: str, level: int = logging.DEBUG) -> _AkariLogger:
-    """Sets up and provides a customized logger instance for use within the Akari framework.
+    """Akari フレームワーク内で使用するためのカスタマイズされたロガーインスタンスを設定して提供します。
 
-    Creates a logger with the specified name and severity level. To prevent
-    "No handlers could be found" warnings if the application using Akari doesn't
-    configure logging, a `NullHandler` is added by default. Additionally, a
-    `StreamHandler` is configured to output log messages to `sys.stdout`,
-    using the same specified logging level.
+    指定された名前と重要度レベルでロガーを作成します。Akari を使用するアプリケーションが
+    ロギングを設定しない場合に「ハンドラーが見つかりませんでした」という警告を防ぐために、
+    デフォルトで `NullHandler` が追加されます。さらに、`StreamHandler` が
+    `sys.stdout` にログメッセージを出力するように設定され、同じ指定された
+    ロギングレベルを使用します。
 
     Args:
-        name (str): The desired name for the logger (e.g., "Akari.Router").
-        level (int): The minimum logging level the logger will handle (e.g.,
-            `logging.DEBUG`, `logging.INFO`). Defaults to `logging.DEBUG`.
+        name (str): ロガーの希望の名前（例: "Akari.Router"）。
+        level (int): ロガーが処理する最小ロギングレベル（例:
+            `logging.DEBUG`、`logging.INFO`）。デフォルトは `logging.DEBUG` です。
 
     Returns:
-        _AkariLogger: The fully configured logger instance.
+        _AkariLogger: 完全に設定されたロガーインスタンス。
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)

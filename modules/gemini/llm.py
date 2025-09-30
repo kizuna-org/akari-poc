@@ -18,23 +18,23 @@ _models: dict[str, GenerativeModel] = {}
 
 @dataclasses.dataclass
 class _LLMModuleParams:
-    """Defines the necessary parameters for invoking a Google Gemini language model.
+    """Google Gemini 言語モデルを呼び出すために必要なパラメータを定義します。
 
-    Includes the specific model identifier (e.g., "gemini-pro") and the
-    conversation content, which can be provided directly or generated via a function.
+    特定のモデル識別子（例: "gemini-pro"）と会話コンテンツが含まれます。
+    会話コンテンツは直接提供することも、関数経由で生成することもできます。
 
     Attributes:
-        model (str): The identifier of the Gemini model to be used (e.g.,
-            "gemini-pro", "gemini-1.5-flash-latest"). This determines which version of the
-            Gemini family will process the request.
-        messages (Optional[Iterable[Content]]): A sequence of `Content` objects
-            that constitute the conversation history or prompt. This is used if
-            `messages_function` is not provided or returns `None`.
+        model (str): 使用する Gemini モデルの識別子（例: "gemini-pro",
+            "gemini-1.5-flash-latest"）。これにより、リクエストを処理する Gemini ファミリの
+            どのバージョンかが決まります。
+        messages (Optional[Iterable[Content]]): 会話履歴またはプロンプトを構成する
+            `Content` オブジェクトのシーケンス。これは、`messages_function` が
+            提供されていないか `None` を返す場合に使用されます。
         messages_function (Optional[Callable[[AkariData], Iterable[Content]]]):
-            A callable that accepts an `AkariData` instance and dynamically
-            generates the sequence of `Content` objects for the prompt. This allows
-            the conversation to be built based on data from previous steps in an
-            Akari pipeline. If provided, it takes precedence. Defaults to `None`.
+            `AkariData` インスタンスを受け入れ、プロンプト用の `Content` オブジェクトの
+            シーケンスを動的に生成する呼び出し可能オブジェクト。これにより、Akari パイプラインの
+            以前のステップのデータに基づいて会話を構築できます。提供されている場合は、
+            こちらが優先されます。デフォルトは `None` です。
     """
 
     model: str
@@ -43,58 +43,55 @@ class _LLMModuleParams:
 
 
 class _LLMModule(AkariModule):
-    """Provides an interface to Google's Gemini large language models.
+    """Google の Gemini 大規模言語モデルへのインターフェースを提供します。
 
-    Enables content generation by sending structured conversation history (as a
-    sequence of `Content` objects) to a specified Gemini model. It manages a
-    local cache of `GenerativeModel` instances to optimize repeated calls to the
-    same model.
+    構造化された会話履歴（`Content` オブジェクトのシーケンスとして）を
+    指定された Gemini モデルに送信することで、コンテンツ生成を可能にします。
+    同じモデルへの繰り返しの呼び出しを最適化するために、`GenerativeModel` インスタンスの
+    ローカルキャッシュを管理します。
     """
 
     def __init__(self, router: AkariRouter, logger: AkariLogger) -> None:
-        """Constructs an _LLMModule instance for interacting with Gemini models.
+        """Gemini モデルと対話するための _LLMModule インスタンスを構築します。
 
         Args:
-            router (AkariRouter): The Akari router instance, used for base module
-                initialization.
-            logger (AkariLogger): The logger instance for recording operational
-                details, debugging information, and API interactions.
+            router (AkariRouter): Akari ルーターインスタンス。ベースモジュールの初期化に使用されます。
+            logger (AkariLogger): 操作の詳細、デバッグ情報、API の相互作用を記録するための
+                ロガーインスタンス。
         """
         super().__init__(router, logger)
 
     def call(self, data: AkariData, params: _LLMModuleParams, callback: AkariModuleType | None = None) -> AkariDataSet:
-        """Sends a request to the specified Google Gemini model to generate textual content.
+        """指定された Google Gemini モデルにリクエストを送信して、テキストコンテンツを生成します。
 
-        The conversation history (prompt) is determined either from the static
-        `params.messages` or dynamically via `params.messages_function`. The module
-        uses a shared, in-memory cache (`_models`) to store and reuse initialized
-        `GenerativeModel` instances, potentially improving performance for
-        subsequent calls to the same model. The generated text from the model's
-        response is then packaged into an `AkariDataSet`.
+        会話履歴（プロンプト）は、静的な `params.messages` から、または動的に
+        `params.messages_function` 経由で決定されます。モジュールは、共有のインメモリキャッシュ
+        （`_models`）を使用して、初期化された `GenerativeModel` インスタンスを格納および再利用し、
+        同じモデルへの後続の呼び出しのパフォーマンスを向上させる可能性があります。
+        モデルの応答から生成されたテキストは、その後 `AkariDataSet` にパッケージ化されます。
 
         Args:
-            data (AkariData): The input `AkariData` object. This is passed to
-                `params.messages_function` if it is set, allowing the prompt to be
-                dynamically constructed based on previous pipeline results.
-            params (_LLMModuleParams): An object containing the target Gemini model
-                name and the conversation content (either directly or via a function).
-            callback (Optional[AkariModuleType]): An optional callback module.
-                This parameter is currently not used by the Gemini LLMModule.
+            data (AkariData): 入力 `AkariData` オブジェクト。これは、プロンプトが
+                以前のパイプラインの結果に基づいて動的に構築されるように、`params.messages_function` が
+                設定されている場合に渡されます。
+            params (_LLMModuleParams): ターゲットの Gemini モデル名と会話コンテンツ
+                （直接または関数経由）を含むオブジェクト。
+            callback (Optional[AkariModuleType]): オプションのコールバックモジュール。
+                このパラメータは現在 Gemini LLMModule では使用されていません。
 
         Returns:
-            AkariDataSet: An `AkariDataSet` where:
-                - `text.main` contains the primary textual content generated by the
-                  Gemini model.
-                - `allData` holds the complete raw response object returned by the
-                  `GenerativeModel.generate_content` method.
+            AkariDataSet: 次のような `AkariDataSet`:
+                - `text.main` には、Gemini モデルによって生成された主要なテキストコンテンツが含まれます。
+                - `allData` には、`GenerativeModel.generate_content` メソッドによって返された
+                  完全な生の応答オブジェクトが保持されます。
 
         Raises:
-            ValueError: If `params.messages` is `None` and `params.messages_function`
-                is also `None` or returns `None`, meaning no message content is
-                available to send to the model.
-            GoogleAPIError: If the call to the Gemini API fails due to issues such
-                as authentication, network problems, or invalid API usage. (Note:
-                Specific exception types may vary based on the `vertexai` library).
+            ValueError: `params.messages` が `None` で、`params.messages_function` も
+                `None` であるか `None` を返す場合。つまり、モデルに送信するメッセージコンテンツが
+                利用できない場合。
+            GoogleAPIError: 認証、ネットワークの問題、無効な API 使用法などの問題により、
+                Gemini API への呼び出しが失敗した場合。（注: 具体的な例外タイプは
+                `vertexai` ライブラリによって異なる場合があります）。
         """
         self._logger.debug("LLMModule called")
         self._logger.debug("Data: %s", data)
