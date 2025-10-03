@@ -9,7 +9,7 @@ runs:
       run: |
         python_version="$(grep '^python\s*=\s*' pyproject.toml | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?')"
         echo "python-version=${python_version}" >> "$GITHUB_OUTPUT"
-    - uses: actions/setup-python@v5.6.0
+    - uses: actions/setup-python@v6.0.0
       with:
         python-version: ${{ steps.get-python-version.outputs.python-version }}
     - name: Install dependencies
